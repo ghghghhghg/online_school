@@ -18,7 +18,7 @@ load_dotenv()
 SECRET_KEY = os.environ.get('SECRET_KEY', 'локальный-ключ-для-разработки')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-CSRF_TRUSTED_ORIGINS = ['https://web-production-91970.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://online-school-abs16-5.up.railway.app']
 
 from pathlib import Path
 
