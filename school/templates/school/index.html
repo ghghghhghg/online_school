@@ -1,0 +1,26 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        {% if course %}
+            <h1 class="mb-3">{{ course.title }}</h1>
+            <p class="lead text-muted">{{ course.description }}</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg mt-3">
+                    Перейти к урокам
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg mt-3 me-2">
+                    Начать обучение
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg mt-3">
+                    Войти
+                </a>
+            {% endif %}
+        {% else %}
+            <h1>Скоро здесь появится курс!</h1>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
