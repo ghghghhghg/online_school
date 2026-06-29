@@ -70,9 +70,17 @@ def lesson_view(request, pk):
         student=request.user, lesson=lesson
     ).exists()
 
+    # Последний результат теста если есть
+    test_result = None
+    if hasattr(lesson, 'test'):
+        test_result = TestResult.objects.filter(
+            student=request.user, test=lesson.test
+        ).first()
+
     return render(request, 'school/lesson.html', {
         'lesson': lesson,
         'is_completed': is_completed,
+        'test_result': test_result,
     })
 
 
@@ -169,12 +177,19 @@ def test_view(request, pk):
         score = int((correct / total) * 100) if total > 0 else 0
         passed = score >= test.pass_score
 
+        # Сохраняем результат
         TestResult.objects.create(
             student=request.user,
             test=test,
             score=score,
             passed=passed
         )
+
+        # Если тест сдан — автоматически отмечаем урок пройденным
+        if passed:
+            LessonProgress.objects.get_or_create(
+                student=request.user, lesson=lesson
+            )
 
         return redirect('test_result', pk=lesson.pk)
 
@@ -183,7 +198,6 @@ def test_view(request, pk):
         'test': test,
         'questions': questions,
     })
-
 
 @login_required
 def test_result_view(request, pk):

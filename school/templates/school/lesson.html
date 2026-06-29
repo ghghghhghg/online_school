@@ -21,21 +21,41 @@
 </div>
 {% endif %}
 
-<div class="mt-3">
-    {% if is_completed %}
-        <span class="text-success fw-bold">✅ Урок пройден</span>
-    {% else %}
-        <form method="post" action="{% url 'complete_lesson' lesson.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success">
-                ✅ Отметить как пройденный
-            </button>
-            {% if lesson.test %}
-            <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary mt-2">
-            📝 Пройти тест
-            </a>
+<div class="mt-4">
+    {% if lesson.test %}
+        {% if test_result %}
+            {% if test_result.passed %}
+                <div class="alert alert-success">
+                    ✅ Урок пройден — тест сдан на {{ test_result.score }}%
+                </div>
+                <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary">
+                    🔄 Пройти тест ещё раз
+                </a>
+            {% else %}
+                <div class="alert alert-warning">
+                    ❌ Тест не сдан — результат {{ test_result.score }}%,
+                    нужно {{ lesson.test.pass_score }}%
+                </div>
+                <a href="{% url 'test' lesson.pk %}" class="btn btn-primary">
+                    🔄 Попробовать ещё раз
+                </a>
             {% endif %}
-        </form>
+        {% else %}
+            <a href="{% url 'test' lesson.pk %}" class="btn btn-primary">
+                📝 Пройти тест
+            </a>
+        {% endif %}
+    {% else %}
+        {% if is_completed %}
+            <span class="text-success fw-bold">✅ Урок пройден</span>
+        {% else %}
+            <form method="post" action="{% url 'complete_lesson' lesson.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">
+                    ✅ Отметить как пройденный
+                </button>
+            </form>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}
