@@ -3,6 +3,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
 
 
 def index(request):
@@ -79,3 +81,67 @@ def complete_lesson(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
     LessonProgress.objects.get_or_create(student=request.user, lesson=lesson)
     return redirect('lesson', pk=pk)
+
+@staff_member_required
+def teacher_dashboard(request):
+    course = Course.objects.first()
+    lessons = course.lessons.all() if course else []
+    return render(request, 'school/teacher/dashboard.html', {
+        'course': course,
+        'lessons': lessons,
+    })
+
+
+@staff_member_required
+def teacher_edit_course(request):
+    course = Course.objects.first()
+    if request.method == 'POST':
+        course.title = request.POST.get('title')
+        course.description = request.POST.get('description')
+        course.save()
+        messages.success(request, 'Курс обновлён!')
+        return redirect('teacher_dashboard')
+    return render(request, 'school/teacher/edit_course.html', {'course': course})
+
+
+@staff_member_required
+def teacher_add_lesson(request):
+    course = Course.objects.first()
+    if request.method == 'POST':
+        Lesson.objects.create(
+            course=course,
+            title=request.POST.get('title'),
+            description=request.POST.get('description'),
+            video_url=request.POST.get('video_url'),
+            order=request.POST.get('order', 0),
+        )
+        messages.success(request, 'Урок добавлен!')
+        return redirect('teacher_dashboard')
+    next_order = course.lessons.count() + 1
+    return render(request, 'school/teacher/add_lesson.html', {
+        'course': course,
+        'next_order': next_order,
+    })
+
+
+@staff_member_required
+def teacher_edit_lesson(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        lesson.title = request.POST.get('title')
+        lesson.description = request.POST.get('description')
+        lesson.video_url = request.POST.get('video_url')
+        lesson.order = request.POST.get('order', lesson.order)
+        lesson.save()
+        messages.success(request, 'Урок обновлён!')
+        return redirect('teacher_dashboard')
+    return render(request, 'school/teacher/edit_lesson.html', {'lesson': lesson})
+
+
+@staff_member_required
+def teacher_delete_lesson(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        lesson.delete()
+        messages.success(request, 'Урок удалён!')
+    return redirect('teacher_dashboard')
