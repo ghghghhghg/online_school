@@ -15,9 +15,9 @@ import os
 
 load_dotenv()
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'временный-ключ')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'локальный-ключ-для-разработки')
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 from pathlib import Path
 
@@ -29,12 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s%w4^%mxbg3t=(*bwh)_6bwg$$__4v%f@66)+fx2r%!t1bjw9+'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
