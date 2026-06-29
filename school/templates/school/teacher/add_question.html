@@ -1,0 +1,37 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Добавить вопрос</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Вопрос</label>
+                <textarea name="text" class="form-control" rows="2" required></textarea>
+            </div>
+
+            <p class="fw-bold mt-3">Варианты ответов</p>
+            <p class="text-muted small">Отметь правильный ответ</p>
+
+            {% for i in "1234" %}
+            <div class="input-group mb-2">
+                <div class="input-group-text">
+                    <input type="radio" name="correct" value="{{ i }}" required>
+                </div>
+                <input type="text" name="answer_{{ i }}"
+                       class="form-control"
+                       placeholder="Вариант {{ i }}" required>
+            </div>
+            {% endfor %}
+
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Добавить вопрос</button>
+                <a href="{% url 'teacher_edit_test' test.pk %}"
+                   class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

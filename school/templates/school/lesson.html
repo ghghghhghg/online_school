@@ -30,6 +30,11 @@
             <button type="submit" class="btn btn-success">
                 ✅ Отметить как пройденный
             </button>
+            {% if lesson.test %}
+            <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary mt-2">
+            📝 Пройти тест
+            </a>
+            {% endif %}
         </form>
     {% endif %}
 </div>

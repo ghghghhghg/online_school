@@ -1,0 +1,69 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ test.title }}</h2>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        ← Назад
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Название теста</label>
+                <input type="text" name="title" value="{{ test.title }}"
+                       class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Проходной балл (%)</label>
+                <input type="number" name="pass_score" value="{{ test.pass_score }}"
+                       class="form-control" min="1" max="100" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>Вопросы ({{ questions|length }})</h5>
+    <a href="{% url 'teacher_add_question' test.pk %}" class="btn btn-primary btn-sm">
+        + Добавить вопрос
+    </a>
+</div>
+
+{% for question in questions %}
+<div class="card mb-2">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>{{ forloop.counter }}. {{ question.text }}</strong>
+                <ul class="mt-2 mb-0">
+                    {% for answer in question.answers.all %}
+                    <li class="{% if answer.is_correct %}text-success fw-bold{% else %}text-muted{% endif %}">
+                        {{ answer.text }}
+                        {% if answer.is_correct %}✓{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <form method="post" action="{% url 'teacher_delete_question' question.pk %}"
+                  onsubmit="return confirm('Удалить вопрос?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% empty %}
+    <p class="text-muted">Вопросов пока нет. Добавьте первый!</p>
+{% endfor %}
+{% endblock %}

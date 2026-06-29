@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from .models import Course, Lesson, Enrollment, LessonProgress
+from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
@@ -145,3 +145,123 @@ def teacher_delete_lesson(request, pk):
         lesson.delete()
         messages.success(request, 'Урок удалён!')
     return redirect('teacher_dashboard')
+
+from .models import Test, Question, Answer, TestResult
+
+
+@login_required
+def test_view(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    test = get_object_or_404(Test, lesson=lesson)
+    questions = test.questions.prefetch_related('answers').all()
+
+    if request.method == 'POST':
+        total = questions.count()
+        correct = 0
+
+        for question in questions:
+            answer_id = request.POST.get(f'question_{question.id}')
+            if answer_id:
+                answer = Answer.objects.filter(id=answer_id, is_correct=True).first()
+                if answer:
+                    correct += 1
+
+        score = int((correct / total) * 100) if total > 0 else 0
+        passed = score >= test.pass_score
+
+        TestResult.objects.create(
+            student=request.user,
+            test=test,
+            score=score,
+            passed=passed
+        )
+
+        return redirect('test_result', pk=lesson.pk)
+
+    return render(request, 'school/test.html', {
+        'lesson': lesson,
+        'test': test,
+        'questions': questions,
+    })
+
+
+@login_required
+def test_result_view(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    test = get_object_or_404(Test, lesson=lesson)
+    result = TestResult.objects.filter(
+        student=request.user, test=test
+    ).first()
+    return render(request, 'school/test_result.html', {
+        'lesson': lesson,
+        'test': test,
+        'result': result,
+    })
+
+
+@staff_member_required
+def teacher_create_test(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        Test.objects.create(
+            lesson=lesson,
+            title=request.POST.get('title'),
+            pass_score=request.POST.get('pass_score', 70),
+        )
+        messages.success(request, 'Тест создан!')
+        return redirect('teacher_dashboard')
+    return render(request, 'school/teacher/create_test.html', {'lesson': lesson})
+
+
+@staff_member_required
+def teacher_edit_test(request, pk):
+    test = get_object_or_404(Test, pk=pk)
+    questions = test.questions.prefetch_related('answers').all()
+
+    if request.method == 'POST':
+        test.title = request.POST.get('title')
+        test.pass_score = request.POST.get('pass_score', 70)
+        test.save()
+        messages.success(request, 'Тест обновлён!')
+        return redirect('teacher_edit_test', pk=pk)
+
+    return render(request, 'school/teacher/edit_test.html', {
+        'test': test,
+        'questions': questions,
+    })
+
+
+@staff_member_required
+def teacher_add_question(request, pk):
+    test = get_object_or_404(Test, pk=pk)
+
+    if request.method == 'POST':
+        question = Question.objects.create(
+            test=test,
+            text=request.POST.get('text'),
+            order=test.questions.count() + 1,
+        )
+        # Сохраняем 4 варианта ответа
+        correct = request.POST.get('correct')
+        for i in range(1, 5):
+            text = request.POST.get(f'answer_{i}')
+            if text:
+                Answer.objects.create(
+                    question=question,
+                    text=text,
+                    is_correct=(str(i) == correct)
+                )
+        messages.success(request, 'Вопрос добавлен!')
+        return redirect('teacher_edit_test', pk=test.pk)
+
+    return render(request, 'school/teacher/add_question.html', {'test': test})
+
+
+@staff_member_required
+def teacher_delete_question(request, pk):
+    question = get_object_or_404(Question, pk=pk)
+    test_pk = question.test.pk
+    if request.method == 'POST':
+        question.delete()
+        messages.success(request, 'Вопрос удалён!')
+    return redirect('teacher_edit_test', pk=test_pk)

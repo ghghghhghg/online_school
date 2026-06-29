@@ -16,4 +16,14 @@ urlpatterns = [
     path('teacher/lesson/add/', views.teacher_add_lesson, name='teacher_add_lesson'),
     path('teacher/lesson/<int:pk>/edit/', views.teacher_edit_lesson, name='teacher_edit_lesson'),
     path('teacher/lesson/<int:pk>/delete/', views.teacher_delete_lesson, name='teacher_delete_lesson'),
+
+# Тесты
+    path('lesson/<int:pk>/test/', views.test_view, name='test'),
+    path('lesson/<int:pk>/test/result/', views.test_result_view, name='test_result'),
+
+    # Тесты в панели преподавателя
+    path('teacher/lesson/<int:pk>/test/create/', views.teacher_create_test, name='teacher_create_test'),
+    path('teacher/test/<int:pk>/edit/', views.teacher_edit_test, name='teacher_edit_test'),
+    path('teacher/test/<int:pk>/question/add/', views.teacher_add_question, name='teacher_add_question'),
+    path('teacher/question/<int:pk>/delete/', views.teacher_delete_question, name='teacher_delete_question'),
 ]

@@ -1,0 +1,35 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<a href="{% url 'lesson' lesson.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+    ← Назад к уроку
+</a>
+
+<h2>{{ test.title }}</h2>
+<p class="text-muted">Проходной балл: {{ test.pass_score }}%</p>
+<hr>
+
+<form method="post">
+    {% csrf_token %}
+    {% for question in questions %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h6>{{ forloop.counter }}. {{ question.text }}</h6>
+            {% for answer in question.answers.all %}
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="radio"
+                       name="question_{{ question.id }}"
+                       id="answer_{{ answer.id }}"
+                       value="{{ answer.id }}" required>
+                <label class="form-check-label" for="answer_{{ answer.id }}">
+                    {{ answer.text }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Отправить ответы</button>
+</form>
+{% endblock %}

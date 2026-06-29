@@ -68,3 +68,64 @@ class LessonProgress(models.Model):
 
     def __str__(self):
         return f'{self.student.username} ✓ {self.lesson.title}'
+
+class Test(models.Model):
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE,
+                                  related_name='test', verbose_name='Урок')
+    title = models.CharField(max_length=200, verbose_name='Название теста')
+    pass_score = models.PositiveIntegerField(default=70,
+                                             verbose_name='Проходной балл (%)')
+
+    class Meta:
+        verbose_name = 'Тест'
+        verbose_name_plural = 'Тесты'
+
+    def __str__(self):
+        return f'Тест: {self.lesson.title}'
+
+
+class Question(models.Model):
+    test = models.ForeignKey(Test, on_delete=models.CASCADE,
+                             related_name='questions', verbose_name='Тест')
+    text = models.TextField(verbose_name='Вопрос')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Вопрос'
+        verbose_name_plural = 'Вопросы'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.order}. {self.text[:50]}'
+
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE,
+                                 related_name='answers', verbose_name='Вопрос')
+    text = models.CharField(max_length=300, verbose_name='Ответ')
+    is_correct = models.BooleanField(default=False, verbose_name='Правильный')
+
+    class Meta:
+        verbose_name = 'Ответ'
+        verbose_name_plural = 'Ответы'
+
+    def __str__(self):
+        return f'{"✓" if self.is_correct else "✗"} {self.text}'
+
+
+class TestResult(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='test_results', verbose_name='Ученик')
+    test = models.ForeignKey(Test, on_delete=models.CASCADE,
+                             related_name='results', verbose_name='Тест')
+    score = models.PositiveIntegerField(verbose_name='Результат (%)')
+    passed = models.BooleanField(verbose_name='Сдан')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Результат теста'
+        verbose_name_plural = 'Результаты тестов'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.student.username} — {self.test} — {self.score}%'
