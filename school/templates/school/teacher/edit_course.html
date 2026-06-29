@@ -13,9 +13,27 @@
                        class="form-control" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Описание</label>
+                <label class="form-label">Краткое описание</label>
                 <textarea name="description" class="form-control"
-                          rows="4">{{ course.description }}</textarea>
+                          rows="2">{{ course.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Что будет в курсе</label>
+                <textarea name="what_you_learn" class="form-control"
+                          rows="4"
+                          placeholder="Каждый пункт с новой строки...">{{ course.what_you_learn }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Кому подойдёт</label>
+                <textarea name="for_whom" class="form-control"
+                          rows="4"
+                          placeholder="Каждый пункт с новой строки...">{{ course.for_whom }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Как проходит обучение</label>
+                <textarea name="how_it_works" class="form-control"
+                          rows="4"
+                          placeholder="Опиши процесс обучения...">{{ course.how_it_works }}</textarea>
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Сохранить</button>

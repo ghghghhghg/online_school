@@ -106,11 +106,13 @@ def teacher_edit_course(request):
     if request.method == 'POST':
         course.title = request.POST.get('title')
         course.description = request.POST.get('description')
+        course.what_you_learn = request.POST.get('what_you_learn')
+        course.for_whom = request.POST.get('for_whom')
+        course.how_it_works = request.POST.get('how_it_works')
         course.save()
         messages.success(request, 'Курс обновлён!')
         return redirect('teacher_dashboard')
     return render(request, 'school/teacher/edit_course.html', {'course': course})
-
 
 @staff_member_required
 def teacher_add_lesson(request):

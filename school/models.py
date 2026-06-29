@@ -3,10 +3,15 @@ from django.contrib.auth.models import User
 
 
 class Course(models.Model):
-    """Курс — один, но пусть будет модель для гибкости"""
     title = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(verbose_name='Описание')
     image = models.ImageField(upload_to='courses/', blank=True, verbose_name='Обложка')
+
+    # Новые поля
+    for_whom = models.TextField(blank=True, verbose_name='Кому подойдёт')
+    what_you_learn = models.TextField(blank=True, verbose_name='Чему научитесь')
+    how_it_works = models.TextField(blank=True, verbose_name='Как проходит обучение')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
