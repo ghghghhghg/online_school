@@ -24,13 +24,14 @@ def register_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.email = request.POST.get('email')
+            user.save()
             login(request, user)
             return redirect('index')
     else:
         form = UserCreationForm()
     return render(request, 'school/register.html', {'form': form})
-
 
 def login_view(request):
     if request.method == 'POST':
