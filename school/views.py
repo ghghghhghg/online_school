@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile
+from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
+    Review, FAQ
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
@@ -10,9 +11,13 @@ from django.contrib import messages
 def index(request):
     course = Course.objects.first()
     teacher = TeacherProfile.objects.first()
+    reviews = Review.objects.filter(is_published=True)
+    faqs = FAQ.objects.all()
     return render(request, 'school/index.html', {
         'course': course,
         'teacher': teacher,
+        'reviews': reviews,
+        'faqs': faqs,
     })
 
 def register_view(request):
@@ -157,8 +162,6 @@ def teacher_delete_lesson(request, pk):
         messages.success(request, 'Урок удалён!')
     return redirect('teacher_dashboard')
 
-from .models import Test, Question, Answer, TestResult
-
 
 @login_required
 def test_view(request, pk):
@@ -295,3 +298,24 @@ def teacher_edit_profile(request):
         messages.success(request, 'Профиль обновлён!')
         return redirect('teacher_dashboard')
     return render(request, 'school/teacher/edit_profile.html', {'profile': profile})
+
+
+@login_required
+def student_profile(request):
+    enrollments = Enrollment.objects.filter(student=request.user).select_related('course')
+    progress = LessonProgress.objects.filter(student=request.user).select_related('lesson')
+    test_results = TestResult.objects.filter(student=request.user).select_related('test')
+
+    course = Course.objects.first()
+    total_lessons = course.lessons.count() if course else 0
+    completed_count = progress.count()
+    percent = int((completed_count / total_lessons) * 100) if total_lessons > 0 else 0
+
+    return render(request, 'school/profile.html', {
+        'enrollments': enrollments,
+        'progress': progress,
+        'test_results': test_results,
+        'total_lessons': total_lessons,
+        'completed_count': completed_count,
+        'percent': percent,
+    })

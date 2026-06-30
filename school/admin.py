@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Lesson, Enrollment, LessonProgress
+from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ
 
 
 class LessonInline(admin.TabularInline):
@@ -31,3 +31,14 @@ class EnrollmentAdmin(admin.ModelAdmin):
 @admin.register(LessonProgress)
 class LessonProgressAdmin(admin.ModelAdmin):
     list_display = ['student', 'lesson', 'completed_at']
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ['student_name', 'rating', 'is_published', 'order']
+    list_editable = ['is_published', 'order']
+
+
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ['question', 'order']
+    list_editable = ['order']

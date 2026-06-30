@@ -1,0 +1,56 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Личный кабинет</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>{{ user.username }}</h5>
+        <p class="text-muted mb-2">{{ user.email|default:"Email не указан" }}</p>
+
+        {% if total_lessons %}
+        <div class="mt-3">
+            <div class="d-flex justify-content-between">
+                <span>Прогресс по курсу</span>
+                <span>{{ completed_count }} / {{ total_lessons }} уроков</span>
+            </div>
+            <div class="progress mt-1" style="height: 10px;">
+                <div class="progress-bar bg-success" style="width: {{ percent }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<h5 class="mb-3">Пройденные уроки</h5>
+{% if progress %}
+    {% for p in progress %}
+    <div class="card mb-2">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <span>✅ {{ p.lesson.title }}</span>
+            <small class="text-muted">{{ p.completed_at|date:"d.m.Y" }}</small>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">Пока нет пройденных уроков</p>
+{% endif %}
+
+{% if test_results %}
+<h5 class="mb-3 mt-4">Результаты тестов</h5>
+{% for result in test_results %}
+<div class="card mb-2">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <span>{{ result.test.title }}</span>
+        <span>
+            {% if result.passed %}
+                <span class="badge bg-success">{{ result.score }}%</span>
+            {% else %}
+                <span class="badge bg-danger">{{ result.score }}%</span>
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

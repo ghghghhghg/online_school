@@ -145,3 +145,34 @@ class TeacherProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+class Review(models.Model):
+    student_name = models.CharField(max_length=200, verbose_name='Имя ученика')
+    text = models.TextField(verbose_name='Текст отзыва')
+    rating = models.PositiveIntegerField(default=5, verbose_name='Оценка (1-5)')
+    photo = models.ImageField(upload_to='reviews/', blank=True, verbose_name='Фото')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ['order', '-created_at']
+
+    def __str__(self):
+        return f'{self.student_name} — {self.rating}★'
+
+
+class FAQ(models.Model):
+    question = models.CharField(max_length=300, verbose_name='Вопрос')
+    answer = models.TextField(verbose_name='Ответ')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Вопрос-ответ'
+        verbose_name_plural = 'FAQ'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.question

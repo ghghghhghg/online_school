@@ -98,6 +98,63 @@
     </div>
 </div>
 {% endif %}
+<!-- Отзывы -->
+{% if reviews %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-9">
+        <h3 class="mb-4 text-center">💬 Отзывы учеников</h3>
+        <div class="row g-3">
+            {% for review in reviews %}
+            <div class="col-md-6">
+                <div class="card h-100 p-3">
+                    <div class="d-flex align-items-center mb-2">
+                        {% if review.photo %}
+                        <img src="{{ review.photo.url }}" class="rounded-circle me-2"
+                             style="width: 48px; height: 48px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <strong>{{ review.student_name }}</strong>
+                            <div class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mb-0">{{ review.text }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- FAQ -->
+{% if faqs %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-9">
+        <h3 class="mb-4 text-center">❓ Частые вопросы</h3>
+        <div class="accordion" id="faqAccordion">
+            {% for faq in faqs %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq{{ faq.id }}">
+                        {{ faq.question }}
+                    </button>
+                </h2>
+                <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
+                     data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">{{ faq.answer }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
 <!-- Кнопка внизу -->
 <div class="text-center py-5">
     {% if user.is_authenticated %}
