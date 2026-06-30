@@ -1,0 +1,194 @@
+/* === Дизайн-система: «рабочая тетрадь» === */
+
+:root {
+  --ink: #1F2A37;
+  --paper: #FAF8F3;
+  --paper-card: #FFFFFF;
+  --accent: #C1440E;
+  --accent-dark: #9C3509;
+  --muted: #6B7280;
+  --line: #E8E2D4;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6,
+.display-5, .display-1 {
+  font-family: 'Fraunces', Georgia, serif;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h1.display-5 { font-weight: 700; }
+
+p, .lead {
+  color: var(--ink);
+}
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+/* === Навбар === */
+.navbar.bg-dark {
+  background-color: var(--ink) !important;
+  border-bottom: 3px solid var(--accent);
+}
+
+.navbar-brand {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+/* === Кнопки === */
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.6rem 1.4rem;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--accent-dark);
+  border-color: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-success {
+  background-color: #3D6B4F;
+  border-color: #3D6B4F;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn-success:hover {
+  background-color: #2F5640;
+  border-color: #2F5640;
+}
+
+/* === Карточки — эффект тетрадного листа со «сшивкой» === */
+.card {
+  background-color: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  border-left: 4px solid var(--accent);
+  box-shadow: none;
+  position: relative;
+}
+
+.card.bg-light {
+  background-color: var(--paper-card) !important;
+}
+
+/* Точки-сшивка слева у карточек уроков */
+.card::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background-image: radial-gradient(circle, var(--line) 1.5px, transparent 1.5px);
+  background-size: 2px 14px;
+  background-repeat: repeat-y;
+  display: none;
+}
+
+/* === Прогресс-бар === */
+.progress {
+  background-color: var(--line);
+  border-radius: 4px;
+}
+
+.progress-bar.bg-success {
+  background-color: var(--accent) !important;
+}
+
+/* === Аккордеон FAQ === */
+.accordion-item {
+  background-color: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: 4px !important;
+  margin-bottom: 0.5rem;
+}
+
+.accordion-button {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  background-color: var(--paper-card);
+  color: var(--ink);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--paper-card);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: var(--line);
+}
+
+/* === Алерты (сообщения системы) === */
+.alert-success {
+  background-color: #EEF3EC;
+  border: 1px solid #3D6B4F;
+  color: #2F5640;
+  border-radius: 4px;
+}
+
+.alert-warning {
+  background-color: #FBF1E6;
+  border: 1px solid var(--accent);
+  color: var(--accent-dark);
+  border-radius: 4px;
+}
+
+/* === Формы === */
+.form-control {
+  border-color: var(--line);
+  border-radius: 5px;
+}
+
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(193, 68, 14, 0.15);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+/* === Бейджи === */
+.badge.bg-success {
+  background-color: #3D6B4F !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--accent) !important;
+}
