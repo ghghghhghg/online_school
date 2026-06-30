@@ -21,7 +21,6 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
-
 class Lesson(models.Model):
     """Урок внутри курса"""
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
@@ -134,3 +133,15 @@ class TestResult(models.Model):
 
     def __str__(self):
         return f'{self.student.username} — {self.test} — {self.score}%'
+
+class TeacherProfile(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Имя')
+    bio = models.TextField(verbose_name='О себе')
+    photo = models.ImageField(upload_to='teacher/', blank=True, verbose_name='Фото')
+
+    class Meta:
+        verbose_name = 'Профиль преподавателя'
+        verbose_name_plural = 'Профиль преподавателя'
+
+    def __str__(self):
+        return self.name

@@ -2,16 +2,18 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult
+from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
 
 def index(request):
-    """Главная — показываем первый курс"""
     course = Course.objects.first()
-    return render(request, 'school/index.html', {'course': course})
-
+    teacher = TeacherProfile.objects.first()
+    return render(request, 'school/index.html', {
+        'course': course,
+        'teacher': teacher,
+    })
 
 def register_view(request):
     if request.method == 'POST':
@@ -98,7 +100,6 @@ def teacher_dashboard(request):
         'course': course,
         'lessons': lessons,
     })
-
 
 @staff_member_required
 def teacher_edit_course(request):
@@ -281,3 +282,16 @@ def teacher_delete_question(request, pk):
         question.delete()
         messages.success(request, 'Вопрос удалён!')
     return redirect('teacher_edit_test', pk=test_pk)
+
+@staff_member_required
+def teacher_edit_profile(request):
+    profile, created = (TeacherProfile.objects.get_or_create(id=1))
+    if request.method == 'POST':
+        profile.name = request.POST.get('name')
+        profile.bio = request.POST.get('bio')
+        if request.FILES.get('photo'):
+            profile.photo = request.FILES.get('photo')
+        profile.save()
+        messages.success(request, 'Профиль обновлён!')
+        return redirect('teacher_dashboard')
+    return render(request, 'school/teacher/edit_profile.html', {'profile': profile})
