@@ -28,7 +28,7 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
         <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">📚 Что будет в курсе</h3>
+            <h3 class="mb-3">Что будет в курсе</h3>
             <p style="white-space: pre-line;">{{ course.what_you_learn }}</p>
         </div>
     </div>
@@ -40,7 +40,7 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
         <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">🎯 Кому подойдёт курс</h3>
+            <h3 class="mb-3">Кому подойдёт курс</h3>
             <p style="white-space: pre-line;">{{ course.for_whom }}</p>
         </div>
     </div>
@@ -52,7 +52,7 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
         <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">⚙️ Как проходит обучение</h3>
+            <h3 class="mb-3">Как проходит обучение</h3>
             <p style="white-space: pre-line;">{{ course.how_it_works }}</p>
         </div>
     </div>
@@ -64,7 +64,7 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
         <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">📋 Программа курса</h3>
+            <h3 class="mb-3">Программа курса</h3>
             {% for lesson in course.lessons.all %}
             <div class="d-flex align-items-center py-2 border-bottom">
                 <span class="text-muted me-3">{{ lesson.order }}</span>
@@ -102,7 +102,7 @@
 {% if reviews %}
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
-        <h3 class="mb-4 text-center">💬 Отзывы учеников</h3>
+        <h3 class="mb-4 text-center">Отзывы учеников</h3>
         <div class="row g-3">
             {% for review in reviews %}
             <div class="col-md-6">
@@ -134,7 +134,7 @@
 {% if faqs %}
 <div class="row justify-content-center mt-4">
     <div class="col-md-9">
-        <h3 class="mb-4 text-center">❓ Частые вопросы</h3>
+        <h3 class="mb-4 text-center">Частые вопросы</h3>
         <div class="accordion" id="faqAccordion">
             {% for faq in faqs %}
             <div class="accordion-item">

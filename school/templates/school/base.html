@@ -14,16 +14,16 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'index' %}">📚 Онлайн-школа</a>
+        <a class="navbar-brand" href="{% url 'index' %}">Онлайн-школа</a>
         <div class="ms-auto">
             {% if user.is_authenticated %}
                 {% if user.is_staff %}
                     <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-warning btn-sm me-2">
-                        ⚙️ Панель преподавателя
+                        Панель преподавателя
                     </a>
                 {% endif %}
                     <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
-                        👤 Кабинет
+                        Кабинет ученика
                     </a>
                 <span class="text-light me-3">{{ user.username }}</span>
                 <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
