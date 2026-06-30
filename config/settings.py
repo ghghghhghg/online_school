@@ -140,6 +140,8 @@ STATIC_URL = 'static/'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+STATICFILES_DIRS = [BASE_DIR / 'school' / 'static']
+
 # Почта для восстановления пароля
 EMAIL_HOST = 'smtp.mail.ru'
 EMAIL_PORT = 465
