@@ -49,4 +49,5 @@ urlpatterns = [
     path('teacher/question/<int:pk>/delete/', views.teacher_delete_question, name='teacher_delete_question'),
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
+    path('teacher/analytics/', views.teacher_analytics, name='teacher_analytics'),
 ]

@@ -6,6 +6,7 @@ from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, 
     Review, FAQ, Comment
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
+from django.db.models import Count, Avg, Q
 
 
 def index(request):
@@ -351,3 +352,59 @@ def delete_comment(request, pk):
     if request.user == comment.author or request.user.is_staff:
         comment.delete()
     return redirect('lesson', pk=lesson_pk)
+
+@staff_member_required
+def teacher_analytics(request):
+    course = Course.objects.first()
+    total_lessons = course.lessons.count() if course else 0
+
+    # Все ученики записанные на курс
+    enrollments = Enrollment.objects.filter(course=course).select_related('student')
+
+    students_data = []
+    for enrollment in enrollments:
+        student = enrollment.student
+        completed = LessonProgress.objects.filter(
+            student=student, lesson__course=course
+        ).count()
+        percent = int((completed / total_lessons) * 100) if total_lessons > 0 else 0
+
+        test_results = TestResult.objects.filter(
+            student=student, test__lesson__course=course
+        )
+        avg_score = test_results.aggregate(avg=Avg('score'))['avg']
+
+        students_data.append({
+            'student': student,
+            'completed': completed,
+            'total': total_lessons,
+            'percent': percent,
+            'avg_score': round(avg_score) if avg_score else None,
+            'enrolled_at': enrollment.enrolled_at,
+        })
+
+    # Сортируем по проценту прохождения (лучшие сверху)
+    students_data.sort(key=lambda x: x['percent'], reverse=True)
+
+    # Общая статистика
+    total_students = enrollments.count()
+    avg_progress = int(sum(s['percent'] for s in students_data) / total_students) if total_students > 0 else 0
+
+    # Статистика по урокам — сколько человек прошли каждый урок
+    lessons_stats = []
+    if course:
+        for lesson in course.lessons.all():
+            completed_count = LessonProgress.objects.filter(lesson=lesson).count()
+            lessons_stats.append({
+                'lesson': lesson,
+                'completed_count': completed_count,
+                'percent': int((completed_count / total_students) * 100) if total_students > 0 else 0,
+            })
+
+    return render(request, 'school/teacher/analytics.html', {
+        'course': course,
+        'students_data': students_data,
+        'total_students': total_students,
+        'avg_progress': avg_progress,
+        'lessons_stats': lessons_stats,
+    })
