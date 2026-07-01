@@ -1,0 +1,71 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ course.title }}</h2>
+    <div>
+        <a href="{% url 'teacher_analytics' course.pk %}" class="btn btn-outline-primary btn-sm me-2">
+            📊 Аналитика
+        </a>
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Все курсы</a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h4>{{ course.title }}</h4>
+                <p class="text-muted">{{ course.description }}</p>
+                <a href="{% url 'course' course.slug %}" class="small">Открыть страницу курса →</a>
+            </div>
+            <a href="{% url 'teacher_edit_course' course.pk %}" class="btn btn-outline-primary btn-sm">
+                ✏️ Редактировать курс
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>Уроки ({{ lessons|length }})</h5>
+    <a href="{% url 'teacher_add_lesson' course.pk %}" class="btn btn-primary btn-sm">+ Добавить урок</a>
+</div>
+
+{% for lesson in lessons %}
+<div class="card mb-2">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ lesson.order }}. {{ lesson.title }}</strong>
+            {% if lesson.description %}
+                <p class="text-muted mb-0 small">{{ lesson.description }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{% url 'teacher_edit_lesson' lesson.pk %}"
+               class="btn btn-outline-secondary btn-sm me-1">✏️</a>
+            <form method="post" action="{% url 'teacher_delete_lesson' lesson.pk %}"
+                  style="display:inline"
+                  onsubmit="return confirm('Удалить урок?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+            </form>
+            {% if lesson.test %}
+                <a href="{% url 'teacher_edit_test' lesson.test.pk %}"
+                   class="btn btn-outline-success btn-sm me-1">📝 Тест</a>
+            {% else %}
+                <a href="{% url 'teacher_create_test' lesson.pk %}"
+                   class="btn btn-outline-primary btn-sm me-1">+ Тест</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+    <p class="text-muted">Уроков пока нет. Добавьте первый!</p>
+{% endfor %}
+{% endblock %}

@@ -11,8 +11,10 @@ class LessonInline(admin.TabularInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['title', 'created_at']
-    inlines = [LessonInline]  # уроки редактируются прямо здесь
+    list_display = ['title', 'slug', 'is_published', 'created_at']
+    list_editable = ['is_published']
+    prepopulated_fields = {'slug': ('title',)}
+    inlines = [LessonInline]
 
 
 @admin.register(Lesson)

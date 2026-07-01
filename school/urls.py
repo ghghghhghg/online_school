@@ -7,7 +7,8 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('course/<int:pk>/', views.course_view, name='course'),
+    path('courses/', views.courses_list, name='courses_list'),
+    path('course/<slug:slug>/', views.course_view, name='course'),
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
     path('profile/', views.student_profile, name='student_profile'),
@@ -35,11 +36,11 @@ urlpatterns = [
 
     # Панель преподавателя
     path('teacher/', views.teacher_dashboard, name='teacher_dashboard'),
-    path('teacher/course/edit/', views.teacher_edit_course, name='teacher_edit_course'),
-    path('teacher/profile/', views.teacher_edit_profile, name='teacher_edit_profile'),
-    path('teacher/lesson/add/', views.teacher_add_lesson, name='teacher_add_lesson'),
-    path('teacher/lesson/<int:pk>/edit/', views.teacher_edit_lesson, name='teacher_edit_lesson'),
-    path('teacher/lesson/<int:pk>/delete/', views.teacher_delete_lesson, name='teacher_delete_lesson'),
+    path('teacher/course/<int:pk>/', views.teacher_course_dashboard, name='teacher_course_dashboard'),
+    path('teacher/course/add/', views.teacher_add_course, name='teacher_add_course'),
+    path('teacher/course/<int:pk>/edit/', views.teacher_edit_course, name='teacher_edit_course'),
+    path('teacher/course/<int:pk>/analytics/', views.teacher_analytics, name='teacher_analytics'),
+    path('teacher/course/<int:pk>/lesson/add/', views.teacher_add_lesson, name='teacher_add_lesson'),
 
     path('lesson/<int:pk>/test/', views.test_view, name='test'),
     path('lesson/<int:pk>/test/result/', views.test_result_view, name='test_result'),

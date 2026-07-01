@@ -1,10 +1,8 @@
 {% extends 'school/base.html' %}
 
-{% block title %}{{ course.title }} — Онлайн-школа{% endblock %}
-{% block description %}{{ course.description|truncatewords:20 }}{% endblock %}
+{% block title %}Онлайн-школа{% endblock %}
 
 {% block content %}
-{% if course %}
 
 <!-- Hero блок -->
 <section class="py-5 mb-4">
@@ -14,141 +12,38 @@
                 Онлайн-школа
             </p>
             <h1 class="display-4 fw-bold mb-3" style="line-height: 1.15;">
-                {{ course.title }}
+                Учись у преподавателя, который знает результат
             </h1>
             <p class="lead mb-4" style="color: var(--muted); max-width: 520px;">
-                {{ course.description }}
+                Курсы с личным подходом, тестами и обратной связью на каждом уроке
             </p>
-            {% if user.is_authenticated %}
-                <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg px-5">
-                    Перейти к урокам →
-                </a>
-            {% else %}
-                <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
-                    Начать обучение
-                </a>
-                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4">
-                    Войти
-                </a>
-            {% endif %}
         </div>
     </div>
 </section>
 
-<!-- Цифры -->
-<section class="py-4 mb-2" style="border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-    <div class="row text-center g-4">
-        <div class="col-4">
-            <div class="display-5 fw-bold" style="color: var(--accent);">98%</div>
-            <div class="small" style="color: var(--muted);">сдают экзамен успешно</div>
-        </div>
-        <div class="col-4">
-            <div class="display-5 fw-bold" style="color: var(--accent);">{{ course.lessons.count }}</div>
-            <div class="small" style="color: var(--muted);">уроков в курсе</div>
-        </div>
-        <div class="col-4">
-            <div class="display-5 fw-bold" style="color: var(--accent);">100</div>
-            <div class="small" style="color: var(--muted);">максимальный балл</div>
-        </div>
-    </div>
-</section>
-
-<!-- Чему научитесь -->
-{% if course.what_you_learn %}
-<section class="py-5" style="background-color: var(--paper);">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <h2 class="mb-4">Что будет в курсе</h2>
-            <div class="row g-3">
-                {% for item in course.what_you_learn.splitlines %}
-                {% if item %}
-                <div class="col-md-6">
-                    <div class="d-flex align-items-start gap-3 p-3 card">
-                        <span style="color: var(--accent); font-size: 1.3rem; margin-top: 2px;">✦</span>
-                        <span>{{ item }}</span>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Кому подойдёт -->
-{% if course.for_whom %}
+<!-- Список курсов -->
 <section class="py-5" style="background-color: var(--paper-card);">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <h2 class="mb-4">Кому подойдёт курс</h2>
+            <h2 class="mb-4">Курсы</h2>
             <div class="row g-3">
-                {% for item in course.for_whom.splitlines %}
-                {% if item %}
+                {% for course in courses %}
                 <div class="col-md-6">
-                    <div class="d-flex align-items-start gap-3 p-3 card">
-                        <span style="color: var(--accent); font-size: 1.1rem; margin-top: 2px;">→</span>
-                        <span>{{ item }}</span>
+                    <div class="card h-100 p-4">
+                        <h4 class="mb-2">{{ course.title }}</h4>
+                        <p class="text-muted mb-3">{{ course.description|truncatewords:20 }}</p>
+                        <a href="{% url 'course' course.slug %}" class="btn btn-primary mt-auto">
+                            Подробнее →
+                        </a>
                     </div>
                 </div>
-                {% endif %}
+                {% empty %}
+                <p class="text-muted">Скоро здесь появятся курсы!</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 </section>
-{% endif %}
-
-<!-- Как проходит обучение -->
-{% if course.how_it_works %}
-<section class="py-5" style="background-color: var(--paper);">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <h2 class="mb-4">Как проходит обучение</h2>
-            <div class="row g-3">
-                {% for item in course.how_it_works.splitlines %}
-                {% if item %}
-                <div class="col-md-4">
-                    <div class="card p-3 h-100">
-                        <div class="fw-bold mb-1" style="color: var(--accent);">
-                            0{{ forloop.counter }}
-                        </div>
-                        <div>{{ item }}</div>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Программа курса -->
-{% if course.lessons.all %}
-<section class="py-5" style="background-color: var(--paper-card);">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <h2 class="mb-4">Программа курса</h2>
-            {% for lesson in course.lessons.all %}
-            <div class="d-flex align-items-center gap-3 py-3"
-                 style="border-bottom: 1px solid var(--line);">
-                <span class="fw-bold" style="color: var(--accent); min-width: 32px;">
-                    {{ lesson.order }}
-                </span>
-                <span class="fw-500">{{ lesson.title }}</span>
-                {% if lesson.test %}
-                    <span class="ms-auto badge rounded-pill"
-                          style="background-color: var(--line); color: var(--muted); font-weight: 500;">
-                        + тест
-                    </span>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
 
 <!-- О преподавателе -->
 {% if teacher %}
@@ -237,31 +132,4 @@
 </section>
 {% endif %}
 
-<!-- Кнопка внизу -->
-<section class="py-5 text-center" style="background-color: var(--ink);">
-    <h2 class="mb-3" style="color: white;">Готов начать?</h2>
-    <p class="mb-4" style="color: rgba(255,255,255,0.6);">
-        Присоединяйся и начни подготовку прямо сейчас
-    </p>
-    {% if user.is_authenticated %}
-        <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg px-5">
-            Перейти к урокам →
-        </a>
-    {% else %}
-        <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
-            Начать учиться
-        </a>
-        <a href="{% url 'login' %}"
-           class="btn btn-lg px-5"
-           style="border: 1px solid rgba(255,255,255,0.3); color: white;">
-            Войти
-        </a>
-    {% endif %}
-</section>
-
-{% else %}
-<div class="text-center py-5">
-    <h1>Скоро здесь появится курс!</h1>
-</div>
-{% endif %}
 {% endblock %}

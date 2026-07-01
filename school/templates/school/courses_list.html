@@ -1,0 +1,20 @@
+{% extends 'school/base.html' %}
+
+{% block title %}Все курсы — Онлайн-школа{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Курсы</h2>
+<div class="row g-3">
+    {% for course in courses %}
+    <div class="col-md-6">
+        <div class="card h-100 p-4">
+            <h4 class="mb-2">{{ course.title }}</h4>
+            <p class="text-muted mb-3">{{ course.description|truncatewords:20 }}</p>
+            <a href="{% url 'course' course.slug %}" class="btn btn-primary mt-auto">Подробнее →</a>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">Пока нет курсов</p>
+    {% endfor %}
+</div>
+{% endblock %}

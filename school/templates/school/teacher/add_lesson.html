@@ -58,8 +58,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary" id="submit-btn">Добавить</button>
-                <a href="{% url 'teacher_dashboard' %}"
-                   class="btn btn-outline-secondary">Отмена</a>
+                <a href="{% url 'teacher_course_dashboard' course.pk %}" class="btn btn-outline-secondary">Отмена</a>
             </div>
         </form>
     </div>

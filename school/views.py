@@ -9,23 +9,25 @@ from django.contrib import messages
 from django.db.models import Count, Avg, Q
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
+import uuid
+from django.contrib.auth import authenticate
 
 
 def index(request):
-    course = Course.objects.first()
+    courses = Course.objects.filter(is_published=True)
     teacher = TeacherProfile.objects.first()
     reviews = Review.objects.filter(is_published=True)
     faqs = FAQ.objects.all()
     return render(request, 'school/index.html', {
-        'course': course,
+        'courses': courses,
         'teacher': teacher,
         'reviews': reviews,
         'faqs': faqs,
     })
 
-import uuid
-from django.contrib.auth import authenticate
-
+def courses_list(request):
+    courses = Course.objects.filter(is_published=True)
+    return render(request, 'school/courses_list.html', {'courses': courses})
 
 def register_view(request):
     if request.method == 'POST':
@@ -87,14 +89,12 @@ def logout_view(request):
 
 
 @login_required
-def course_view(request, pk):
-    course = get_object_or_404(Course, pk=pk)
+def course_view(request, slug):
+    course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
-    # Записываем ученика на курс автоматически
     Enrollment.objects.get_or_create(student=request.user, course=course)
 
-    # Какие уроки уже пройдены
     completed_ids = LessonProgress.objects.filter(
         student=request.user,
         lesson__in=lessons
@@ -138,30 +138,41 @@ def complete_lesson(request, pk):
 
 @staff_member_required
 def teacher_dashboard(request):
-    course = Course.objects.first()
-    lessons = course.lessons.all() if course else []
-    return render(request, 'school/teacher/dashboard.html', {
+    courses = Course.objects.all()
+    return render(request, 'school/teacher/dashboard.html', {'courses': courses})
+
+
+@staff_member_required
+def teacher_course_dashboard(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    lessons = course.lessons.all()
+    return render(request, 'school/teacher/course_dashboard.html', {
         'course': course,
         'lessons': lessons,
     })
 
-@staff_member_required
-def teacher_edit_course(request):
-    course = Course.objects.first()
-    if request.method == 'POST':
-        course.title = request.POST.get('title')
-        course.description = request.POST.get('description')
-        course.what_you_learn = request.POST.get('what_you_learn')
-        course.for_whom = request.POST.get('for_whom')
-        course.how_it_works = request.POST.get('how_it_works')
-        course.save()
-        messages.success(request, 'Курс обновлён!')
-        return redirect('teacher_dashboard')
-    return render(request, 'school/teacher/edit_course.html', {'course': course})
 
 @staff_member_required
-def teacher_add_lesson(request):
-    course = Course.objects.first()
+def teacher_add_course(request):
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        errors = []
+        if not title:
+            errors.append('Введите название курса')
+        if not errors:
+            course = Course.objects.create(
+                title=title,
+                description=request.POST.get('description', ''),
+            )
+            messages.success(request, 'Курс создан!')
+            return redirect('teacher_course_dashboard', pk=course.pk)
+        return render(request, 'school/teacher/add_course.html', {'errors': errors})
+    return render(request, 'school/teacher/add_course.html')
+
+
+@staff_member_required
+def teacher_add_lesson(request, pk):
+    course = get_object_or_404(Course, pk=pk)
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         order = request.POST.get('order', '').strip()
@@ -184,7 +195,7 @@ def teacher_add_lesson(request):
                 lesson.video_file = request.FILES.get('video_file')
                 lesson.save()
             messages.success(request, 'Урок добавлен!')
-            return redirect('teacher_dashboard')
+            return redirect('teacher_course_dashboard', pk=course.pk)
 
         next_order = course.lessons.count() + 1
         return render(request, 'school/teacher/add_lesson.html', {
@@ -379,21 +390,31 @@ def teacher_edit_profile(request):
 @login_required
 def student_profile(request):
     enrollments = Enrollment.objects.filter(student=request.user).select_related('course')
-    progress = LessonProgress.objects.filter(student=request.user).select_related('lesson')
     test_results = TestResult.objects.filter(student=request.user).select_related('test')
 
-    course = Course.objects.first()
-    total_lessons = course.lessons.count() if course else 0
-    completed_count = progress.count()
-    percent = int((completed_count / total_lessons) * 100) if total_lessons > 0 else 0
+    courses_progress = []
+    for enrollment in enrollments:
+        course = enrollment.course
+        total = course.lessons.count()
+        completed = LessonProgress.objects.filter(
+            student=request.user, lesson__course=course
+        ).count()
+        percent = int((completed / total) * 100) if total > 0 else 0
+        completed_lessons = LessonProgress.objects.filter(
+            student=request.user, lesson__course=course
+        ).select_related('lesson')
+
+        courses_progress.append({
+            'course': course,
+            'total': total,
+            'completed': completed,
+            'percent': percent,
+            'completed_lessons': completed_lessons,
+        })
 
     return render(request, 'school/profile.html', {
-        'enrollments': enrollments,
-        'progress': progress,
+        'courses_progress': courses_progress,
         'test_results': test_results,
-        'total_lessons': total_lessons,
-        'completed_count': completed_count,
-        'percent': percent,
     })
 
 @login_required
@@ -422,11 +443,10 @@ def delete_comment(request, pk):
     return redirect('lesson', pk=lesson_pk)
 
 @staff_member_required
-def teacher_analytics(request):
-    course = Course.objects.first()
-    total_lessons = course.lessons.count() if course else 0
+def teacher_analytics(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    total_lessons = course.lessons.count()
 
-    # Все ученики записанные на курс
     enrollments = Enrollment.objects.filter(course=course).select_related('student')
 
     students_data = []
@@ -451,23 +471,19 @@ def teacher_analytics(request):
             'enrolled_at': enrollment.enrolled_at,
         })
 
-    # Сортируем по проценту прохождения (лучшие сверху)
     students_data.sort(key=lambda x: x['percent'], reverse=True)
 
-    # Общая статистика
     total_students = enrollments.count()
     avg_progress = int(sum(s['percent'] for s in students_data) / total_students) if total_students > 0 else 0
 
-    # Статистика по урокам — сколько человек прошли каждый урок
     lessons_stats = []
-    if course:
-        for lesson in course.lessons.all():
-            completed_count = LessonProgress.objects.filter(lesson=lesson).count()
-            lessons_stats.append({
-                'lesson': lesson,
-                'completed_count': completed_count,
-                'percent': int((completed_count / total_students) * 100) if total_students > 0 else 0,
-            })
+    for lesson in course.lessons.all():
+        completed_count = LessonProgress.objects.filter(lesson=lesson).count()
+        lessons_stats.append({
+            'lesson': lesson,
+            'completed_count': completed_count,
+            'percent': int((completed_count / total_students) * 100) if total_students > 0 else 0,
+        })
 
     return render(request, 'school/teacher/analytics.html', {
         'course': course,
@@ -523,3 +539,18 @@ def edit_student_profile(request):
         return render(request, 'school/edit_profile.html', {'errors': errors})
 
     return render(request, 'school/edit_profile.html')
+
+@staff_member_required
+def teacher_edit_course(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        course.title = request.POST.get('title')
+        course.description = request.POST.get('description')
+        course.what_you_learn = request.POST.get('what_you_learn')
+        course.for_whom = request.POST.get('for_whom')
+        course.how_it_works = request.POST.get('how_it_works')
+        course.is_published = request.POST.get('is_published') == 'on'
+        course.save()
+        messages.success(request, 'Курс обновлён!')
+        return redirect('teacher_course_dashboard', pk=course.pk)
+    return render(request, 'school/teacher/edit_course.html', {'course': course})
