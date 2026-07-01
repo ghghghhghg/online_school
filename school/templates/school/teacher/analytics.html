@@ -65,7 +65,7 @@
                 {% for data in students_data %}
                 <tr>
                     <td>
-                        <strong>{{ data.student.username }}</strong><br>
+                        <strong>{{ user.first_name }} {{ user.last_name }}</strong><br>
                         <small class="text-muted">{{ data.student.email }}</small>
                     </td>
                     <td>{{ data.enrolled_at|date:"d.m.Y" }}</td>

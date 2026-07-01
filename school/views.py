@@ -7,6 +7,7 @@ from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
+from django.contrib.auth.models import User
 
 
 def index(request):
@@ -21,30 +22,63 @@ def index(request):
         'faqs': faqs,
     })
 
+import uuid
+from django.contrib.auth import authenticate
+
+
 def register_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.email = request.POST.get('email')
-            user.save()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password')
+        password2 = request.POST.get('password2')
+
+        errors = []
+        if not first_name:
+            errors.append('Введите имя')
+        if not last_name:
+            errors.append('Введите фамилию')
+        if not email:
+            errors.append('Введите email')
+        elif User.objects.filter(email=email).exists():
+            errors.append('Этот email уже зарегистрирован')
+        if not password or len(password) < 8:
+            errors.append('Пароль должен быть не короче 8 символов')
+        if password != password2:
+            errors.append('Пароли не совпадают')
+
+        if not errors:
+            username = f'user_{uuid.uuid4().hex[:12]}'
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            user = authenticate(request, username=email, password=password)
             login(request, user)
             return redirect('index')
-    else:
-        form = UserCreationForm()
-    return render(request, 'school/register.html', {'form': form})
+
+        return render(request, 'school/register.html', {'errors': errors, 'form_data': request.POST})
+
+    return render(request, 'school/register.html')
+
 
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password')
+        user = authenticate(request, username=email, password=password)
+        if user:
             login(request, user)
             return redirect('index')
-    else:
-        form = AuthenticationForm()
-    return render(request, 'school/login.html', {'form': form})
-
+        return render(request, 'school/login.html', {
+            'error': 'Неверный email или пароль',
+            'email': email,
+        })
+    return render(request, 'school/login.html')
 
 def logout_view(request):
     logout(request)
