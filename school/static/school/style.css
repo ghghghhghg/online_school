@@ -101,7 +101,7 @@ p, .lead {
 .card {
   background-color: var(--paper-card);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 20px;
   border-left: 4px solid var(--accent);
   box-shadow: none;
   position: relative;
