@@ -3,174 +3,258 @@
 {% block content %}
 {% if course %}
 
-<!-- Герой блок -->
-<div class="row justify-content-center text-center py-5">
-    <div class="col-md-8">
-        <h1 class="display-5 fw-bold">{{ course.title }}</h1>
-        <p class="lead text-muted mt-3">{{ course.description }}</p>
-        {% if user.is_authenticated %}
-            <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg mt-3">
-                Перейти к урокам →
-            </a>
-        {% else %}
-            <a href="{% url 'register' %}" class="btn btn-primary btn-lg mt-3 me-2">
-                Начать обучение
-            </a>
-            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg mt-3">
-                Войти
-            </a>
-        {% endif %}
+<!-- Hero блок -->
+<section class="py-5 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <p class="text-uppercase fw-600 mb-2" style="color: var(--accent); font-size: 0.85rem; letter-spacing: 0.1em;">
+                Онлайн-школа
+            </p>
+            <h1 class="display-4 fw-bold mb-3" style="line-height: 1.15;">
+                {{ course.title }}
+            </h1>
+            <p class="lead mb-4" style="color: var(--muted); max-width: 520px;">
+                {{ course.description }}
+            </p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg px-5">
+                    Перейти к урокам →
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
+                    Начать обучение
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4">
+                    Войти
+                </a>
+            {% endif %}
+        </div>
     </div>
-</div>
+</section>
+
+<!-- Цифры -->
+<section class="py-4 mb-2" style="border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+    <div class="row text-center g-4">
+        <div class="col-4">
+            <div class="display-5 fw-bold" style="color: var(--accent);">98%</div>
+            <div class="small" style="color: var(--muted);">сдают экзамен успешно</div>
+        </div>
+        <div class="col-4">
+            <div class="display-5 fw-bold" style="color: var(--accent);">{{ course.lessons.count }}</div>
+            <div class="small" style="color: var(--muted);">уроков в курсе</div>
+        </div>
+        <div class="col-4">
+            <div class="display-5 fw-bold" style="color: var(--accent);">100</div>
+            <div class="small" style="color: var(--muted);">максимальный балл</div>
+        </div>
+    </div>
+</section>
 
 <!-- Чему научитесь -->
 {% if course.what_you_learn %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">Что будет в курсе</h3>
-            <p style="white-space: pre-line;">{{ course.what_you_learn }}</p>
+<section class="py-5" style="background-color: var(--paper);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Что будет в курсе</h2>
+            <div class="row g-3">
+                {% for item in course.what_you_learn.splitlines %}
+                {% if item %}
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-3 p-3 card">
+                        <span style="color: var(--accent); font-size: 1.3rem; margin-top: 2px;">✦</span>
+                        <span>{{ item }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endif %}
 
 <!-- Кому подойдёт -->
 {% if course.for_whom %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">Кому подойдёт курс</h3>
-            <p style="white-space: pre-line;">{{ course.for_whom }}</p>
+<section class="py-5" style="background-color: var(--paper-card);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Кому подойдёт курс</h2>
+            <div class="row g-3">
+                {% for item in course.for_whom.splitlines %}
+                {% if item %}
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start gap-3 p-3 card">
+                        <span style="color: var(--accent); font-size: 1.1rem; margin-top: 2px;">→</span>
+                        <span>{{ item }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endif %}
 
 <!-- Как проходит обучение -->
 {% if course.how_it_works %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">Как проходит обучение</h3>
-            <p style="white-space: pre-line;">{{ course.how_it_works }}</p>
+<section class="py-5" style="background-color: var(--paper);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Как проходит обучение</h2>
+            <div class="row g-3">
+                {% for item in course.how_it_works.splitlines %}
+                {% if item %}
+                <div class="col-md-4">
+                    <div class="card p-3 h-100">
+                        <div class="fw-bold mb-1" style="color: var(--accent);">
+                            0{{ forloop.counter }}
+                        </div>
+                        <div>{{ item }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endif %}
 
 <!-- Программа курса -->
 {% if course.lessons.all %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <div class="card border-0 bg-light p-4">
-            <h3 class="mb-3">Программа курса</h3>
+<section class="py-5" style="background-color: var(--paper-card);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Программа курса</h2>
             {% for lesson in course.lessons.all %}
-            <div class="d-flex align-items-center py-2 border-bottom">
-                <span class="text-muted me-3">{{ lesson.order }}</span>
-                <span>{{ lesson.title }}</span>
+            <div class="d-flex align-items-center gap-3 py-3"
+                 style="border-bottom: 1px solid var(--line);">
+                <span class="fw-bold" style="color: var(--accent); min-width: 32px;">
+                    {{ lesson.order }}
+                </span>
+                <span class="fw-500">{{ lesson.title }}</span>
+                {% if lesson.test %}
+                    <span class="ms-auto badge rounded-pill"
+                          style="background-color: var(--line); color: var(--muted); font-weight: 500;">
+                        + тест
+                    </span>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
-</div>
+</section>
 {% endif %}
+
 <!-- О преподавателе -->
 {% if teacher %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <div class="card border-0 bg-light p-4">
-            <h3 class="mb-4">Главный преподаватель</h3>
-            <div class="row align-items-center">
+<section class="py-5" style="background-color: var(--paper);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Немного обо мне</h2>
+            <div class="row align-items-center g-4">
                 <div class="col-md-8">
-                    <h5 class="fw-bold">{{ teacher.name }}</h5>
-                    <p style="white-space: pre-line;">{{ teacher.bio }}</p>
+                    <h4 class="fw-bold mb-3">{{ teacher.name }}</h4>
+                    <p style="white-space: pre-line; color: var(--muted);">{{ teacher.bio }}</p>
                 </div>
                 {% if teacher.photo %}
                 <div class="col-md-4 text-center">
                     <img src="{{ teacher.photo.url }}"
-                        class="img-fluid rounded-3"
-                        style="max-width: 280px; width: 100%; object-fit: cover;">
+                         class="img-fluid rounded-3"
+                         style="max-width: 280px; width: 100%; object-fit: cover;">
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endif %}
+
 <!-- Отзывы -->
 {% if reviews %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <h3 class="mb-4 text-center">Отзывы учеников</h3>
-        <div class="row g-3">
-            {% for review in reviews %}
-            <div class="col-md-6">
-                <div class="card h-100 p-3">
-                    <div class="d-flex align-items-center mb-2">
-                        {% if review.photo %}
-                        <img src="{{ review.photo.url }}" class="rounded-circle me-2"
-                             style="width: 48px; height: 48px; object-fit: cover;">
-                        {% endif %}
-                        <div>
+<section class="py-5" style="background-color: var(--paper-card);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Отзывы учеников</h2>
+            <div class="row g-3">
+                {% for review in reviews %}
+                <div class="col-md-6">
+                    <div class="card p-4 h-100">
+                        <div class="text-warning mb-2" style="font-size: 1.1rem;">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="mb-3" style="color: var(--ink);">{{ review.text }}</p>
+                        <div class="d-flex align-items-center gap-2 mt-auto">
+                            {% if review.photo %}
+                            <img src="{{ review.photo.url }}"
+                                 class="rounded-circle"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            {% endif %}
                             <strong>{{ review.student_name }}</strong>
-                            <div class="text-warning">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
-                                {% endfor %}
-                            </div>
                         </div>
                     </div>
-                    <p class="mb-0">{{ review.text }}</p>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
-</div>
+</section>
 {% endif %}
 
 <!-- FAQ -->
 {% if faqs %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-9">
-        <h3 class="mb-4 text-center">Частые вопросы</h3>
-        <div class="accordion" id="faqAccordion">
-            {% for faq in faqs %}
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#faq{{ faq.id }}">
-                        {{ faq.question }}
-                    </button>
-                </h2>
-                <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
-                     data-bs-parent="#faqAccordion">
-                    <div class="accordion-body">{{ faq.answer }}</div>
+<section class="py-5" style="background-color: var(--paper);">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4">Частые вопросы</h2>
+            <div class="accordion" id="faqAccordion">
+                {% for faq in faqs %}
+                <div class="accordion-item mb-2">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#faq{{ faq.id }}">
+                            {{ faq.question }}
+                        </button>
+                    </h2>
+                    <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
+                         data-bs-parent="#faqAccordion">
+                        <div class="accordion-body" style="color: var(--muted);">
+                            {{ faq.answer }}
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
-</div>
+</section>
 {% endif %}
+
 <!-- Кнопка внизу -->
-<div class="text-center py-5">
+<section class="py-5 text-center" style="background-color: var(--ink);">
+    <h2 class="mb-3" style="color: white;">Готов начать?</h2>
+    <p class="mb-4" style="color: rgba(255,255,255,0.6);">
+        Присоединяйся и начни подготовку прямо сейчас
+    </p>
     {% if user.is_authenticated %}
         <a href="{% url 'course' course.pk %}" class="btn btn-primary btn-lg px-5">
             Перейти к урокам →
         </a>
     {% else %}
-        <h4 class="mb-3">Готов начать?</h4>
         <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
             Начать учиться
         </a>
-        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-5">
+        <a href="{% url 'login' %}"
+           class="btn btn-lg px-5"
+           style="border: 1px solid rgba(255,255,255,0.3); color: white;">
             Войти
         </a>
     {% endif %}
-</div>
+</section>
 
 {% else %}
 <div class="text-center py-5">
