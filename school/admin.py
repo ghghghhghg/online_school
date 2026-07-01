@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment
+from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock
 
 
 class LessonInline(admin.TabularInline):
@@ -49,3 +49,14 @@ class FAQAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ['author', 'lesson', 'text', 'created_at']
     list_filter = ['lesson']
+
+@admin.register(WhyUsBlock)
+class WhyUsBlockAdmin(admin.ModelAdmin):
+    list_display = ['title', 'icon', 'order']
+    list_editable = ['icon', 'order']
+
+
+@admin.register(StatBlock)
+class StatBlockAdmin(admin.ModelAdmin):
+    list_display = ['number', 'label', 'order']
+    list_editable = ['number', 'label', 'order']

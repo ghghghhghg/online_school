@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout, authenticate,update_session_auth_
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ, Comment
+    Review, FAQ, Comment, WhyUsBlock, StatBlock
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -18,11 +18,15 @@ def index(request):
     teacher = TeacherProfile.objects.first()
     reviews = Review.objects.filter(is_published=True)
     faqs = FAQ.objects.all()
+    why_us_blocks = WhyUsBlock.objects.all()
+    stats = StatBlock.objects.all()
     return render(request, 'school/index.html', {
         'courses': courses,
         'teacher': teacher,
         'reviews': reviews,
         'faqs': faqs,
+        'why_us_blocks': why_us_blocks,
+        'stats': stats,
     })
 
 def courses_list(request):

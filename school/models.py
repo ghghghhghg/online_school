@@ -213,3 +213,31 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'{self.author.username}: {self.text[:50]}'
+
+class WhyUsBlock(models.Model):
+    icon = models.CharField(max_length=10, default='✦', verbose_name='Иконка (эмодзи)')
+    title = models.CharField(max_length=100, verbose_name='Заголовок')
+    text = models.TextField(verbose_name='Текст')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Блок "Почему мы"'
+        verbose_name_plural = 'Блоки "Почему мы"'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
+
+
+class StatBlock(models.Model):
+    number = models.CharField(max_length=20, verbose_name='Число')
+    label = models.CharField(max_length=100, verbose_name='Подпись')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Цифра-достижение'
+        verbose_name_plural = 'Цифры-достижения'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.number} — {self.label}'
