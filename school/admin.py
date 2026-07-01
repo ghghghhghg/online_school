@@ -58,5 +58,5 @@ class WhyUsBlockAdmin(admin.ModelAdmin):
 
 @admin.register(StatBlock)
 class StatBlockAdmin(admin.ModelAdmin):
-    list_display = ['number', 'label', 'order']
+    list_display = ['id', 'number', 'label', 'order']
     list_editable = ['number', 'label', 'order']
