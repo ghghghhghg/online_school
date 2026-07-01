@@ -7,8 +7,15 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <h5>{{ user.username }}</h5>
-        <p class="text-muted mb-2">{{ user.email|default:"Email не указан" }}</p>
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5>{{ user.first_name }} {{ user.last_name }}</h5>
+                <p class="text-muted mb-2">{{ user.email }}</p>
+            </div>
+            <a href="{% url 'edit_student_profile' %}" class="btn btn-outline-secondary btn-sm">
+                ✏️ Редактировать
+            </a>
+        </div>
 
         {% if total_lessons %}
         <div class="mt-3">

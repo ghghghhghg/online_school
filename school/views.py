@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate,update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
@@ -8,6 +8,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
 
 
 def index(request):
@@ -442,3 +443,50 @@ def teacher_analytics(request):
         'avg_progress': avg_progress,
         'lessons_stats': lessons_stats,
     })
+
+@login_required
+def edit_student_profile(request):
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        new_password2 = request.POST.get('new_password2', '').strip()
+        current_password = request.POST.get('current_password', '').strip()
+
+        errors = []
+        if not first_name:
+            errors.append('Введите имя')
+        if not last_name:
+            errors.append('Введите фамилию')
+        if not email:
+            errors.append('Введите email')
+        elif User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+            errors.append('Этот email уже используется другим пользователем')
+
+        password_changing = bool(new_password or new_password2)
+        if password_changing:
+            if not current_password:
+                errors.append('Введите текущий пароль чтобы задать новый')
+            elif not request.user.check_password(current_password):
+                errors.append('Текущий пароль указан неверно')
+            if len(new_password) < 8:
+                errors.append('Новый пароль должен быть не короче 8 символов')
+            if new_password != new_password2:
+                errors.append('Новые пароли не совпадают')
+
+        if not errors:
+            request.user.first_name = first_name
+            request.user.last_name = last_name
+            request.user.email = email
+            if password_changing:
+                request.user.set_password(new_password)
+            request.user.save()
+            if password_changing:
+                update_session_auth_hash(request, request.user)
+            messages.success(request, 'Профиль обновлён!')
+            return redirect('student_profile')
+
+        return render(request, 'school/edit_profile.html', {'errors': errors})
+
+    return render(request, 'school/edit_profile.html')
