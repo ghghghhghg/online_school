@@ -9,6 +9,15 @@
   --muted: #6B7280;
   --line: #E8E2D4;
 }
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
 body {
   background-color: var(--paper);
