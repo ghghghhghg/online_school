@@ -101,7 +101,7 @@ p, .lead {
 .card {
   background-color: var(--paper-card);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 10px;
   border-left: 4px solid var(--accent);
   box-shadow: none;
   position: relative;
@@ -200,4 +200,8 @@ p, .lead {
 
 .badge.bg-danger {
   background-color: var(--accent) !important;
+}
+.card.card-clean {
+  border-left: 1px solid var(--line);
+  border-radius: 10px;
 }
