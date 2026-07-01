@@ -3,7 +3,7 @@
 {% block title %}Уроки — {{ course.title }}{% endblock %}
 
 {% block content %}
-<a href="{% url 'course_lessons' course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
+<a href="{% url 'course' course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
     ← Назад к описанию курса
 </a>
 

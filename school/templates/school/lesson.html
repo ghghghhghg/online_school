@@ -4,7 +4,7 @@
 {% block description %}{{ lesson.description|default:lesson.title|truncatewords:20 }}{% endblock %}
 
 {% block content %}
-<a href="{% url 'course' lesson.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
+<a href="{% url 'course_lessons' lesson.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
     ← Назад к урокам
 </a>
 
