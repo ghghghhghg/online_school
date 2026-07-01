@@ -47,7 +47,7 @@
 {% endif %}
 
 {% if course.how_it_works %}
-<section class="py-4" style="background-color: var(--paper-card);">
+<section class="py-4">
     <h3 class="mb-4">Как проходит обучение</h3>
     <div class="row g-3">
         {% for item in course.how_it_works.splitlines %}
@@ -64,7 +64,7 @@
 </section>
 {% endif %}
 
-<section class="py-5 text-center" style="background-color: var(--ink);">
+<section class="py-5 text-center">
     <h2 class="mb-3" style="color: white;">Готов начать?</h2>
     <p class="mb-4" style="color: rgba(255,255,255,0.6);">
         {{ lessons.count }} уроков • {{ completed_ids|length }} уже пройдено
