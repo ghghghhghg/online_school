@@ -4,7 +4,7 @@
 {% block description %}{{ lesson.description|default:lesson.title|truncatewords:20 }}{% endblock %}
 
 {% block content %}
-<a href="{% url 'course' lesson.course.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+<a href="{% url 'course' lesson.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
     ← Назад к урокам
 </a>
 
@@ -38,7 +38,7 @@
                 <div class="alert alert-success">
                     ✅ Урок пройден — тест сдан на {{ test_result.score }}%
                 </div>
-                <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary">
+                <a href="{% url 'test' lesson.slug %}" class="btn btn-outline-primary">
                     🔄 Пройти тест ещё раз
                 </a>
             {% else %}

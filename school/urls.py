@@ -12,6 +12,7 @@ urlpatterns = [
 
     path('courses/', views.courses_list, name='courses_list'),
     path('course/<slug:slug>/', views.course_view, name='course'),
+    path('course/<slug:slug>/lessons/', views.course_lessons_view, name='course_lessons'),
 
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
@@ -56,4 +57,5 @@ urlpatterns = [
     path('teacher/test/<int:pk>/edit/', views.teacher_edit_test, name='teacher_edit_test'),
     path('teacher/test/<int:pk>/question/add/', views.teacher_add_question, name='teacher_add_question'),
     path('teacher/question/<int:pk>/delete/', views.teacher_delete_question, name='teacher_delete_question'),
+
 ]

@@ -110,6 +110,23 @@ def course_view(request, slug):
         'completed_ids': completed_ids,
     })
 
+@login_required
+def course_lessons_view(request, slug):
+    course = get_object_or_404(Course, slug=slug)
+    lessons = course.lessons.all()
+
+    Enrollment.objects.get_or_create(student=request.user, course=course)
+
+    completed_ids = LessonProgress.objects.filter(
+        student=request.user,
+        lesson__in=lessons
+    ).values_list('lesson_id', flat=True)
+
+    return render(request, 'school/course_lessons.html', {
+        'course': course,
+        'lessons': lessons,
+        'completed_ids': completed_ids,
+    })
 
 @login_required
 def lesson_view(request, pk):

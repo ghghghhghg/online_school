@@ -70,7 +70,7 @@
         {{ lessons.count }} уроков • {{ completed_ids|length }} уже пройдено
     </p>
     {% if lessons %}
-        <a href="{% url 'lesson' lessons.0.pk %}" class="btn btn-primary btn-lg px-5">
+        <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
             {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
         </a>
     {% else %}
