@@ -125,13 +125,16 @@ def teacher_edit_course(request):
 def teacher_add_lesson(request):
     course = Course.objects.first()
     if request.method == 'POST':
-        Lesson.objects.create(
+        lesson = Lesson.objects.create(
             course=course,
             title=request.POST.get('title'),
             description=request.POST.get('description'),
-            video_url=request.POST.get('video_url'),
+            video_url=request.POST.get('video_url', ''),
             order=request.POST.get('order', 0),
         )
+        if request.FILES.get('video_file'):
+            lesson.video_file = request.FILES.get('video_file')
+            lesson.save()
         messages.success(request, 'Урок добавлен!')
         return redirect('teacher_dashboard')
     next_order = course.lessons.count() + 1
@@ -147,13 +150,14 @@ def teacher_edit_lesson(request, pk):
     if request.method == 'POST':
         lesson.title = request.POST.get('title')
         lesson.description = request.POST.get('description')
-        lesson.video_url = request.POST.get('video_url')
+        lesson.video_url = request.POST.get('video_url', '')
         lesson.order = request.POST.get('order', lesson.order)
+        if request.FILES.get('video_file'):
+            lesson.video_file = request.FILES.get('video_file')
         lesson.save()
         messages.success(request, 'Урок обновлён!')
         return redirect('teacher_dashboard')
     return render(request, 'school/teacher/edit_lesson.html', {'lesson': lesson})
-
 
 @staff_member_required
 def teacher_delete_lesson(request, pk):

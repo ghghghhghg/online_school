@@ -5,7 +5,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label">Порядок</label>
@@ -20,11 +20,24 @@
                 <label class="form-label">Описание</label>
                 <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
+
+            <hr>
+            <p class="fw-bold mb-1">Видео</p>
+            <p class="text-muted small mb-3">Загрузи файл или вставь ссылку на VK/YouTube — одно из двух</p>
+
             <div class="mb-3">
-                <label class="form-label">Ссылка на YouTube</label>
-                <input type="url" name="video_url" class="form-control"
-                       placeholder="https://www.youtube.com/watch?v=...">
+                <label class="form-label">Загрузить видео файл</label>
+                <input type="file" name="video_file" class="form-control"
+                       accept="video/*">
+                <div class="form-text">MP4, MOV, AVI — до 100MB на бесплатном тарифе Cloudinary</div>
             </div>
+
+            <div class="mb-3">
+                <label class="form-label">Или ссылка на VK/YouTube</label>
+                <input type="url" name="video_url" class="form-control"
+                       placeholder="https://vk.com/video_ext.php?...">
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Добавить</button>
                 <a href="{% url 'teacher_dashboard' %}"
