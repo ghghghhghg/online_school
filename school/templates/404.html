@@ -1,10 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'school/base.html' %}
 
-</body>
-</html>
+{% block title %}Страница не найдена — Онлайн-школа{% endblock %}
+
+{% block content %}
+<div class="text-center py-5" style="max-width: 480px; margin: 0 auto;">
+    <div class="mb-4" style="position: relative; display: inline-block;">
+        <div class="display-1 fw-bold" style="color: var(--accent); font-size: 6rem; line-height: 1;">
+            404
+        </div>
+        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 80px; height: 3px; background-color: var(--line);"></div>
+    </div>
+
+    <h2 class="mb-3">Страница не найдена</h2>
+    <p class="text-muted mb-4">
+        Похоже, вы свернули не туда — такой страницы не существует
+        или она была перемещена.
+    </p>
+
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a href="{% url 'index' %}" class="btn btn-primary px-4">
+            На главную
+        </a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'student_profile' %}" class="btn btn-outline-primary px-4">
+            В личный кабинет
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
