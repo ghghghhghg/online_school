@@ -3,9 +3,6 @@
 {% block title %}Уроки — {{ course.title }}{% endblock %}
 
 {% block content %}
-<a href="{% url 'course' course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
-    ← Назад к описанию курса
-</a>
 
 <h2 class="mb-2">{{ course.title }}</h2>
 <p class="text-muted mb-4">Пройдено: {{ completed_ids|length }} из {{ lessons|length }}</p>
