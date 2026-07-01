@@ -67,7 +67,7 @@
 </div>
 <hr class="my-4">
 
-<h5 class="mb-3">💬 Вопросы к уроку</h5>
+<h5 class="mb-3">Вопросы к уроку</h5>
 
 <form method="post" action="{% url 'add_comment' lesson.pk %}" class="mb-4">
     {% csrf_token %}
@@ -100,6 +100,22 @@
         {% endif %}
     </div>
 
+    <button class="btn btn-sm btn-link ps-0 mt-1" type="button"
+            data-bs-toggle="collapse" data-bs-target="#reply-form-{{ comment.pk }}">
+        Ответить
+    </button>
+
+    <form method="post" action="{% url 'add_comment' lesson.pk %}"
+          class="collapse ms-4 mt-1" id="reply-form-{{ comment.pk }}">
+        {% csrf_token %}
+        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+        <div class="input-group input-group-sm">
+            <input type="text" name="text" class="form-control"
+                   placeholder="Ваш ответ..." required>
+            <button type="submit" class="btn btn-outline-primary">Отправить</button>
+        </div>
+    </form>
+
     <!-- Ответы -->
     {% for reply in comment.replies.all %}
     <div class="ms-4 mt-2 p-2" style="border-left: 2px solid var(--line);">
@@ -122,21 +138,24 @@
             </form>
             {% endif %}
         </div>
+
+        <button class="btn btn-sm btn-link ps-0 mt-1" type="button"
+                data-bs-toggle="collapse" data-bs-target="#reply-form-{{ reply.pk }}">
+            Ответить
+        </button>
+
+        <form method="post" action="{% url 'add_comment' lesson.pk %}"
+              class="collapse ms-3 mt-1" id="reply-form-{{ reply.pk }}">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+            <div class="input-group input-group-sm">
+                <input type="text" name="text" class="form-control"
+                       placeholder="Ваш ответ..." required>
+                <button type="submit" class="btn btn-outline-primary">Отправить</button>
+            </div>
+        </form>
     </div>
     {% endfor %}
-
-    <!-- Форма ответа -->
-    {% if request.user.is_staff %}
-    <form method="post" action="{% url 'add_comment' lesson.pk %}" class="ms-4 mt-2">
-        {% csrf_token %}
-        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
-        <div class="input-group input-group-sm">
-            <input type="text" name="text" class="form-control"
-                   placeholder="Ответить..." required>
-            <button type="submit" class="btn btn-outline-primary">Ответить</button>
-        </div>
-    </form>
-    {% endif %}
 </div>
 {% empty %}
 <p class="text-muted">Пока нет вопросов. Будьте первым!</p>
