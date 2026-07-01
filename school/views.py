@@ -163,23 +163,43 @@ def teacher_edit_course(request):
 def teacher_add_lesson(request):
     course = Course.objects.first()
     if request.method == 'POST':
-        lesson = Lesson.objects.create(
-            course=course,
-            title=request.POST.get('title'),
-            description=request.POST.get('description'),
-            video_url=request.POST.get('video_url', ''),
-            order=request.POST.get('order', 0),
-        )
-        if request.FILES.get('video_file'):
-            lesson.video_file = request.FILES.get('video_file')
-            lesson.save()
-        messages.success(request, 'Урок добавлен!')
-        return redirect('teacher_dashboard')
+        title = request.POST.get('title', '').strip()
+        order = request.POST.get('order', '').strip()
+
+        errors = []
+        if not title:
+            errors.append('Введите название урока')
+        if not order or not order.isdigit():
+            errors.append('Порядок должен быть числом')
+
+        if not errors:
+            lesson = Lesson.objects.create(
+                course=course,
+                title=title,
+                description=request.POST.get('description', ''),
+                video_url=request.POST.get('video_url', ''),
+                order=order,
+            )
+            if request.FILES.get('video_file'):
+                lesson.video_file = request.FILES.get('video_file')
+                lesson.save()
+            messages.success(request, 'Урок добавлен!')
+            return redirect('teacher_dashboard')
+
+        next_order = course.lessons.count() + 1
+        return render(request, 'school/teacher/add_lesson.html', {
+            'course': course,
+            'next_order': next_order,
+            'errors': errors,
+            'form_data': request.POST,
+        })
+
     next_order = course.lessons.count() + 1
     return render(request, 'school/teacher/add_lesson.html', {
         'course': course,
         'next_order': next_order,
     })
+
 
 
 @staff_member_required
@@ -299,26 +319,39 @@ def teacher_add_question(request, pk):
     test = get_object_or_404(Test, pk=pk)
 
     if request.method == 'POST':
-        question = Question.objects.create(
-            test=test,
-            text=request.POST.get('text'),
-            order=test.questions.count() + 1,
-        )
-        # Сохраняем 4 варианта ответа
+        text = request.POST.get('text', '').strip()
         correct = request.POST.get('correct')
-        for i in range(1, 5):
-            text = request.POST.get(f'answer_{i}')
-            if text:
+        answers = [request.POST.get(f'answer_{i}', '').strip() for i in range(1, 5)]
+
+        errors = []
+        if not text:
+            errors.append('Введите текст вопроса')
+        if not correct:
+            errors.append('Отметьте правильный ответ')
+        if not all(answers):
+            errors.append('Заполните все 4 варианта ответа')
+
+        if not errors:
+            question = Question.objects.create(
+                test=test,
+                text=text,
+                order=test.questions.count() + 1,
+            )
+            for i, answer_text in enumerate(answers, start=1):
                 Answer.objects.create(
                     question=question,
-                    text=text,
+                    text=answer_text,
                     is_correct=(str(i) == correct)
                 )
-        messages.success(request, 'Вопрос добавлен!')
-        return redirect('teacher_edit_test', pk=test.pk)
+            messages.success(request, 'Вопрос добавлен!')
+            return redirect('teacher_edit_test', pk=test.pk)
+
+        return render(request, 'school/teacher/add_question.html', {
+            'test': test,
+            'errors': errors,
+        })
 
     return render(request, 'school/teacher/add_question.html', {'test': test})
-
 
 @staff_member_required
 def teacher_delete_question(request, pk):
