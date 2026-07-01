@@ -180,3 +180,22 @@ class FAQ(models.Model):
 
     def __str__(self):
         return self.question
+
+class Comment(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE,
+                               related_name='comments', verbose_name='Урок')
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name='comments', verbose_name='Автор')
+    text = models.TextField(verbose_name='Текст')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE,
+                               null=True, blank=True,
+                               related_name='replies', verbose_name='Ответ на')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.author.username}: {self.text[:50]}'

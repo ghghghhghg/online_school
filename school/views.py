@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ
+    Review, FAQ, Comment
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
@@ -78,17 +78,19 @@ def lesson_view(request, pk):
         student=request.user, lesson=lesson
     ).exists()
 
-    # Последний результат теста если есть
     test_result = None
     if hasattr(lesson, 'test'):
         test_result = TestResult.objects.filter(
             student=request.user, test=lesson.test
         ).first()
 
+    comments = lesson.comments.filter(parent=None).select_related('author').prefetch_related('replies__author')
+
     return render(request, 'school/lesson.html', {
         'lesson': lesson,
         'is_completed': is_completed,
         'test_result': test_result,
+        'comments': comments,
     })
 
 
@@ -324,3 +326,28 @@ def student_profile(request):
         'completed_count': completed_count,
         'percent': percent,
     })
+
+@login_required
+def add_comment(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        parent_id = request.POST.get('parent_id')
+        parent = Comment.objects.filter(id=parent_id).first() if parent_id else None
+        if text:
+            Comment.objects.create(
+                lesson=lesson,
+                author=request.user,
+                text=text,
+                parent=parent,
+            )
+    return redirect('lesson', pk=lesson.pk)
+
+
+@login_required
+def delete_comment(request, pk):
+    comment = get_object_or_404(Comment, pk=pk)
+    lesson_pk = comment.lesson.pk
+    if request.user == comment.author or request.user.is_staff:
+        comment.delete()
+    return redirect('lesson', pk=lesson_pk)

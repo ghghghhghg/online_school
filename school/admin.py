@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ
+from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment
 
 
 class LessonInline(admin.TabularInline):
@@ -42,3 +42,8 @@ class ReviewAdmin(admin.ModelAdmin):
 class FAQAdmin(admin.ModelAdmin):
     list_display = ['question', 'order']
     list_editable = ['order']
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['author', 'lesson', 'text', 'created_at']
+    list_filter = ['lesson']

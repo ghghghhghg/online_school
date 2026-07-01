@@ -65,4 +65,80 @@
         {% endif %}
     {% endif %}
 </div>
+<hr class="my-4">
+
+<h5 class="mb-3">💬 Вопросы к уроку</h5>
+
+<form method="post" action="{% url 'add_comment' lesson.pk %}" class="mb-4">
+    {% csrf_token %}
+    <div class="mb-2">
+        <textarea name="text" class="form-control" rows="2"
+                  placeholder="Задайте вопрос преподавателю..." required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Отправить</button>
+</form>
+
+{% for comment in comments %}
+<div class="card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <strong>
+                {{ comment.author.username }}
+                {% if comment.author.is_staff %}
+                    <span class="badge" style="background-color: var(--accent);">Преподаватель</span>
+                {% endif %}
+            </strong>
+            <p class="mb-1 mt-1">{{ comment.text }}</p>
+            <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+        {% if request.user == comment.author or request.user.is_staff %}
+        <form method="post" action="{% url 'delete_comment' comment.pk %}"
+              onsubmit="return confirm('Удалить комментарий?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">🗑</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Ответы -->
+    {% for reply in comment.replies.all %}
+    <div class="ms-4 mt-2 p-2" style="border-left: 2px solid var(--line);">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>
+                    {{ reply.author.username }}
+                    {% if reply.author.is_staff %}
+                        <span class="badge" style="background-color: var(--accent);">Преподаватель</span>
+                    {% endif %}
+                </strong>
+                <p class="mb-1 mt-1">{{ reply.text }}</p>
+                <small class="text-muted">{{ reply.created_at|date:"d.m.Y H:i" }}</small>
+            </div>
+            {% if request.user == reply.author or request.user.is_staff %}
+            <form method="post" action="{% url 'delete_comment' reply.pk %}"
+                  onsubmit="return confirm('Удалить комментарий?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">🗑</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Форма ответа -->
+    {% if request.user.is_staff %}
+    <form method="post" action="{% url 'add_comment' lesson.pk %}" class="ms-4 mt-2">
+        {% csrf_token %}
+        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+        <div class="input-group input-group-sm">
+            <input type="text" name="text" class="form-control"
+                   placeholder="Ответить..." required>
+            <button type="submit" class="btn btn-outline-primary">Ответить</button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">Пока нет вопросов. Будьте первым!</p>
+{% endfor %}
 {% endblock %}
