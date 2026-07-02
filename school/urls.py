@@ -17,6 +17,8 @@ urlpatterns = [
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),
+    # Домашние задания — ученик
+    path('lesson/<int:pk>/homework/', views.homework_view, name='homework'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
 
     path('lesson/<int:pk>/test/', views.test_view, name='test'),
@@ -52,6 +54,12 @@ urlpatterns = [
     path('teacher/course/<int:pk>/lesson/add/', views.teacher_add_lesson, name='teacher_add_lesson'),
     path('teacher/lesson/<int:pk>/edit/', views.teacher_edit_lesson, name='teacher_edit_lesson'),
     path('teacher/lesson/<int:pk>/delete/', views.teacher_delete_lesson, name='teacher_delete_lesson'),
+
+    # Домашние задания — преподаватель
+    path('teacher/lesson/<int:pk>/homework/create/', views.teacher_create_homework, name='teacher_create_homework'),
+    path('teacher/homework/<int:pk>/edit/', views.teacher_edit_homework, name='teacher_edit_homework'),
+    path('teacher/homework/<int:pk>/submissions/', views.teacher_homework_submissions, name='teacher_homework_submissions'),
+    path('teacher/submission/<int:pk>/check/', views.teacher_check_submission, name='teacher_check_submission'),
 
     path('teacher/lesson/<int:pk>/test/create/', views.teacher_create_test, name='teacher_create_test'),
     path('teacher/test/<int:pk>/edit/', views.teacher_edit_test, name='teacher_edit_test'),

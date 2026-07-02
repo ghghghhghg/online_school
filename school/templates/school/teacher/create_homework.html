@@ -1,0 +1,48 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Домашнее задание к уроку «{{ lesson.title }}»</h2>
+
+{% if errors %}
+    <div class="alert alert-warning">
+        <ul class="mb-0 ps-3">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Название задания</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Текст задания</label>
+                <textarea name="description" class="form-control" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Как ученик отправляет ответ</label>
+                <select name="submission_type" class="form-select">
+                    <option value="text">Только текст</option>
+                    <option value="file">Только файл</option>
+                    <option value="both">Текст и файл</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Как оценивать</label>
+                <select name="grading_type" class="form-select">
+                    <option value="pass_fail">Зачёт / незачёт</option>
+                    <option value="score">Баллы (0-100)</option>
+                    <option value="comment_only">Только комментарий</option>
+                </select>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="allow_resubmit" class="form-check-input" id="allow_resubmit" checked>
+                <label class="form-check-label" for="allow_resubmit">Разрешить пересдачу</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Создать задание</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

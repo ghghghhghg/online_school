@@ -1,0 +1,69 @@
+{% extends 'school/base.html' %}
+
+{% block title %}{{ homework.title }} — {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'lesson' lesson.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+    ← Назад к уроку
+</a>
+
+<h2>{{ homework.title }}</h2>
+<p class="text-muted" style="white-space: pre-line;">{{ homework.description }}</p>
+
+{% if last_submission %}
+<div class="card mb-4 p-3">
+    <h6 class="mb-2">Ваш последний ответ</h6>
+    {% if last_submission.text %}
+        <p class="mb-2">{{ last_submission.text }}</p>
+    {% endif %}
+    {% if last_submission.file %}
+        <a href="{{ last_submission.file.url }}" target="_blank" class="d-block mb-2">📎 Прикреплённый файл</a>
+    {% endif %}
+
+    {% if last_submission.status == 'checked' %}
+        <div class="alert alert-success mt-2 mb-0">
+            {% if homework.grading_type == 'score' %}
+                <strong>Оценка: {{ last_submission.score }}/100</strong>
+            {% elif homework.grading_type == 'pass_fail' %}
+                <strong>{% if last_submission.passed %}✅ Зачтено{% else %}❌ Не зачтено{% endif %}</strong>
+            {% endif %}
+            {% if last_submission.teacher_comment %}
+                <p class="mb-0 mt-2">{{ last_submission.teacher_comment }}</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <span class="badge bg-secondary">На проверке</span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if can_submit %}
+{% if errors %}
+    <div class="alert alert-warning">
+        <ul class="mb-0 ps-3">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+{% endif %}
+
+<div class="card p-3">
+    <h6 class="mb-3">{% if last_submission %}Отправить новый ответ{% else %}Отправить ответ{% endif %}</h6>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if homework.submission_type == 'text' or homework.submission_type == 'both' %}
+        <div class="mb-3">
+            <label class="form-label">Ваш ответ</label>
+            <textarea name="text" class="form-control" rows="5"></textarea>
+        </div>
+        {% endif %}
+        {% if homework.submission_type == 'file' or homework.submission_type == 'both' %}
+        <div class="mb-3">
+            <label class="form-label">Прикрепить файл</label>
+            <input type="file" name="file" class="form-control">
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Отправить на проверку</button>
+    </form>
+</div>
+{% else %}
+<p class="text-muted">Пересдача этого задания недоступна</p>
+{% endif %}
+{% endblock %}

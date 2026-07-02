@@ -1,0 +1,53 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Сдачи: {{ homework.title }}</h2>
+
+{% for submission in submissions %}
+<div class="card mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+        <small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small>
+    </div>
+
+    {% if submission.text %}
+        <p class="mb-2">{{ submission.text }}</p>
+    {% endif %}
+    {% if submission.file %}
+        <a href="{{ submission.file.url }}" target="_blank" class="d-block mb-2">📎 Файл ответа</a>
+    {% endif %}
+
+    {% if submission.status == 'checked' %}
+        <div class="alert alert-success mb-0">
+            Проверено:
+            {% if homework.grading_type == 'score' %}{{ submission.score }}/100{% endif %}
+            {% if homework.grading_type == 'pass_fail' %}{% if submission.passed %}Зачтено{% else %}Не зачтено{% endif %}{% endif %}
+            {% if submission.teacher_comment %}<br>{{ submission.teacher_comment }}{% endif %}
+        </div>
+    {% else %}
+        <form method="post" action="{% url 'teacher_check_submission' submission.pk %}" class="mt-2">
+            {% csrf_token %}
+            {% if homework.grading_type == 'score' %}
+                <div class="mb-2">
+                    <label class="form-label">Баллы (0-100)</label>
+                    <input type="number" name="score" min="0" max="100" class="form-control" style="max-width: 150px;" required>
+                </div>
+            {% elif homework.grading_type == 'pass_fail' %}
+                <div class="mb-2">
+                    <select name="passed" class="form-select" style="max-width: 200px;" required>
+                        <option value="yes">Зачтено</option>
+                        <option value="no">Не зачтено</option>
+                    </select>
+                </div>
+            {% endif %}
+            <div class="mb-2">
+                <textarea name="comment" class="form-control" rows="2" placeholder="Комментарий ученику"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Проверить</button>
+        </form>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">Пока никто не сдал это задание</p>
+{% endfor %}
+{% endblock %}

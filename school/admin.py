@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock
+from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
+    HomeworkSubmission
 
 
 class LessonInline(admin.TabularInline):
@@ -60,3 +61,13 @@ class WhyUsBlockAdmin(admin.ModelAdmin):
 class StatBlockAdmin(admin.ModelAdmin):
     list_display = ['id', 'number', 'label', 'order']
     list_editable = ['number', 'label', 'order']
+
+@admin.register(Homework)
+class HomeworkAdmin(admin.ModelAdmin):
+    list_display = ['title', 'lesson', 'submission_type', 'grading_type']
+
+
+@admin.register(HomeworkSubmission)
+class HomeworkSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['student', 'homework', 'status', 'submitted_at']
+    list_filter = ['status', 'homework']

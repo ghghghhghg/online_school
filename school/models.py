@@ -241,3 +241,72 @@ class StatBlock(models.Model):
 
     def __str__(self):
         return f'{self.number} — {self.label}'
+
+class Homework(models.Model):
+    SUBMISSION_TEXT = 'text'
+    SUBMISSION_FILE = 'file'
+    SUBMISSION_BOTH = 'both'
+    SUBMISSION_CHOICES = [
+        (SUBMISSION_TEXT, 'Только текст'),
+        (SUBMISSION_FILE, 'Только файл'),
+        (SUBMISSION_BOTH, 'Текст и файл'),
+    ]
+
+    GRADING_SCORE = 'score'
+    GRADING_PASS_FAIL = 'pass_fail'
+    GRADING_COMMENT_ONLY = 'comment_only'
+    GRADING_CHOICES = [
+        (GRADING_SCORE, 'Баллы (0-100)'),
+        (GRADING_PASS_FAIL, 'Зачёт / незачёт'),
+        (GRADING_COMMENT_ONLY, 'Только комментарий'),
+    ]
+
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE,
+                                  related_name='homework', verbose_name='Урок')
+    title = models.CharField(max_length=200, verbose_name='Название задания')
+    description = models.TextField(verbose_name='Текст задания')
+    submission_type = models.CharField(max_length=10, choices=SUBMISSION_CHOICES,
+                                       default=SUBMISSION_TEXT, verbose_name='Формат сдачи')
+    grading_type = models.CharField(max_length=15, choices=GRADING_CHOICES,
+                                    default=GRADING_PASS_FAIL, verbose_name='Формат оценки')
+    allow_resubmit = models.BooleanField(default=True, verbose_name='Разрешить пересдачу')
+
+    class Meta:
+        verbose_name = 'Домашнее задание'
+        verbose_name_plural = 'Домашние задания'
+
+    def __str__(self):
+        return f'ДЗ: {self.lesson.title}'
+
+
+class HomeworkSubmission(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_CHECKED = 'checked'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'На проверке'),
+        (STATUS_CHECKED, 'Проверено'),
+    ]
+
+    homework = models.ForeignKey(Homework, on_delete=models.CASCADE,
+                                 related_name='submissions', verbose_name='Задание')
+    student = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='homework_submissions', verbose_name='Ученик')
+    text = models.TextField(blank=True, verbose_name='Текст ответа')
+    file = CloudinaryField('raw', resource_type='raw', blank=True, null=True)
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES,
+                              default=STATUS_PENDING, verbose_name='Статус')
+    score = models.PositiveIntegerField(null=True, blank=True, verbose_name='Баллы')
+    passed = models.BooleanField(null=True, blank=True, verbose_name='Зачёт')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
+
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Сдача домашнего задания'
+        verbose_name_plural = 'Сдачи домашних заданий'
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f'{self.student.username} — {self.homework.title}'

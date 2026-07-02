@@ -55,6 +55,13 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
             </form>
+            {% if lesson.homework %}
+                <a href="{% url 'teacher_homework_submissions' lesson.homework.pk %}"
+                    class="btn btn-outline-warning btn-sm me-1">📋 ДЗ</a>
+            {% else %}
+                <a href="{% url 'teacher_create_homework' lesson.pk %}"
+                    class="btn btn-outline-primary btn-sm me-1">+ ДЗ</a>
+            {% endif %}
             {% if lesson.test %}
                 <a href="{% url 'teacher_edit_test' lesson.test.pk %}"
                    class="btn btn-outline-success btn-sm me-1">📝 Тест</a>

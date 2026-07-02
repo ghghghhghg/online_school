@@ -1,0 +1,47 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Редактировать домашнее задание</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Название задания</label>
+                <input type="text" name="title" value="{{ homework.title }}" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Текст задания</label>
+                <textarea name="description" class="form-control" rows="4" required>{{ homework.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Как ученик отправляет ответ</label>
+                <select name="submission_type" class="form-select">
+                    <option value="text" {% if homework.submission_type == 'text' %}selected{% endif %}>Только текст</option>
+                    <option value="file" {% if homework.submission_type == 'file' %}selected{% endif %}>Только файл</option>
+                    <option value="both" {% if homework.submission_type == 'both' %}selected{% endif %}>Текст и файл</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Как оценивать</label>
+                <select name="grading_type" class="form-select">
+                    <option value="pass_fail" {% if homework.grading_type == 'pass_fail' %}selected{% endif %}>Зачёт / незачёт</option>
+                    <option value="score" {% if homework.grading_type == 'score' %}selected{% endif %}>Баллы (0-100)</option>
+                    <option value="comment_only" {% if homework.grading_type == 'comment_only' %}selected{% endif %}>Только комментарий</option>
+                </select>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" name="allow_resubmit" class="form-check-input" id="allow_resubmit" {% if homework.allow_resubmit %}checked{% endif %}>
+                <label class="form-check-label" for="allow_resubmit">Разрешить пересдачу</label>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{% url 'teacher_homework_submissions' homework.pk %}" class="btn btn-outline-secondary">
+                    Посмотреть сдачи
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

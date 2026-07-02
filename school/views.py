@@ -1,9 +1,11 @@
+from django.utils import timezone
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate,update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ, Comment, WhyUsBlock, StatBlock
+    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -575,3 +577,128 @@ def teacher_edit_course(request, pk):
         messages.success(request, 'Курс обновлён!')
         return redirect('teacher_course_dashboard', pk=course.pk)
     return render(request, 'school/teacher/edit_course.html', {'course': course})
+
+
+@login_required
+def homework_view(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    homework = get_object_or_404(Homework, lesson=lesson)
+
+    submissions = HomeworkSubmission.objects.filter(
+        homework=homework, student=request.user
+    )
+    last_submission = submissions.first()
+
+    can_submit = homework.allow_resubmit or not submissions.exists()
+
+    if request.method == 'POST' and can_submit:
+        text = request.POST.get('text', '').strip()
+        file = request.FILES.get('file')
+
+        errors = []
+        if homework.submission_type in [Homework.SUBMISSION_TEXT, Homework.SUBMISSION_BOTH] and not text:
+            errors.append('Введите текст ответа')
+        if homework.submission_type in [Homework.SUBMISSION_FILE, Homework.SUBMISSION_BOTH] and not file:
+            errors.append('Прикрепите файл')
+
+        if not errors:
+            HomeworkSubmission.objects.create(
+                homework=homework,
+                student=request.user,
+                text=text,
+                file=file,
+            )
+            messages.success(request, 'Домашнее задание отправлено на проверку!')
+            return redirect('homework', pk=lesson.pk)
+
+        return render(request, 'school/homework.html', {
+            'lesson': lesson,
+            'homework': homework,
+            'last_submission': last_submission,
+            'can_submit': can_submit,
+            'errors': errors,
+        })
+
+    return render(request, 'school/homework.html', {
+        'lesson': lesson,
+        'homework': homework,
+        'last_submission': last_submission,
+        'can_submit': can_submit,
+    })
+
+
+@staff_member_required
+def teacher_create_homework(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+
+        errors = []
+        if not title:
+            errors.append('Введите название задания')
+        if not description:
+            errors.append('Введите текст задания')
+
+        if not errors:
+            Homework.objects.create(
+                lesson=lesson,
+                title=title,
+                description=description,
+                submission_type=request.POST.get('submission_type'),
+                grading_type=request.POST.get('grading_type'),
+                allow_resubmit=request.POST.get('allow_resubmit') == 'on',
+            )
+            messages.success(request, 'Домашнее задание создано!')
+            return redirect('teacher_course_dashboard', pk=lesson.course.pk)
+
+        return render(request, 'school/teacher/create_homework.html', {
+            'lesson': lesson, 'errors': errors,
+        })
+
+    return render(request, 'school/teacher/create_homework.html', {'lesson': lesson})
+
+
+@staff_member_required
+def teacher_edit_homework(request, pk):
+    homework = get_object_or_404(Homework, pk=pk)
+    if request.method == 'POST':
+        homework.title = request.POST.get('title', '').strip()
+        homework.description = request.POST.get('description', '').strip()
+        homework.submission_type = request.POST.get('submission_type')
+        homework.grading_type = request.POST.get('grading_type')
+        homework.allow_resubmit = request.POST.get('allow_resubmit') == 'on'
+        homework.save()
+        messages.success(request, 'Задание обновлено!')
+        return redirect('teacher_course_dashboard', pk=homework.lesson.course.pk)
+    return render(request, 'school/teacher/edit_homework.html', {'homework': homework})
+
+
+@staff_member_required
+def teacher_homework_submissions(request, pk):
+    homework = get_object_or_404(Homework, pk=pk)
+    submissions = homework.submissions.select_related('student').all()
+    return render(request, 'school/teacher/homework_submissions.html', {
+        'homework': homework,
+        'submissions': submissions,
+    })
+
+
+@staff_member_required
+def teacher_check_submission(request, pk):
+    submission = get_object_or_404(HomeworkSubmission, pk=pk)
+    homework = submission.homework
+
+    if request.method == 'POST':
+        if homework.grading_type == Homework.GRADING_SCORE:
+            submission.score = request.POST.get('score')
+        elif homework.grading_type == Homework.GRADING_PASS_FAIL:
+            submission.passed = request.POST.get('passed') == 'yes'
+        submission.teacher_comment = request.POST.get('comment', '')
+        submission.status = HomeworkSubmission.STATUS_CHECKED
+        submission.checked_at = timezone.now()
+        submission.save()
+        messages.success(request, 'Проверено!')
+        return redirect('teacher_homework_submissions', pk=homework.pk)
+
+    return redirect('teacher_homework_submissions', pk=homework.pk)

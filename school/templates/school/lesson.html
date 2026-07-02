@@ -30,7 +30,11 @@
     </iframe>
 </div>
 {% endif %}
-
+{% if lesson.homework %}
+<a href="{% url 'homework' lesson.pk %}" class="btn btn-outline-primary mb-3">
+    Домашнее задание
+</a>
+{% endif %}
 <div class="mt-4">
     {% if lesson.test %}
         {% if test_result %}
