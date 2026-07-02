@@ -731,6 +731,24 @@ def teacher_all_homework(request):
     if status:
         submissions = submissions.filter(status=status)
 
+    # Группируем по (ученик, домашка) — последняя попытка первая
+    groups = {}
+    for s in submissions:
+        key = (s.student_id, s.homework_id)
+        groups.setdefault(key, []).append(s)
+
+    grouped_list = []
+    for (student_id, homework_id), items in groups.items():
+        items.sort(key=lambda x: x.submitted_at, reverse=True)
+        grouped_list.append({
+            'latest': items[0],
+            'history': items[1:],
+            'attempts_count': len(items),
+        })
+
+    # Сортируем группы: сначала непроверенные последние попытки, потом по дате
+    grouped_list.sort(key=lambda g: (g['latest'].status == 'checked', -g['latest'].submitted_at.timestamp()))
+
     courses = Course.objects.all()
     lessons = Lesson.objects.filter(homework__isnull=False)
     if course_id:
@@ -739,7 +757,7 @@ def teacher_all_homework(request):
     pending_count = HomeworkSubmission.objects.filter(status='pending').count()
 
     return render(request, 'school/teacher/all_homework.html', {
-        'submissions': submissions,
+        'grouped_list': grouped_list,
         'courses': courses,
         'lessons': lessons,
         'selected_course': course_id,

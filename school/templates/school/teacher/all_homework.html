@@ -58,7 +58,13 @@
     {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} на проверке</span>{% endif %}
 </p>
 
-{% for submission in submissions %}
+<p class="text-muted small mb-3">
+    Найдено групп: {{ grouped_list|length }}
+    {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} на проверке</span>{% endif %}
+</p>
+
+{% for group in grouped_list %}
+{% with submission=group.latest %}
 <div class="card mb-3 p-3">
     <div class="d-flex justify-content-between align-items-start mb-2">
         <div>
@@ -75,6 +81,9 @@
                 <span class="badge bg-success">Проверено</span>
             {% endif %}
             <div><small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small></div>
+            {% if group.attempts_count > 1 %}
+                <div><small class="text-muted">Попытка {{ group.attempts_count }}</small></div>
+            {% endif %}
         </div>
     </div>
 
@@ -116,7 +125,32 @@
             <button type="submit" class="btn btn-primary btn-sm">Проверить</button>
         </form>
     {% endif %}
+
+    {% if group.history %}
+    <button class="btn btn-sm btn-link ps-0 mt-2" type="button"
+            data-bs-toggle="collapse" data-bs-target="#history-{{ submission.pk }}">
+        Показать предыдущие попытки ({{ group.history|length }})
+    </button>
+    <div class="collapse mt-2" id="history-{{ submission.pk }}">
+        {% for old in group.history %}
+        <div class="p-2 mb-2" style="border-left: 2px solid var(--line);">
+            <small class="text-muted">{{ old.submitted_at|date:"d.m.Y H:i" }}</small>
+            {% if old.text %}<p class="mb-1 mt-1 small">{{ old.text }}</p>{% endif %}
+            {% if old.file %}<a href="{{ old.file.url }}" target="_blank" class="small d-block">📎 Файл</a>{% endif %}
+            {% if old.status == 'checked' %}
+                <small class="text-muted">
+                    {% if old.homework.grading_type == 'score' %}Баллы: {{ old.score }}/100{% endif %}
+                    {% if old.homework.grading_type == 'pass_fail' %}
+                        {% if old.passed %}Зачтено{% else %}Не зачтено{% endif %}
+                    {% endif %}
+                </small>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
+{% endwith %}
 {% empty %}
 <p class="text-muted">Ничего не найдено</p>
 {% endfor %}
