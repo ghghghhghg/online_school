@@ -38,7 +38,7 @@
                 <div class="alert alert-success">
                     ✅ Урок пройден — тест сдан на {{ test_result.score }}%
                 </div>
-                <a href="{% url 'test' lesson.slug %}" class="btn btn-outline-primary">
+                <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary">
                     🔄 Пройти тест ещё раз
                 </a>
             {% else %}
