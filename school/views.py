@@ -589,7 +589,18 @@ def homework_view(request, pk):
     )
     last_submission = submissions.first()
 
-    can_submit = homework.allow_resubmit or not submissions.exists()
+    already_passed = (
+        last_submission
+        and last_submission.status == HomeworkSubmission.STATUS_CHECKED
+        and (
+            last_submission.passed is True
+            or (homework.grading_type == Homework.GRADING_COMMENT_ONLY)
+        )
+    )
+
+    can_submit = homework.allow_resubmit and not already_passed
+    if not submissions.exists():
+        can_submit = True
 
     if request.method == 'POST' and can_submit:
         text = request.POST.get('text', '').strip()
