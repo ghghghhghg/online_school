@@ -7,8 +7,14 @@
         <a href="{% url 'teacher_edit_profile' %}" class="btn btn-outline-secondary btn-sm me-2">
             👤 Мой профиль
         </a>
-        <a href="{% url 'teacher_all_homework' %}" class="btn btn-outline-secondary btn-sm me-2">
-            Домашние задания
+        <a href="{% url 'teacher_all_homework' %}" class="btn btn-outline-secondary btn-sm me-2 position-relative">
+            📋 Домашние задания
+            {% if pending_homework_count %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                      style="background-color: var(--accent); font-size: 0.65rem;">
+                    {{ pending_homework_count }}
+                </span>
+            {% endif %}
         </a>
         <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm">← На сайт</a>
     </div>
