@@ -63,7 +63,7 @@
         <button type="submit" class="btn btn-primary">Отправить на проверку</button>
     </form>
 </div>
-{% else %}
+{% elif last_submission and last_submission.status == 'checked' and not homework.allow_resubmit %}
 <p class="text-muted">Пересдача этого задания недоступна</p>
 {% endif %}
 {% endblock %}
