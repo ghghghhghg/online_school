@@ -1,0 +1,123 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Домашние задания</h2>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Панель преподавателя</a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<!-- Фильтры -->
+<div class="card mb-4 p-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">Курс</label>
+            <select name="course" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все курсы</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}" {% if selected_course == course.id|stringformat:"s" %}selected{% endif %}>
+                    {{ course.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Урок</label>
+            <select name="lesson" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все уроки</option>
+                {% for lesson in lessons %}
+                <option value="{{ lesson.id }}" {% if selected_lesson == lesson.id|stringformat:"s" %}selected{% endif %}>
+                    {{ lesson.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Статус</label>
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>На проверке</option>
+                <option value="checked" {% if selected_status == 'checked' %}selected{% endif %}>Проверено</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'teacher_all_homework' %}" class="btn btn-outline-secondary btn-sm w-100">
+                Сбросить фильтры
+            </a>
+        </div>
+    </form>
+</div>
+
+<p class="text-muted small mb-3">
+    Найдено: {{ submissions|length }}
+    {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} на проверке</span>{% endif %}
+</p>
+
+{% for submission in submissions %}
+<div class="card mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+            <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+            <p class="text-muted small mb-0">
+                {{ submission.homework.lesson.course.title }} → {{ submission.homework.lesson.title }} →
+                {{ submission.homework.title }}
+            </p>
+        </div>
+        <div class="text-end">
+            {% if submission.status == 'pending' %}
+                <span class="badge" style="background-color: var(--accent);">На проверке</span>
+            {% else %}
+                <span class="badge bg-success">Проверено</span>
+            {% endif %}
+            <div><small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small></div>
+        </div>
+    </div>
+
+    {% if submission.text %}
+        <p class="mb-2">{{ submission.text }}</p>
+    {% endif %}
+    {% if submission.file %}
+        <a href="{{ submission.file.url }}" target="_blank" class="d-block mb-2">📎 Файл ответа</a>
+    {% endif %}
+
+    {% if submission.status == 'checked' %}
+        <div class="alert alert-success mb-0">
+            {% if submission.homework.grading_type == 'score' %}Баллы: {{ submission.score }}/100{% endif %}
+            {% if submission.homework.grading_type == 'pass_fail' %}
+                {% if submission.passed %}Зачтено{% else %}Не зачтено{% endif %}
+            {% endif %}
+            {% if submission.teacher_comment %}<br>{{ submission.teacher_comment }}{% endif %}
+        </div>
+    {% else %}
+        <form method="post" action="{% url 'teacher_check_submission' submission.pk %}" class="mt-2">
+            {% csrf_token %}
+            {% if submission.homework.grading_type == 'score' %}
+                <div class="mb-2">
+                    <input type="number" name="score" min="0" max="100" class="form-control form-control-sm"
+                           style="max-width: 150px;" placeholder="Баллы 0-100" required>
+                </div>
+            {% elif submission.homework.grading_type == 'pass_fail' %}
+                <div class="mb-2">
+                    <select name="passed" class="form-select form-select-sm" style="max-width: 200px;" required>
+                        <option value="yes">Зачтено</option>
+                        <option value="no">Не зачтено</option>
+                    </select>
+                </div>
+            {% endif %}
+            <div class="mb-2">
+                <textarea name="comment" class="form-control form-control-sm" rows="2"
+                          placeholder="Комментарий ученику"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Проверить</button>
+        </form>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">Ничего не найдено</p>
+{% endfor %}
+{% endblock %}

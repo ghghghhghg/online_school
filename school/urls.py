@@ -19,6 +19,7 @@ urlpatterns = [
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),
     # Домашние задания — ученик
     path('lesson/<int:pk>/homework/', views.homework_view, name='homework'),
+    path('teacher/homework/', views.teacher_all_homework, name='teacher_all_homework'),
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
 
     path('lesson/<int:pk>/test/', views.test_view, name='test'),

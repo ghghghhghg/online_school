@@ -712,4 +712,38 @@ def teacher_check_submission(request, pk):
         messages.success(request, 'Проверено!')
         return redirect('teacher_homework_submissions', pk=homework.pk)
 
-    return redirect('teacher_homework_submissions', pk=homework.pk)
+    return redirect(request.META.get('HTTP_REFERER', 'teacher_all_homework'))
+
+@staff_member_required
+def teacher_all_homework(request):
+    submissions = HomeworkSubmission.objects.select_related(
+        'student', 'homework', 'homework__lesson', 'homework__lesson__course'
+    ).all()
+
+    course_id = request.GET.get('course')
+    lesson_id = request.GET.get('lesson')
+    status = request.GET.get('status')
+
+    if course_id:
+        submissions = submissions.filter(homework__lesson__course_id=course_id)
+    if lesson_id:
+        submissions = submissions.filter(homework__lesson_id=lesson_id)
+    if status:
+        submissions = submissions.filter(status=status)
+
+    courses = Course.objects.all()
+    lessons = Lesson.objects.filter(homework__isnull=False)
+    if course_id:
+        lessons = lessons.filter(course_id=course_id)
+
+    pending_count = HomeworkSubmission.objects.filter(status='pending').count()
+
+    return render(request, 'school/teacher/all_homework.html', {
+        'submissions': submissions,
+        'courses': courses,
+        'lessons': lessons,
+        'selected_course': course_id,
+        'selected_lesson': lesson_id,
+        'selected_status': status,
+        'pending_count': pending_count,
+    })
