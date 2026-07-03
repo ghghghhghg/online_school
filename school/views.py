@@ -780,11 +780,12 @@ def teacher_add_module(request, pk):
     course = get_object_or_404(Course, pk=pk)
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
+        order = request.POST.get('order', '').strip()
         if title:
             Module.objects.create(
                 course=course,
                 title=title,
-                order=course.modules.count() + 1,
+                order=order if order.isdigit() else course.modules.count() + 1,
             )
             messages.success(request, 'Раздел добавлен!')
         return redirect('teacher_course_dashboard', pk=course.pk)

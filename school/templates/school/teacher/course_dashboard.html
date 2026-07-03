@@ -150,9 +150,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label">Название раздела</label>
-                    <input type="text" name="title" class="form-control"
-                           placeholder="Например: Орфография" required>
+                    <div class="mb-3">
+                        <label class="form-label">Название раздела</label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="Например: Орфография" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Порядок</label>
+                        <input type="number" name="order" class="form-control"
+                               value="{{ modules.count|add:'1' }}" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Создать</button>
