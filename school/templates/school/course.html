@@ -64,15 +64,27 @@
 </section>
 {% endif %}
 
-<section class="py-5 text-center">
+<section class="py-5 text-center" style="background-color: var(--ink);">
     <h2 class="mb-3" style="color: white;">Готов начать?</h2>
     <p class="mb-4" style="color: rgba(255,255,255,0.6);">
-        {{ lessons.count }} уроков • {{ completed_ids|length }} уже пройдено
+        {{ lessons.count }} уроков
+        {% if user.is_authenticated %} • {{ completed_ids|length }} уже пройдено{% endif %}
     </p>
     {% if lessons %}
-        <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
-            {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
-        </a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
+                {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
+            </a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
+                Начать учиться →
+            </a>
+            <a href="{% url 'login' %}"
+               class="btn btn-lg px-5"
+               style="border: 1px solid rgba(255,255,255,0.3); color: white;">
+                Войти
+            </a>
+        {% endif %}
     {% else %}
         <p style="color: rgba(255,255,255,0.6);">Уроки скоро появятся</p>
     {% endif %}

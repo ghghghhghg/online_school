@@ -94,17 +94,17 @@ def logout_view(request):
     return redirect('index')
 
 
-@login_required
 def course_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
-    Enrollment.objects.get_or_create(student=request.user, course=course)
-
-    completed_ids = LessonProgress.objects.filter(
-        student=request.user,
-        lesson__in=lessons
-    ).values_list('lesson_id', flat=True)
+    completed_ids = []
+    if request.user.is_authenticated:
+        Enrollment.objects.get_or_create(student=request.user, course=course)
+        completed_ids = LessonProgress.objects.filter(
+            student=request.user,
+            lesson__in=lessons
+        ).values_list('lesson_id', flat=True)
 
     return render(request, 'school/course.html', {
         'course': course,
