@@ -160,7 +160,8 @@ def lesson_view(request, pk):
 @login_required
 def complete_lesson(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
-    LessonProgress.objects.get_or_create(student=request.user, lesson=lesson)
+    if not request.user.is_staff:
+        LessonProgress.objects.get_or_create(student=request.user, lesson=lesson)
     return redirect('lesson', pk=pk)
 
 @staff_member_required
@@ -275,6 +276,9 @@ def test_view(request, pk):
     test = get_object_or_404(Test, lesson=lesson)
     questions = test.questions.prefetch_related('answers').all()
 
+    if request.user.is_staff:
+        messages.info(request, 'Вы просматриваете тест как преподаватель — результат не будет сохранён')
+
     if request.method == 'POST':
         total = questions.count()
         correct = 0
@@ -289,21 +293,21 @@ def test_view(request, pk):
         score = int((correct / total) * 100) if total > 0 else 0
         passed = score >= test.pass_score
 
-        # Сохраняем результат
-        TestResult.objects.create(
-            student=request.user,
-            test=test,
-            score=score,
-            passed=passed
-        )
-
-        # Если тест сдан — автоматически отмечаем урок пройденным
-        if passed:
-            LessonProgress.objects.get_or_create(
-                student=request.user, lesson=lesson
+        if not request.user.is_staff:
+            TestResult.objects.create(
+                student=request.user,
+                test=test,
+                score=score,
+                passed=passed
             )
-
-        return redirect('test_result', pk=lesson.pk)
+            if passed:
+                LessonProgress.objects.get_or_create(
+                    student=request.user, lesson=lesson
+                )
+            return redirect('test_result', pk=lesson.pk)
+        else:
+            messages.success(request, f'Предпросмотр: результат {score}% (не сохранён)')
+            return redirect('lesson', pk=lesson.pk)
 
     return render(request, 'school/test.html', {
         'lesson': lesson,
@@ -623,6 +627,15 @@ def teacher_edit_course(request, pk):
 def homework_view(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
     homework = get_object_or_404(Homework, lesson=lesson)
+
+    if request.user.is_staff:
+        messages.info(request, 'Вы просматриваете задание как преподаватель')
+        return render(request, 'school/homework.html', {
+            'lesson': lesson,
+            'homework': homework,
+            'last_submission': None,
+            'can_submit': False,
+        })
 
     submissions = HomeworkSubmission.objects.filter(
         homework=homework, student=request.user

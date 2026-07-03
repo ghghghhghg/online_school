@@ -36,7 +36,9 @@
 </a>
 {% endif %}
 <div class="mt-4">
-    {% if lesson.test %}
+    {% if user.is_staff %}
+        <p class="text-muted small">Вы просматриваете урок как преподаватель — прогресс не отслеживается</p>
+    {% elif lesson.test %}
         {% if test_result %}
             {% if test_result.passed %}
                 <div class="alert alert-success">
