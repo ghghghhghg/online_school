@@ -19,6 +19,15 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label">Порядок</label>
+                <div class="mb-3">
+                    <label class="form-label">Раздел (необязательно)</label>
+                    <select name="module" class="form-select">
+                        <option value="">Без раздела</option>
+                        {% for module in course.modules.all %}
+                        <option value="{{ module.id }}">{{ module.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <input type="number" name="order"
                        value="{{ form_data.order|default:next_order }}"
                        class="form-control" required>

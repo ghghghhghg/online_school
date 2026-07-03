@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout, authenticate,update_session_auth_
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission
+    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -124,9 +124,13 @@ def course_lessons_view(request, slug):
         lesson__in=lessons
     ).values_list('lesson_id', flat=True)
 
+    modules = course.modules.prefetch_related('lessons').all()
+    lessons_without_module = lessons.filter(module__isnull=True)
+
     return render(request, 'school/course_lessons.html', {
         'course': course,
-        'lessons': lessons,
+        'modules': modules,
+        'lessons_without_module': lessons_without_module,
         'completed_ids': completed_ids,
     })
 
@@ -168,10 +172,12 @@ def teacher_dashboard(request):
 @staff_member_required
 def teacher_course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    lessons = course.lessons.all()
+    modules = course.modules.prefetch_related('lessons').all()
+    lessons_without_module = course.lessons.filter(module__isnull=True)
     return render(request, 'school/teacher/course_dashboard.html', {
         'course': course,
-        'lessons': lessons,
+        'modules': modules,
+        'lessons_without_module': lessons_without_module,
     })
 
 
@@ -199,6 +205,7 @@ def teacher_add_lesson(request, pk):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         order = request.POST.get('order', '').strip()
+        module_id = request.POST.get('module') or None
 
         errors = []
         if not title:
@@ -209,6 +216,7 @@ def teacher_add_lesson(request, pk):
         if not errors:
             lesson = Lesson.objects.create(
                 course=course,
+                module_id=module_id,
                 title=title,
                 description=request.POST.get('description', ''),
                 video_url=request.POST.get('video_url', ''),
@@ -244,11 +252,12 @@ def teacher_edit_lesson(request, pk):
         lesson.description = request.POST.get('description')
         lesson.video_url = request.POST.get('video_url', '')
         lesson.order = request.POST.get('order', lesson.order)
+        lesson.module_id = request.POST.get('module') or None
         if request.FILES.get('video_file'):
             lesson.video_file = request.FILES.get('video_file')
         lesson.save()
         messages.success(request, 'Урок обновлён!')
-        return redirect('teacher_dashboard')
+        return redirect('teacher_course_dashboard', pk=lesson.course.pk)
     return render(request, 'school/teacher/edit_lesson.html', {'lesson': lesson})
 
 @staff_member_required
@@ -765,3 +774,39 @@ def teacher_all_homework(request):
         'selected_status': status,
         'pending_count': pending_count,
     })
+
+@staff_member_required
+def teacher_add_module(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        if title:
+            Module.objects.create(
+                course=course,
+                title=title,
+                order=course.modules.count() + 1,
+            )
+            messages.success(request, 'Раздел добавлен!')
+        return redirect('teacher_course_dashboard', pk=course.pk)
+    return redirect('teacher_course_dashboard', pk=course.pk)
+
+
+@staff_member_required
+def teacher_edit_module(request, pk):
+    module = get_object_or_404(Module, pk=pk)
+    if request.method == 'POST':
+        module.title = request.POST.get('title', '').strip()
+        module.order = request.POST.get('order', module.order)
+        module.save()
+        messages.success(request, 'Раздел обновлён!')
+    return redirect('teacher_course_dashboard', pk=module.course.pk)
+
+
+@staff_member_required
+def teacher_delete_module(request, pk):
+    module = get_object_or_404(Module, pk=pk)
+    course_pk = module.course.pk
+    if request.method == 'POST':
+        module.delete()
+        messages.success(request, 'Раздел удалён (уроки остались, но без раздела)')
+    return redirect('teacher_course_dashboard', pk=course_pk)

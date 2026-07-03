@@ -38,9 +38,26 @@ class Course(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
+class Module(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='modules', verbose_name='Курс')
+    title = models.CharField(max_length=200, verbose_name='Название раздела')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Раздел курса'
+        verbose_name_plural = 'Разделы курса'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.order}. {self.title}'
+
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='lessons', verbose_name='Курс')
+    module = models.ForeignKey(Module, on_delete=models.SET_NULL,
+                               null=True, blank=True,
+                               related_name='lessons', verbose_name='Раздел')
     title = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
     video_file = CloudinaryField(resource_type='video',

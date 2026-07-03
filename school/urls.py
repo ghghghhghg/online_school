@@ -14,6 +14,10 @@ urlpatterns = [
     path('course/<slug:slug>/', views.course_view, name='course'),
     path('course/<slug:slug>/lessons/', views.course_lessons_view, name='course_lessons'),
 
+    path('teacher/course/<int:pk>/module/add/', views.teacher_add_module, name='teacher_add_module'),
+    path('teacher/module/<int:pk>/edit/', views.teacher_edit_module, name='teacher_edit_module'),
+    path('teacher/module/<int:pk>/delete/', views.teacher_delete_module, name='teacher_delete_module'),
+
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),

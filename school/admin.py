@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
-    HomeworkSubmission
+    HomeworkSubmission, Module
 
 
 class LessonInline(admin.TabularInline):
@@ -71,3 +71,14 @@ class HomeworkAdmin(admin.ModelAdmin):
 class HomeworkSubmissionAdmin(admin.ModelAdmin):
     list_display = ['student', 'homework', 'status', 'submitted_at']
     list_filter = ['status', 'homework']
+
+class LessonInline(admin.TabularInline):
+    model = Lesson
+    extra = 1
+    fields = ['order', 'module', 'title', 'description', 'video_url']
+
+
+@admin.register(Module)
+class ModuleAdmin(admin.ModelAdmin):
+    list_display = ['title', 'course', 'order']
+    list_editable = ['order']
