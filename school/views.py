@@ -494,6 +494,13 @@ def teacher_analytics(request, pk):
         )
         avg_score = test_results.aggregate(avg=Avg('score'))['avg']
 
+        hw_submissions = HomeworkSubmission.objects.filter(
+            student=student, homework__lesson__course=course
+        )
+        hw_total = Homework.objects.filter(lesson__course=course).count()
+        hw_done = hw_submissions.filter(status='checked').values('homework').distinct().count()
+        hw_pending = hw_submissions.filter(status='pending').values('homework').distinct().count()
+
         students_data.append({
             'student': student,
             'completed': completed,
@@ -501,6 +508,9 @@ def teacher_analytics(request, pk):
             'percent': percent,
             'avg_score': round(avg_score) if avg_score else None,
             'enrolled_at': enrollment.enrolled_at,
+            'hw_done': hw_done,
+            'hw_total': hw_total,
+            'hw_pending': hw_pending,
         })
 
     students_data.sort(key=lambda x: x['percent'], reverse=True)
@@ -517,12 +527,31 @@ def teacher_analytics(request, pk):
             'percent': int((completed_count / total_students) * 100) if total_students > 0 else 0,
         })
 
+    # Статистика по домашкам
+    homeworks = Homework.objects.filter(lesson__course=course).select_related('lesson')
+    homework_stats = []
+    for hw in homeworks:
+        submissions = HomeworkSubmission.objects.filter(homework=hw)
+        checked_count = submissions.filter(status='checked').values('student').distinct().count()
+        pending_count = submissions.filter(status='pending').values('student').distinct().count()
+        homework_stats.append({
+            'homework': hw,
+            'checked_count': checked_count,
+            'pending_count': pending_count,
+        })
+
+    total_pending_hw = HomeworkSubmission.objects.filter(
+        status='pending', homework__lesson__course=course
+    ).count()
+
     return render(request, 'school/teacher/analytics.html', {
         'course': course,
         'students_data': students_data,
         'total_students': total_students,
         'avg_progress': avg_progress,
         'lessons_stats': lessons_stats,
+        'homework_stats': homework_stats,
+        'total_pending_hw': total_pending_hw,
     })
 
 @login_required
