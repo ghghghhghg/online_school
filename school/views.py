@@ -99,7 +99,7 @@ def course_view(request, slug):
     lessons = course.lessons.all()
 
     completed_ids = []
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and not request.user.is_staff:
         Enrollment.objects.get_or_create(student=request.user, course=course)
         completed_ids = LessonProgress.objects.filter(
             student=request.user,
@@ -117,12 +117,13 @@ def course_lessons_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
-    Enrollment.objects.get_or_create(student=request.user, course=course)
-
-    completed_ids = LessonProgress.objects.filter(
-        student=request.user,
-        lesson__in=lessons
-    ).values_list('lesson_id', flat=True)
+    completed_ids = []
+    if not request.user.is_staff:
+        Enrollment.objects.get_or_create(student=request.user, course=course)
+        completed_ids = LessonProgress.objects.filter(
+            student=request.user,
+            lesson__in=lessons
+        ).values_list('lesson_id', flat=True)
 
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = lessons.filter(module__isnull=True)
