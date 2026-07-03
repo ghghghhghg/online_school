@@ -76,20 +76,31 @@ class Lesson(models.Model):
 
 
 class Enrollment(models.Model):
-    """Ученик записан на курс"""
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'На рассмотрении'),
+        (STATUS_APPROVED, 'Одобрено'),
+        (STATUS_REJECTED, 'Отклонено'),
+    ]
+
     student = models.ForeignKey(User, on_delete=models.CASCADE,
                                 related_name='enrollments', verbose_name='Ученик')
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='enrollments', verbose_name='Курс')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES,
+                              default=STATUS_PENDING, verbose_name='Статус')
     enrolled_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Запись на курс'
         verbose_name_plural = 'Записи на курсы'
-        unique_together = ('student', 'course')  # нельзя записаться дважды
+        unique_together = ('student', 'course')
 
     def __str__(self):
-        return f'{self.student.username} → {self.course.title}'
+        return f'{self.student.username} → {self.course.title} ({self.status})'
 
 
 class LessonProgress(models.Model):

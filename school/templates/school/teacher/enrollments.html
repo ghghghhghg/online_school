@@ -1,0 +1,61 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Заявки на курсы</h2>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Панель преподавателя</a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="mb-3">
+    <a href="?status=pending" class="btn btn-sm {% if selected_status == 'pending' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        На рассмотрении {% if pending_count %}({{ pending_count }}){% endif %}
+    </a>
+    <a href="?status=approved" class="btn btn-sm {% if selected_status == 'approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        Одобренные
+    </a>
+    <a href="?status=rejected" class="btn btn-sm {% if selected_status == 'rejected' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        Отклонённые
+    </a>
+    <a href="?status=" class="btn btn-sm {% if not selected_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        Все
+    </a>
+</div>
+
+{% for enrollment in enrollments %}
+<div class="card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</strong>
+            <p class="text-muted small mb-0">
+                {{ enrollment.student.email }} • {{ enrollment.course.title }}
+            </p>
+            <small class="text-muted">Подана: {{ enrollment.enrolled_at|date:"d.m.Y H:i" }}</small>
+        </div>
+        <div>
+            {% if enrollment.status == 'pending' %}
+                <form method="post" action="{% url 'teacher_approve_enrollment' enrollment.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm">✅ Одобрить</button>
+                </form>
+                <form method="post" action="{% url 'teacher_reject_enrollment' enrollment.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Отклонить</button>
+                </form>
+            {% elif enrollment.status == 'approved' %}
+                <span class="badge bg-success">Одобрено</span>
+            {% else %}
+                <span class="badge bg-danger">Отклонено</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">Заявок нет</p>
+{% endfor %}
+{% endblock %}

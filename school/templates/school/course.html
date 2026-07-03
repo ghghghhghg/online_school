@@ -68,16 +68,36 @@
     <h2 class="mb-3" style="color: white;">Готов начать?</h2>
     <p class="mb-4" style="color: rgba(255,255,255,0.6);">
         {{ lessons.count }} уроков
-        {% if user.is_authenticated %} • {{ completed_ids|length }} уже пройдено{% endif %}
+        {% if enrollment.status == 'approved' %} • {{ completed_ids|length }} уже пройдено{% endif %}
     </p>
     {% if lessons %}
         {% if user.is_authenticated %}
-            <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
-                {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
-            </a>
+            {% if user.is_staff %}
+                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
+                    Просмотреть уроки →
+                </a>
+            {% elif enrollment.status == 'approved' %}
+                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
+                    {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
+                </a>
+            {% elif enrollment.status == 'pending' %}
+                <button class="btn btn-lg px-5" disabled
+                        style="background-color: rgba(255,255,255,0.15); color: white; border: none;">
+                    ⏳ Заявка на рассмотрении
+                </button>
+            {% elif enrollment.status == 'rejected' %}
+                <p style="color: rgba(255,255,255,0.6);">Заявка была отклонена. Свяжитесь с преподавателем.</p>
+            {% else %}
+                <form method="post" action="{% url 'apply_to_course' course.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        Подать заявку →
+                    </button>
+                </form>
+            {% endif %}
         {% else %}
             <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
-                Начать учиться →
+                Зарегистрироваться →
             </a>
             <a href="{% url 'login' %}"
                class="btn btn-lg px-5"

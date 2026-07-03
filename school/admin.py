@@ -27,8 +27,9 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
-    list_display = ['student', 'course', 'enrolled_at']
-    list_filter = ['course']
+    list_display = ['student', 'course', 'status', 'enrolled_at']
+    list_filter = ['status', 'course']
+    list_editable = ['status']
 
 
 @admin.register(LessonProgress)

@@ -18,6 +18,11 @@ urlpatterns = [
     path('teacher/module/<int:pk>/edit/', views.teacher_edit_module, name='teacher_edit_module'),
     path('teacher/module/<int:pk>/delete/', views.teacher_delete_module, name='teacher_delete_module'),
 
+    path('course/<slug:slug>/apply/', views.apply_to_course, name='apply_to_course'),
+    path('teacher/enrollments/', views.teacher_enrollments, name='teacher_enrollments'),
+    path('teacher/enrollment/<int:pk>/approve/', views.teacher_approve_enrollment, name='teacher_approve_enrollment'),
+    path('teacher/enrollment/<int:pk>/reject/', views.teacher_reject_enrollment, name='teacher_reject_enrollment'),
+
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),

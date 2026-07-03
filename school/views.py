@@ -99,17 +99,20 @@ def course_view(request, slug):
     lessons = course.lessons.all()
 
     completed_ids = []
+    enrollment = None
     if request.user.is_authenticated and not request.user.is_staff:
-        Enrollment.objects.get_or_create(student=request.user, course=course)
-        completed_ids = LessonProgress.objects.filter(
-            student=request.user,
-            lesson__in=lessons
-        ).values_list('lesson_id', flat=True)
+        enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
+        if enrollment and enrollment.status == Enrollment.STATUS_APPROVED:
+            completed_ids = LessonProgress.objects.filter(
+                student=request.user,
+                lesson__in=lessons
+            ).values_list('lesson_id', flat=True)
 
     return render(request, 'school/course.html', {
         'course': course,
         'lessons': lessons,
         'completed_ids': completed_ids,
+        'enrollment': enrollment,
     })
 
 @login_required
@@ -117,13 +120,16 @@ def course_lessons_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
-    completed_ids = []
     if not request.user.is_staff:
-        Enrollment.objects.get_or_create(student=request.user, course=course)
-        completed_ids = LessonProgress.objects.filter(
-            student=request.user,
-            lesson__in=lessons
-        ).values_list('lesson_id', flat=True)
+        enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
+        if not enrollment or enrollment.status != Enrollment.STATUS_APPROVED:
+            messages.warning(request, 'Доступ к урокам появится после одобрения заявки преподавателем')
+            return redirect('course', slug=course.slug)
+
+    completed_ids = LessonProgress.objects.filter(
+        student=request.user,
+        lesson__in=lessons
+    ).values_list('lesson_id', flat=True) if not request.user.is_staff else []
 
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = lessons.filter(module__isnull=True)
@@ -428,7 +434,10 @@ def teacher_edit_profile(request):
 def student_profile(request):
     if request.user.is_staff:
         return redirect('teacher_dashboard')
-    enrollments = Enrollment.objects.filter(student=request.user).select_related('course')
+
+    enrollments = Enrollment.objects.filter(
+        student=request.user, status=Enrollment.STATUS_APPROVED
+    ).select_related('course')
     test_results = TestResult.objects.filter(student=request.user).select_related('test')
 
     courses_progress = []
@@ -439,21 +448,22 @@ def student_profile(request):
             student=request.user, lesson__course=course
         ).count()
         percent = int((completed / total) * 100) if total > 0 else 0
-        completed_lessons = LessonProgress.objects.filter(
-            student=request.user, lesson__course=course
-        ).select_related('lesson')
 
         courses_progress.append({
             'course': course,
             'total': total,
             'completed': completed,
             'percent': percent,
-            'completed_lessons': completed_lessons,
         })
+
+    pending_enrollments = Enrollment.objects.filter(
+        student=request.user, status=Enrollment.STATUS_PENDING
+    ).select_related('course')
 
     return render(request, 'school/profile.html', {
         'courses_progress': courses_progress,
         'test_results': test_results,
+        'pending_enrollments': pending_enrollments,
     })
 
 @login_required
@@ -856,3 +866,54 @@ def teacher_delete_module(request, pk):
         module.delete()
         messages.success(request, 'Раздел удалён (уроки остались, но без раздела)')
     return redirect('teacher_course_dashboard', pk=course_pk)
+
+@login_required
+def apply_to_course(request, slug):
+    course = get_object_or_404(Course, slug=slug)
+    if request.user.is_staff:
+        return redirect('course', slug=slug)
+
+    Enrollment.objects.get_or_create(
+        student=request.user, course=course,
+        defaults={'status': Enrollment.STATUS_PENDING}
+    )
+    messages.success(request, 'Заявка отправлена! Ожидайте одобрения преподавателя.')
+    return redirect('course', slug=slug)
+
+
+@staff_member_required
+def teacher_enrollments(request):
+    status_filter = request.GET.get('status', 'pending')
+    enrollments = Enrollment.objects.select_related('student', 'course').all()
+    if status_filter:
+        enrollments = enrollments.filter(status=status_filter)
+    enrollments = enrollments.order_by('-enrolled_at')
+
+    pending_count = Enrollment.objects.filter(status=Enrollment.STATUS_PENDING).count()
+
+    return render(request, 'school/teacher/enrollments.html', {
+        'enrollments': enrollments,
+        'selected_status': status_filter,
+        'pending_count': pending_count,
+    })
+
+
+@staff_member_required
+def teacher_approve_enrollment(request, pk):
+    enrollment = get_object_or_404(Enrollment, pk=pk)
+    if request.method == 'POST':
+        enrollment.status = Enrollment.STATUS_APPROVED
+        enrollment.approved_at = timezone.now()
+        enrollment.save()
+        messages.success(request, f'Заявка {enrollment.student.first_name} одобрена!')
+    return redirect('teacher_enrollments')
+
+
+@staff_member_required
+def teacher_reject_enrollment(request, pk):
+    enrollment = get_object_or_404(Enrollment, pk=pk)
+    if request.method == 'POST':
+        enrollment.status = Enrollment.STATUS_REJECTED
+        enrollment.save()
+        messages.success(request, 'Заявка отклонена')
+    return redirect('teacher_enrollments')
