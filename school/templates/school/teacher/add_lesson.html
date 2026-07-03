@@ -19,7 +19,11 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label">Порядок</label>
-                <div class="mb-3">
+                <input type="number" name="order"
+                       value="{{ form_data.order|default:next_order }}"
+                       class="form-control" required>
+            </div>
+            <div class="mb-3">
                     <label class="form-label">Раздел (необязательно)</label>
                     <select name="module" class="form-select">
                         <option value="">Без раздела</option>
@@ -28,10 +32,6 @@
                         {% endfor %}
                     </select>
                 </div>
-                <input type="number" name="order"
-                       value="{{ form_data.order|default:next_order }}"
-                       class="form-control" required>
-            </div>
             <div class="mb-3">
                 <label class="form-label">Название</label>
                 <input type="text" name="title"
