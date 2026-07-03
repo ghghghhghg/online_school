@@ -421,6 +421,8 @@ def teacher_edit_profile(request):
 
 @login_required
 def student_profile(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
     enrollments = Enrollment.objects.filter(student=request.user).select_related('course')
     test_results = TestResult.objects.filter(student=request.user).select_related('test')
 

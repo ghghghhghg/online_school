@@ -23,9 +23,11 @@
                         Панель преподавателя
                     </a>
                 {% endif %}
+                    {% if not user.is_staff %}
                     <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
-                        Кабинет ученика
+                        👤 Кабинет
                     </a>
+                    {% endif %}
                 <span class="text-light me-3">{{ user.first_name }} {{ user.last_name }}</span>
                 <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
             {% else %}
