@@ -5,13 +5,13 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="form-check mb-3">
-            <input type="checkbox" name="is_published" class="form-check-input"
-                id="is_published" {% if course.is_published %}checked{% endif %}>
-            <label class="form-check-label" for="is_published">Курс опубликован (виден на сайте)</label>
-        </div>
         <form method="post">
             {% csrf_token %}
+            <div class="form-check mb-3">
+                <input type="checkbox" name="is_published" class="form-check-input"
+                    id="is_published" {% if course.is_published %}checked{% endif %}>
+                <label class="form-check-label" for="is_published">Курс опубликован (виден на сайте)</label>
+            </div>
             <div class="mb-3">
                 <label class="form-label">Название</label>
                 <input type="text" name="title" value="{{ course.title }}"
