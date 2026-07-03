@@ -44,11 +44,16 @@
 {% for module in modules %}
 <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
     <h6 style="color: var(--accent);">{{ module.title }}</h6>
-    <form method="post" action="{% url 'teacher_delete_module' module.pk %}"
-          onsubmit="return confirm('Удалить раздел? Уроки останутся без раздела.')">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-outline-danger btn-sm">🗑 Раздел</button>
-    </form>
+    <div>
+        <a href="{% url 'teacher_edit_module' module.pk %}"
+           class="btn btn-outline-secondary btn-sm me-1">✏️</a>
+        <form method="post" action="{% url 'teacher_delete_module' module.pk %}"
+              style="display:inline"
+              onsubmit="return confirm('Удалить раздел? Уроки останутся без раздела.')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+        </form>
+    </div>
 </div>
 {% for lesson in module.lessons.all %}
 <div class="card mb-2">

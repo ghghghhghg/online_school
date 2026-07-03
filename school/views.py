@@ -799,8 +799,8 @@ def teacher_edit_module(request, pk):
         module.order = request.POST.get('order', module.order)
         module.save()
         messages.success(request, 'Раздел обновлён!')
-    return redirect('teacher_course_dashboard', pk=module.course.pk)
-
+        return redirect('teacher_course_dashboard', pk=module.course.pk)
+    return render(request, 'school/teacher/edit_module.html', {'module': module})
 
 @staff_member_required
 def teacher_delete_module(request, pk):
