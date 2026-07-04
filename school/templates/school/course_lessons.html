@@ -46,9 +46,6 @@
                 <span class="text-muted me-2">⭕</span>
             {% endif %}
             <strong>{{ lesson.order }}. {{ lesson.title }}</strong>
-            {% if lesson.description %}
-                <p class="text-muted mb-0 mt-1 small">{{ lesson.description }}</p>
-            {% endif %}
         </div>
         <a href="{% url 'lesson' lesson.pk %}" class="btn btn-outline-primary btn-sm">
             {% if lesson.id in completed_ids %}Повторить{% else %}Начать{% endif %}
