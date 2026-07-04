@@ -232,7 +232,9 @@ def teacher_add_lesson(request, pk):
             )
             if request.FILES.get('video_file'):
                 lesson.video_file = request.FILES.get('video_file')
-                lesson.save()
+            if request.FILES.get('conspect'):
+                lesson.conspect = request.FILES.get('conspect')
+            lesson.save()
             messages.success(request, 'Урок добавлен!')
             return redirect('teacher_course_dashboard', pk=course.pk)
 
@@ -263,6 +265,8 @@ def teacher_edit_lesson(request, pk):
         lesson.module_id = request.POST.get('module') or None
         if request.FILES.get('video_file'):
             lesson.video_file = request.FILES.get('video_file')
+        if request.FILES.get('conspect'):
+            lesson.conspect = request.FILES.get('conspect')
         lesson.save()
         messages.success(request, 'Урок обновлён!')
         return redirect('teacher_course_dashboard', pk=lesson.course.pk)

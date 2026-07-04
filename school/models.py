@@ -60,9 +60,9 @@ class Lesson(models.Model):
                                related_name='lessons', verbose_name='Раздел')
     title = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
-    video_file = CloudinaryField(resource_type='video',
-                                 blank=True, null=True)
+    video_file = CloudinaryField(resource_type='video', blank=True, null=True)
     video_url = models.URLField(blank=True, verbose_name='Ссылка на видео (VK/YouTube)')
+    conspect = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Конспект (PDF)')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     created_at = models.DateTimeField(auto_now_add=True)
 

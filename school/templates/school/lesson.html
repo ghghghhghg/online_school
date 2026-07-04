@@ -30,6 +30,12 @@
     </iframe>
 </div>
 {% endif %}
+{% if lesson.conspect %}
+<a href="{{ lesson.conspect.url }}" target="_blank"
+   class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-3">
+    📄 Скачать конспект урока
+</a>
+{% endif %}
 {% if lesson.homework %}
 <a href="{% url 'homework' lesson.pk %}" class="btn btn-outline-primary mb-3">
     Домашнее задание
