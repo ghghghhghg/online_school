@@ -56,6 +56,9 @@
                     Посмотреть ответы
                 </a>
                 {% endif %}
+                <a href="{% url 'teacher_course_dashboard' checkpoint.course.pk %}" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
             </div>
         </form>
     </div>
