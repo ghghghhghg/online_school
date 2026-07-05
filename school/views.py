@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout, authenticate,update_session_auth_
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module
+    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointSubmission
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -120,24 +120,25 @@ def course_lessons_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
+    completed_ids = []
     if not request.user.is_staff:
-        enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
-        if not enrollment or enrollment.status != Enrollment.STATUS_APPROVED:
-            messages.warning(request, 'Доступ к урокам появится после одобрения заявки преподавателем')
-            return redirect('course', slug=course.slug)
-
-    completed_ids = LessonProgress.objects.filter(
-        student=request.user,
-        lesson__in=lessons
-    ).values_list('lesson_id', flat=True) if not request.user.is_staff else []
+        Enrollment.objects.get_or_create(student=request.user, course=course)
+        completed_ids = LessonProgress.objects.filter(
+            student=request.user,
+            lesson__in=lessons
+        ).values_list('lesson_id', flat=True)
 
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = lessons.filter(module__isnull=True)
+    checkpoints = course.checkpoints.all()
+    checkpoints_before_start = checkpoints.filter(after_module__isnull=True)
 
     return render(request, 'school/course_lessons.html', {
         'course': course,
         'modules': modules,
         'lessons_without_module': lessons_without_module,
+        'checkpoints': checkpoints,
+        'checkpoints_before_start': checkpoints_before_start,
         'completed_ids': completed_ids,
     })
 
@@ -182,10 +183,14 @@ def teacher_course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = course.lessons.filter(module__isnull=True)
+    checkpoints = course.checkpoints.all()
+    checkpoints_before_start = checkpoints.filter(after_module__isnull=True)
     return render(request, 'school/teacher/course_dashboard.html', {
         'course': course,
         'modules': modules,
         'lessons_without_module': lessons_without_module,
+        'checkpoints': checkpoints,
+        'checkpoints_before_start': checkpoints_before_start,
     })
 
 
@@ -921,3 +926,157 @@ def teacher_reject_enrollment(request, pk):
         enrollment.save()
         messages.success(request, 'Заявка отклонена')
     return redirect('teacher_enrollments')
+
+
+@login_required
+def checkpoint_view(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+
+    submissions = CheckpointSubmission.objects.filter(
+        checkpoint=checkpoint, student=request.user
+    )
+    last_submission = submissions.first()
+
+    if request.user.is_staff:
+        messages.info(request, 'Вы просматриваете контрольную точку как преподаватель')
+        return render(request, 'school/checkpoint.html', {
+            'checkpoint': checkpoint,
+            'last_submission': None,
+        })
+
+    if request.method == 'POST':
+        if checkpoint.checkpoint_type == Checkpoint.TYPE_AUTO:
+            answer = request.POST.get('answer', '').strip().lower()
+            correct_variants = [
+                line.strip().lower()
+                for line in checkpoint.correct_answers.splitlines() if line.strip()
+            ]
+            passed = answer in correct_variants
+
+            CheckpointSubmission.objects.create(
+                checkpoint=checkpoint,
+                student=request.user,
+                answer_text=request.POST.get('answer', ''),
+                status=CheckpointSubmission.STATUS_CHECKED,
+                passed=passed,
+                checked_at=timezone.now(),
+            )
+            if passed:
+                messages.success(request, '✅ Верно!')
+            else:
+                messages.warning(request, '❌ Неверно, попробуйте ещё раз')
+            return redirect('checkpoint', pk=pk)
+
+        else:
+            text = request.POST.get('answer_text', '').strip()
+            file = request.FILES.get('file')
+            errors = []
+            if checkpoint.submission_type in [Homework.SUBMISSION_TEXT, Homework.SUBMISSION_BOTH] and not text:
+                errors.append('Введите текст ответа')
+            if checkpoint.submission_type in [Homework.SUBMISSION_FILE, Homework.SUBMISSION_BOTH] and not file:
+                errors.append('Прикрепите файл')
+
+            if not errors:
+                CheckpointSubmission.objects.create(
+                    checkpoint=checkpoint,
+                    student=request.user,
+                    answer_text=text,
+                    file=file,
+                )
+                messages.success(request, 'Ответ отправлен на проверку!')
+                return redirect('checkpoint', pk=pk)
+
+            return render(request, 'school/checkpoint.html', {
+                'checkpoint': checkpoint,
+                'last_submission': last_submission,
+                'errors': errors,
+            })
+
+    return render(request, 'school/checkpoint.html', {
+        'checkpoint': checkpoint,
+        'last_submission': last_submission,
+    })
+
+
+@staff_member_required
+def teacher_add_checkpoint(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        checkpoint_type = request.POST.get('checkpoint_type')
+        after_module_id = request.POST.get('after_module') or None
+
+        errors = []
+        if not title:
+            errors.append('Введите название')
+        if not description:
+            errors.append('Введите текст задания')
+
+        if not errors:
+            Checkpoint.objects.create(
+                course=course,
+                after_module_id=after_module_id,
+                title=title,
+                description=description,
+                checkpoint_type=checkpoint_type,
+                correct_answers=request.POST.get('correct_answers', ''),
+                submission_type=request.POST.get('submission_type', Homework.SUBMISSION_TEXT),
+            )
+            messages.success(request, 'Контрольная точка добавлена!')
+            return redirect('teacher_course_dashboard', pk=course.pk)
+
+        return render(request, 'school/teacher/add_checkpoint.html', {
+            'course': course, 'errors': errors,
+        })
+
+    return render(request, 'school/teacher/add_checkpoint.html', {'course': course})
+
+
+@staff_member_required
+def teacher_edit_checkpoint(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+    if request.method == 'POST':
+        checkpoint.title = request.POST.get('title', '').strip()
+        checkpoint.description = request.POST.get('description', '').strip()
+        checkpoint.checkpoint_type = request.POST.get('checkpoint_type')
+        checkpoint.after_module_id = request.POST.get('after_module') or None
+        checkpoint.correct_answers = request.POST.get('correct_answers', '')
+        checkpoint.submission_type = request.POST.get('submission_type', Homework.SUBMISSION_TEXT)
+        checkpoint.save()
+        messages.success(request, 'Контрольная точка обновлена!')
+        return redirect('teacher_course_dashboard', pk=checkpoint.course.pk)
+    return render(request, 'school/teacher/edit_checkpoint.html', {'checkpoint': checkpoint})
+
+
+@staff_member_required
+def teacher_delete_checkpoint(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+    course_pk = checkpoint.course.pk
+    if request.method == 'POST':
+        checkpoint.delete()
+        messages.success(request, 'Контрольная точка удалена')
+    return redirect('teacher_course_dashboard', pk=course_pk)
+
+
+@staff_member_required
+def teacher_checkpoint_submissions(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+    submissions = checkpoint.submissions.select_related('student').all()
+    return render(request, 'school/teacher/checkpoint_submissions.html', {
+        'checkpoint': checkpoint,
+        'submissions': submissions,
+    })
+
+
+@staff_member_required
+def teacher_check_checkpoint_submission(request, pk):
+    submission = get_object_or_404(CheckpointSubmission, pk=pk)
+    if request.method == 'POST':
+        submission.passed = request.POST.get('passed') == 'yes'
+        submission.teacher_comment = request.POST.get('comment', '')
+        submission.status = CheckpointSubmission.STATUS_CHECKED
+        submission.checked_at = timezone.now()
+        submission.save()
+        messages.success(request, 'Проверено!')
+    return redirect('teacher_checkpoint_submissions', pk=submission.checkpoint.pk)

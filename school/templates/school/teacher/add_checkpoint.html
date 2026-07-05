@@ -1,0 +1,65 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Новая контрольная точка</h2>
+
+{% if errors %}
+    <div class="alert alert-warning">
+        <ul class="mb-0 ps-3">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">После какого раздела разместить</label>
+                <select name="after_module" class="form-select">
+                    <option value="">В самом начале курса</option>
+                    {% for module in course.modules.all %}
+                    <option value="{{ module.id }}">После «{{ module.title }}»</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Текст задания</label>
+                <textarea name="description" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Тип проверки</label>
+                <select name="checkpoint_type" class="form-select" id="checkpoint_type" onchange="toggleFields()">
+                    <option value="manual">Проверка преподавателем (текст/файл)</option>
+                    <option value="auto">Автопроверка текста</option>
+                </select>
+            </div>
+            <div class="mb-3" id="auto-field" style="display: none;">
+                <label class="form-label">Правильные ответы (каждый вариант с новой строки)</label>
+                <textarea name="correct_answers" class="form-control" rows="3"
+                          placeholder="да&#10;конечно&#10;согласен"></textarea>
+            </div>
+            <div class="mb-3" id="manual-field">
+                <label class="form-label">Как ученик отправляет ответ</label>
+                <select name="submission_type" class="form-select">
+                    <option value="text">Только текст</option>
+                    <option value="file">Только файл</option>
+                    <option value="both">Текст и файл</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Создать</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const type = document.getElementById('checkpoint_type').value;
+    document.getElementById('auto-field').style.display = type === 'auto' ? 'block' : 'none';
+    document.getElementById('manual-field').style.display = type === 'manual' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

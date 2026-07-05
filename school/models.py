@@ -338,3 +338,70 @@ class HomeworkSubmission(models.Model):
 
     def __str__(self):
         return f'{self.student.username} — {self.homework.title}'
+
+class Checkpoint(models.Model):
+    TYPE_AUTO = 'auto'
+    TYPE_MANUAL = 'manual'
+    TYPE_CHOICES = [
+        (TYPE_AUTO, 'Автопроверка текста'),
+        (TYPE_MANUAL, 'Проверка преподавателем'),
+    ]
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='checkpoints', verbose_name='Курс')
+    after_module = models.ForeignKey(Module, on_delete=models.SET_NULL,
+                                     null=True, blank=True, related_name='+',
+                                     verbose_name='После раздела (пусто = в начале курса)')
+    title = models.CharField(max_length=200, verbose_name='Название')
+    description = models.TextField(verbose_name='Задание')
+    checkpoint_type = models.CharField(max_length=10, choices=TYPE_CHOICES,
+                                       default=TYPE_MANUAL, verbose_name='Тип проверки')
+
+    # Для автопроверки — приемлемые варианты ответа, каждый с новой строки
+    correct_answers = models.TextField(blank=True, verbose_name='Правильные ответы (по одному на строку)')
+
+    # Для ручной проверки — формат сдачи, как в домашке
+    submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
+                                       default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
+
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок среди точек в этом месте')
+
+    class Meta:
+        verbose_name = 'Контрольная точка'
+        verbose_name_plural = 'Контрольные точки'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'Точка: {self.title}'
+
+
+class CheckpointSubmission(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_CHECKED = 'checked'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'На проверке'),
+        (STATUS_CHECKED, 'Проверено'),
+    ]
+
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE,
+                                   related_name='submissions', verbose_name='Точка')
+    student = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='checkpoint_submissions', verbose_name='Ученик')
+    answer_text = models.TextField(blank=True, verbose_name='Ответ')
+    file = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Файл')
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES,
+                              default=STATUS_PENDING, verbose_name='Статус')
+    passed = models.BooleanField(null=True, blank=True, verbose_name='Зачтено')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
+
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Сдача контрольной точки'
+        verbose_name_plural = 'Сдачи контрольных точек'
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f'{self.student.username} — {self.checkpoint.title}'

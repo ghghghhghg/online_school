@@ -1,0 +1,72 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Редактировать контрольную точку</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">После какого раздела разместить</label>
+                <select name="after_module" class="form-select">
+                    <option value="">В самом начале курса</option>
+                    {% for module in checkpoint.course.modules.all %}
+                    <option value="{{ module.id }}" {% if checkpoint.after_module_id == module.id %}selected{% endif %}>
+                        После «{{ module.title }}»
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" name="title" value="{{ checkpoint.title }}" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Текст задания</label>
+                <textarea name="description" class="form-control" rows="3" required>{{ checkpoint.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Тип проверки</label>
+                <select name="checkpoint_type" class="form-select" id="checkpoint_type" onchange="toggleFields()">
+                    <option value="manual" {% if checkpoint.checkpoint_type == 'manual' %}selected{% endif %}>
+                        Проверка преподавателем (текст/файл)
+                    </option>
+                    <option value="auto" {% if checkpoint.checkpoint_type == 'auto' %}selected{% endif %}>
+                        Автопроверка текста
+                    </option>
+                </select>
+            </div>
+            <div class="mb-3" id="auto-field">
+                <label class="form-label">Правильные ответы (каждый вариант с новой строки)</label>
+                <textarea name="correct_answers" class="form-control" rows="3">{{ checkpoint.correct_answers }}</textarea>
+            </div>
+            <div class="mb-3" id="manual-field">
+                <label class="form-label">Как ученик отправляет ответ</label>
+                <select name="submission_type" class="form-select">
+                    <option value="text" {% if checkpoint.submission_type == 'text' %}selected{% endif %}>Только текст</option>
+                    <option value="file" {% if checkpoint.submission_type == 'file' %}selected{% endif %}>Только файл</option>
+                    <option value="both" {% if checkpoint.submission_type == 'both' %}selected{% endif %}>Текст и файл</option>
+                </select>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                {% if checkpoint.checkpoint_type == 'manual' %}
+                <a href="{% url 'teacher_checkpoint_submissions' checkpoint.pk %}" class="btn btn-outline-secondary">
+                    Посмотреть ответы
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const type = document.getElementById('checkpoint_type').value;
+    document.getElementById('auto-field').style.display = type === 'auto' ? 'block' : 'none';
+    document.getElementById('manual-field').style.display = type === 'manual' ? 'block' : 'none';
+}
+toggleFields();
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Ответы: {{ checkpoint.title }}</h2>
+
+{% for submission in submissions %}
+<div class="card mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+        <small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small>
+    </div>
+    {% if submission.answer_text %}<p class="mb-2">{{ submission.answer_text }}</p>{% endif %}
+    {% if submission.file %}<a href="{{ submission.file.url }}" target="_blank" class="d-block mb-2">📎 Файл</a>{% endif %}
+
+    {% if submission.status == 'checked' %}
+        <div class="alert {% if submission.passed %}alert-success{% else %}alert-warning{% endif %} mb-0">
+            {% if submission.passed %}Зачтено{% else %}Не зачтено{% endif %}
+            {% if submission.teacher_comment %}<br>{{ submission.teacher_comment }}{% endif %}
+        </div>
+    {% else %}
+        <form method="post" action="{% url 'teacher_check_checkpoint_submission' submission.pk %}" class="mt-2">
+            {% csrf_token %}
+            <div class="mb-2">
+                <select name="passed" class="form-select form-select-sm" style="max-width: 200px;" required>
+                    <option value="yes">Зачтено</option>
+                    <option value="no">Не зачтено</option>
+                </select>
+            </div>
+            <div class="mb-2">
+                <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Комментарий"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Проверить</button>
+        </form>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">Пока никто не отправил ответ</p>
+{% endfor %}
+{% endblock %}

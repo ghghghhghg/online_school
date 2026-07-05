@@ -23,6 +23,16 @@ urlpatterns = [
     path('teacher/enrollment/<int:pk>/approve/', views.teacher_approve_enrollment, name='teacher_approve_enrollment'),
     path('teacher/enrollment/<int:pk>/reject/', views.teacher_reject_enrollment, name='teacher_reject_enrollment'),
 
+    # Контрольные точки — ученик
+    path('checkpoint/<int:pk>/', views.checkpoint_view, name='checkpoint'),
+
+    # Контрольные точки — преподаватель
+    path('teacher/course/<int:pk>/checkpoint/add/', views.teacher_add_checkpoint, name='teacher_add_checkpoint'),
+    path('teacher/checkpoint/<int:pk>/edit/', views.teacher_edit_checkpoint, name='teacher_edit_checkpoint'),
+    path('teacher/checkpoint/<int:pk>/delete/', views.teacher_delete_checkpoint, name='teacher_delete_checkpoint'),
+    path('teacher/checkpoint/<int:pk>/submissions/', views.teacher_checkpoint_submissions, name='teacher_checkpoint_submissions'),
+    path('teacher/checkpoint-submission/<int:pk>/check/', views.teacher_check_checkpoint_submission, name='teacher_check_checkpoint_submission'),
+
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
     path('lesson/<int:pk>/comment/', views.add_comment, name='add_comment'),
