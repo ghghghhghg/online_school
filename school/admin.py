@@ -1,7 +1,11 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
-    HomeworkSubmission, Module, Checkpoint, CheckpointSubmission
+    HomeworkSubmission, Module, Checkpoint, CheckpointSubmission, CheckpointTask
 
+
+class CheckpointTaskInline(admin.TabularInline):
+    model = CheckpointTask
+    extra = 1
 
 class LessonInline(admin.TabularInline):
     """Уроки прямо внутри страницы курса"""
@@ -86,10 +90,11 @@ class ModuleAdmin(admin.ModelAdmin):
 
 @admin.register(Checkpoint)
 class CheckpointAdmin(admin.ModelAdmin):
-    list_display = ['title', 'course', 'checkpoint_type', 'after_module']
+    list_display = ['title', 'course', 'after_module']
+    inlines = [CheckpointTaskInline]
 
 
 @admin.register(CheckpointSubmission)
 class CheckpointSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['student', 'checkpoint', 'status', 'submitted_at']
+    list_display = ['student', 'task', 'status', 'submitted_at']
     list_filter = ['status']

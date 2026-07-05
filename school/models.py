@@ -340,30 +340,12 @@ class HomeworkSubmission(models.Model):
         return f'{self.student.username} — {self.homework.title}'
 
 class Checkpoint(models.Model):
-    TYPE_AUTO = 'auto'
-    TYPE_MANUAL = 'manual'
-    TYPE_CHOICES = [
-        (TYPE_AUTO, 'Автопроверка текста'),
-        (TYPE_MANUAL, 'Проверка преподавателем'),
-    ]
-
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='checkpoints', verbose_name='Курс')
     after_module = models.ForeignKey(Module, on_delete=models.SET_NULL,
                                      null=True, blank=True, related_name='+',
                                      verbose_name='После раздела (пусто = в начале курса)')
     title = models.CharField(max_length=200, verbose_name='Название')
-    description = models.TextField(verbose_name='Задание')
-    checkpoint_type = models.CharField(max_length=10, choices=TYPE_CHOICES,
-                                       default=TYPE_MANUAL, verbose_name='Тип проверки')
-
-    # Для автопроверки — приемлемые варианты ответа, каждый с новой строки
-    correct_answers = models.TextField(blank=True, verbose_name='Правильные ответы (по одному на строку)')
-
-    # Для ручной проверки — формат сдачи, как в домашке
-    submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
-                                       default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
-
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок среди точек в этом месте')
 
     class Meta:
@@ -375,6 +357,33 @@ class Checkpoint(models.Model):
         return f'Точка: {self.title}'
 
 
+class CheckpointTask(models.Model):
+    TYPE_AUTO = 'auto'
+    TYPE_MANUAL = 'manual'
+    TYPE_CHOICES = [
+        (TYPE_AUTO, 'Автопроверка текста'),
+        (TYPE_MANUAL, 'Проверка преподавателем'),
+    ]
+
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE,
+                                   related_name='tasks', verbose_name='Точка')
+    title = models.CharField(max_length=200, verbose_name='Название задания')
+    description = models.TextField(verbose_name='Задание')
+    task_type = models.CharField(max_length=10, choices=TYPE_CHOICES,
+                                 default=TYPE_MANUAL, verbose_name='Тип проверки')
+    correct_answers = models.TextField(blank=True, verbose_name='Правильные ответы (по одному на строку)')
+    submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
+                                       default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Задание контрольной точки'
+        verbose_name_plural = 'Задания контрольной точки'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.checkpoint.title} — {self.title}'
+
 class CheckpointSubmission(models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CHECKED = 'checked'
@@ -383,8 +392,8 @@ class CheckpointSubmission(models.Model):
         (STATUS_CHECKED, 'Проверено'),
     ]
 
-    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE,
-                                   related_name='submissions', verbose_name='Точка')
+    task = models.ForeignKey(CheckpointTask, on_delete=models.CASCADE,
+                             related_name='submissions', verbose_name='Задание')
     student = models.ForeignKey(User, on_delete=models.CASCADE,
                                 related_name='checkpoint_submissions', verbose_name='Ученик')
     answer_text = models.TextField(blank=True, verbose_name='Ответ')
@@ -399,9 +408,9 @@ class CheckpointSubmission(models.Model):
     checked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Сдача контрольной точки'
-        verbose_name_plural = 'Сдачи контрольных точек'
+        verbose_name = 'Сдача задания контрольной точки'
+        verbose_name_plural = 'Сдачи заданий контрольных точек'
         ordering = ['-submitted_at']
 
     def __str__(self):
-        return f'{self.student.username} — {self.checkpoint.title}'
+        return f'{self.student.username} — {self.task.title}'
