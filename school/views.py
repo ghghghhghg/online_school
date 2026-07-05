@@ -1087,7 +1087,7 @@ def teacher_check_checkpoint_submission(request, pk):
         submission.checked_at = timezone.now()
         submission.save()
         messages.success(request, 'Проверено!')
-    return redirect('teacher_checkpoint_submissions', pk=submission.task.pk)
+    return redirect(request.META.get('HTTP_REFERER', 'teacher_all_checkpoints'))
 
 @staff_member_required
 def teacher_add_checkpoint_task(request, pk):
@@ -1127,3 +1127,54 @@ def teacher_delete_checkpoint_task(request, pk):
         task.delete()
         messages.success(request, 'Задание удалено')
     return redirect('teacher_edit_checkpoint', pk=checkpoint_pk)
+
+@staff_member_required
+def teacher_all_checkpoints(request):
+    submissions = CheckpointSubmission.objects.select_related(
+        'student', 'task', 'task__checkpoint', 'task__checkpoint__course'
+    ).all()
+
+    course_id = request.GET.get('course')
+    checkpoint_id = request.GET.get('checkpoint')
+    status = request.GET.get('status')
+
+    if course_id:
+        submissions = submissions.filter(task__checkpoint__course_id=course_id)
+    if checkpoint_id:
+        submissions = submissions.filter(task__checkpoint_id=checkpoint_id)
+    if status:
+        submissions = submissions.filter(status=status)
+
+    # Группируем по (ученик, задание) — последняя попытка первая
+    groups = {}
+    for s in submissions:
+        key = (s.student_id, s.task_id)
+        groups.setdefault(key, []).append(s)
+
+    grouped_list = []
+    for (student_id, task_id), items in groups.items():
+        items.sort(key=lambda x: x.submitted_at, reverse=True)
+        grouped_list.append({
+            'latest': items[0],
+            'history': items[1:],
+            'attempts_count': len(items),
+        })
+
+    grouped_list.sort(key=lambda g: (g['latest'].status == 'checked', -g['latest'].submitted_at.timestamp()))
+
+    courses = Course.objects.all()
+    checkpoints = Checkpoint.objects.all()
+    if course_id:
+        checkpoints = checkpoints.filter(course_id=course_id)
+
+    pending_count = CheckpointSubmission.objects.filter(status='pending').count()
+
+    return render(request, 'school/teacher/all_checkpoints.html', {
+        'grouped_list': grouped_list,
+        'courses': courses,
+        'checkpoints': checkpoints,
+        'selected_course': course_id,
+        'selected_checkpoint': checkpoint_id,
+        'selected_status': status,
+        'pending_count': pending_count,
+    })

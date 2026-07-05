@@ -16,6 +16,15 @@
                 </span>
             {% endif %}
         </a>
+        <a href="{% url 'teacher_all_checkpoints' %}" class="btn btn-outline-secondary btn-sm me-2 position-relative">
+            🚩 Контрольные точки
+            {% if pending_checkpoint_count %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                      style="background-color: var(--accent); font-size: 0.65rem;">
+                    {{ pending_checkpoint_count }}
+                </span>
+            {% endif %}
+        </a>
         <a href="{% url 'teacher_enrollments' %}" class="btn btn-outline-secondary btn-sm me-2 position-relative">
             ✅ Заявки на курсы
             {% if pending_enrollment_count %}

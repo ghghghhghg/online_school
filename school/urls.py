@@ -37,6 +37,7 @@ urlpatterns = [
          name='teacher_checkpoint_submissions'),
     path('teacher/checkpoint-submission/<int:pk>/check/', views.teacher_check_checkpoint_submission,
          name='teacher_check_checkpoint_submission'),
+    path('teacher/checkpoints/', views.teacher_all_checkpoints, name='teacher_all_checkpoints'),
 
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),
