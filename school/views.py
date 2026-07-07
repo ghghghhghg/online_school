@@ -772,6 +772,15 @@ def teacher_edit_homework(request, pk):
         return redirect('teacher_course_dashboard', pk=homework.lesson.course.pk)
     return render(request, 'school/teacher/edit_homework.html', {'homework': homework})
 
+@staff_member_required
+def teacher_delete_homework(request, pk):
+    homework = get_object_or_404(Homework, pk=pk)
+    lesson_pk = homework.lesson.pk
+    course_pk = homework.lesson.course.pk
+    if request.method == 'POST':
+        homework.delete()
+        messages.success(request, 'Домашнее задание удалено')
+    return redirect('teacher_course_dashboard', pk=course_pk)
 
 @staff_member_required
 def teacher_homework_submissions(request, pk):

@@ -99,7 +99,7 @@
                    class="btn btn-outline-primary btn-sm me-1">+ Тест</a>
             {% endif %}
             {% if lesson.homework %}
-                <a href="{% url 'teacher_homework_submissions' lesson.homework.pk %}"
+                <a href="{% url 'teacher_edit_homework' lesson.homework.pk %}"
                    class="btn btn-outline-warning btn-sm me-1">📋 ДЗ</a>
             {% else %}
                 <a href="{% url 'teacher_create_homework' lesson.pk %}"
@@ -160,7 +160,7 @@
                    class="btn btn-outline-primary btn-sm me-1">+ Тест</a>
             {% endif %}
             {% if lesson.homework %}
-                <a href="{% url 'teacher_homework_submissions' lesson.homework.pk %}"
+                <a href="{% url 'teacher_edit_homework' lesson.homework.pk %}"
                    class="btn btn-outline-warning btn-sm me-1">📋 ДЗ</a>
             {% else %}
                 <a href="{% url 'teacher_create_homework' lesson.pk %}"
