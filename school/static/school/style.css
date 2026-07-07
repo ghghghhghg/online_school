@@ -251,3 +251,11 @@ p, .lead {
 a > .card:hover {
   background-color: var(--paper);
 }
+.navbar .ms-auto {
+  display: flex;
+  align-items: center;
+}
+
+.navbar .ms-auto .dropdown {
+  display: inline-block;
+}
