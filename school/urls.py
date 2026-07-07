@@ -25,6 +25,7 @@ urlpatterns = [
 
     # Контрольные точки — ученик
     path('checkpoint/<int:pk>/', views.checkpoint_view, name='checkpoint'),
+    path('checkpoint-result/<int:pk>/', views.checkpoint_result_view, name='checkpoint_result'),
 
     path('teacher/course/<int:pk>/checkpoint/add/', views.teacher_add_checkpoint, name='teacher_add_checkpoint'),
     path('teacher/checkpoint/<int:pk>/edit/', views.teacher_edit_checkpoint, name='teacher_edit_checkpoint'),
@@ -33,11 +34,9 @@ urlpatterns = [
          name='teacher_add_checkpoint_task'),
     path('teacher/checkpoint-task/<int:pk>/delete/', views.teacher_delete_checkpoint_task,
          name='teacher_delete_checkpoint_task'),
-    path('teacher/checkpoint-task/<int:pk>/submissions/', views.teacher_checkpoint_submissions,
-         name='teacher_checkpoint_submissions'),
-    path('teacher/checkpoint-submission/<int:pk>/check/', views.teacher_check_checkpoint_submission,
-         name='teacher_check_checkpoint_submission'),
     path('teacher/checkpoints/', views.teacher_all_checkpoints, name='teacher_all_checkpoints'),
+    path('teacher/checkpoint-attempt/<int:pk>/check/', views.teacher_check_checkpoint_attempt,
+         name='teacher_check_checkpoint_attempt'),
 
     path('lesson/<int:pk>/', views.lesson_view, name='lesson'),
     path('lesson/<int:pk>/complete/', views.complete_lesson, name='complete_lesson'),

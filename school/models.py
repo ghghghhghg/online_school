@@ -384,7 +384,39 @@ class CheckpointTask(models.Model):
     def __str__(self):
         return f'{self.checkpoint.title} — {self.title}'
 
-class CheckpointSubmission(models.Model):
+class CheckpointAttempt(models.Model):
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE,
+                                   related_name='attempts', verbose_name='Точка')
+    student = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='checkpoint_attempts', verbose_name='Ученик')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Попытка контрольной точки'
+        verbose_name_plural = 'Попытки контрольных точек'
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f'{self.student.username} — {self.checkpoint.title}'
+
+    @property
+    def all_passed(self):
+        answers = self.answers.select_related('task')
+        if not answers:
+            return False
+        for a in answers:
+            if a.task.task_type == CheckpointTask.TYPE_MANUAL and a.status != 'checked':
+                return False
+            if not a.passed:
+                return False
+        return True
+
+    @property
+    def has_pending(self):
+        return self.answers.filter(task__task_type=CheckpointTask.TYPE_MANUAL, status='pending').exists()
+
+
+class CheckpointAnswer(models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CHECKED = 'checked'
     STATUS_CHOICES = [
@@ -392,25 +424,22 @@ class CheckpointSubmission(models.Model):
         (STATUS_CHECKED, 'Проверено'),
     ]
 
+    attempt = models.ForeignKey(CheckpointAttempt, on_delete=models.CASCADE,
+                                related_name='answers', verbose_name='Попытка')
     task = models.ForeignKey(CheckpointTask, on_delete=models.CASCADE,
-                             related_name='submissions', verbose_name='Задание')
-    student = models.ForeignKey(User, on_delete=models.CASCADE,
-                                related_name='checkpoint_submissions', verbose_name='Ученик')
+                             related_name='answers', verbose_name='Задание')
     answer_text = models.TextField(blank=True, verbose_name='Ответ')
     file = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Файл')
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES,
                               default=STATUS_PENDING, verbose_name='Статус')
     passed = models.BooleanField(null=True, blank=True, verbose_name='Зачтено')
-    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
-
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий')
     checked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Сдача задания контрольной точки'
-        verbose_name_plural = 'Сдачи заданий контрольных точек'
-        ordering = ['-submitted_at']
+        verbose_name = 'Ответ на задание точки'
+        verbose_name_plural = 'Ответы на задания точки'
 
     def __str__(self):
-        return f'{self.student.username} — {self.task.title}'
+        return f'{self.attempt} — {self.task.title}'

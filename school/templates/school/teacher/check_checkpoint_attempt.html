@@ -1,0 +1,62 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<a href="{% url 'teacher_all_checkpoints' %}" class="btn btn-outline-secondary btn-sm mb-3">
+    ← Назад к списку
+</a>
+
+<h2 class="mb-1">{{ attempt.checkpoint.title }}</h2>
+<p class="text-muted mb-4">
+    {{ attempt.student.first_name }} {{ attempt.student.last_name }} • {{ attempt.submitted_at|date:"d.m.Y H:i" }}
+</p>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {% for answer in answers %}
+    <div class="card mb-3 p-3">
+        <h6>{{ answer.task.title }}</h6>
+        <p class="text-muted small">{{ answer.task.description }}</p>
+
+        {% if answer.task.task_type == 'auto' %}
+            <p class="mb-1">Ответ ученика: «{{ answer.answer_text }}»</p>
+            {% if answer.passed %}
+                <span class="badge bg-success">✅ Верно (проверено автоматически)</span>
+            {% else %}
+                <span class="badge bg-danger">❌ Неверно (проверено автоматически)</span>
+            {% endif %}
+        {% else %}
+            {% if answer.answer_text %}<p class="mb-2">{{ answer.answer_text }}</p>{% endif %}
+            {% if answer.file %}<a href="{{ answer.file.url }}" target="_blank" class="d-block mb-2">📎 Файл</a>{% endif %}
+
+            {% if answer.status == 'checked' %}
+                <span class="badge {% if answer.passed %}bg-success{% else %}bg-danger{% endif %}">
+                    {% if answer.passed %}Зачтено{% else %}Не зачтено{% endif %}
+                </span>
+                {% if answer.teacher_comment %}<p class="text-muted small mt-2 mb-0">{{ answer.teacher_comment }}</p>{% endif %}
+            {% else %}
+                <div class="mb-2">
+                    <select name="passed_{{ answer.id }}" class="form-select form-select-sm" style="max-width: 200px;" required>
+                        <option value="yes">Зачтено</option>
+                        <option value="no">Не зачтено</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <textarea name="comment_{{ answer.id }}" class="form-control form-control-sm" rows="2"
+                              placeholder="Комментарий ученику"></textarea>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if attempt.has_pending %}
+    <button type="submit" class="btn btn-primary">Сохранить проверку</button>
+    {% endif %}
+</form>
+{% endblock %}

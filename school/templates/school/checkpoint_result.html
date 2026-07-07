@@ -1,0 +1,53 @@
+{% extends 'school/base.html' %}
+
+{% block title %}Результат — {{ attempt.checkpoint.title }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'course_lessons' attempt.checkpoint.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
+    ← Назад к курсу
+</a>
+
+<h2>🚩 {{ attempt.checkpoint.title }}</h2>
+<p class="text-muted mb-4">Отправлено: {{ attempt.submitted_at|date:"d.m.Y H:i" }}</p>
+
+{% if attempt.all_passed %}
+    <div class="alert alert-success">✅ Контрольная точка пройдена полностью!</div>
+{% elif attempt.has_pending %}
+    <div class="alert alert-secondary">⏳ Часть ответов ещё на проверке у преподавателя</div>
+{% else %}
+    <div class="alert alert-warning">Есть задания с ошибками — можно пройти точку заново</div>
+{% endif %}
+
+{% for answer in answers %}
+<div class="card mb-3 p-3">
+    <h6>{{ answer.task.title }}</h6>
+
+    {% if answer.task.task_type == 'auto' %}
+        <p class="mb-2">Ваш ответ: «{{ answer.answer_text }}»</p>
+        {% if answer.passed %}
+            <span class="badge bg-success">✅ Верно</span>
+        {% else %}
+            <span class="badge bg-danger">❌ Неверно</span>
+        {% endif %}
+    {% else %}
+        {% if answer.answer_text %}<p class="mb-2">{{ answer.answer_text }}</p>{% endif %}
+        {% if answer.file %}<a href="{{ answer.file.url }}" target="_blank" class="d-block mb-2">📎 Файл</a>{% endif %}
+
+        {% if answer.status == 'checked' %}
+            <span class="badge {% if answer.passed %}bg-success{% else %}bg-danger{% endif %}">
+                {% if answer.passed %}Зачтено{% else %}Не зачтено{% endif %}
+            </span>
+            {% if answer.teacher_comment %}
+                <p class="mt-2 mb-0 text-muted small">{{ answer.teacher_comment }}</p>
+            {% endif %}
+        {% else %}
+            <span class="badge bg-secondary">На проверке</span>
+        {% endif %}
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if not attempt.all_passed and not attempt.has_pending %}
+<a href="{% url 'checkpoint' attempt.checkpoint.pk %}" class="btn btn-primary">Пройти ещё раз</a>
+{% endif %}
+{% endblock %}

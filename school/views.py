@@ -5,8 +5,8 @@ from django.contrib.auth import login, logout, authenticate,update_session_auth_
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
-    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointSubmission, \
-    CheckpointTask
+    Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
+    CheckpointAttempt, CheckpointAnswer
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -117,16 +117,12 @@ def course_view(request, slug):
     })
 
 def is_checkpoint_passed(checkpoint, user):
-    tasks = checkpoint.tasks.all()
-    if not tasks:
+    attempt = CheckpointAttempt.objects.filter(
+        checkpoint=checkpoint, student=user
+    ).order_by('-submitted_at').first()
+    if not attempt:
         return False
-    for task in tasks:
-        submission = CheckpointSubmission.objects.filter(
-            task=task, student=user, passed=True
-        ).first()
-        if not submission:
-            return False
-    return True
+    return attempt.all_passed
 
 @login_required
 def course_lessons_view(request, slug):
@@ -957,67 +953,60 @@ def checkpoint_view(request, pk):
         return render(request, 'school/checkpoint.html', {
             'checkpoint': checkpoint,
             'tasks': tasks,
-            'submissions_map': {},
+            'last_attempt': None,
         })
 
-    # Последняя попытка по каждому заданию
-    submissions_map = {}
-    for task in tasks:
-        last = CheckpointSubmission.objects.filter(task=task, student=request.user).first()
-        submissions_map[task.id] = last
+    last_attempt = CheckpointAttempt.objects.filter(
+        checkpoint=checkpoint, student=request.user
+    ).prefetch_related('answers__task').first()
 
     if request.method == 'POST':
-        task_id = request.POST.get('task_id')
-        task = get_object_or_404(CheckpointTask, pk=task_id, checkpoint=checkpoint)
+        attempt = CheckpointAttempt.objects.create(checkpoint=checkpoint, student=request.user)
 
-        if task.task_type == CheckpointTask.TYPE_AUTO:
-            answer = request.POST.get('answer', '').strip().lower()
-            correct_variants = [
-                line.strip().lower()
-                for line in task.correct_answers.splitlines() if line.strip()
-            ]
-            passed = answer in correct_variants
-
-            CheckpointSubmission.objects.create(
-                task=task,
-                student=request.user,
-                answer_text=request.POST.get('answer', ''),
-                status=CheckpointSubmission.STATUS_CHECKED,
-                passed=passed,
-                checked_at=timezone.now(),
-            )
-            if passed:
-                messages.success(request, f'✅ «{task.title}» — верно!')
-            else:
-                messages.warning(request, f'❌ «{task.title}» — неверно, попробуйте ещё раз')
-            return redirect('checkpoint', pk=pk)
-
-        else:
-            text = request.POST.get('answer_text', '').strip()
-            file = request.FILES.get('file')
-            errors = []
-            if task.submission_type in [Homework.SUBMISSION_TEXT, Homework.SUBMISSION_BOTH] and not text:
-                errors.append('Введите текст ответа')
-            if task.submission_type in [Homework.SUBMISSION_FILE, Homework.SUBMISSION_BOTH] and not file:
-                errors.append('Прикрепите файл')
-
-            if not errors:
-                CheckpointSubmission.objects.create(
+        for task in tasks:
+            if task.task_type == CheckpointTask.TYPE_AUTO:
+                answer_text = request.POST.get(f'answer_{task.id}', '').strip()
+                correct_variants = [
+                    line.strip().lower()
+                    for line in task.correct_answers.splitlines() if line.strip()
+                ]
+                passed = answer_text.strip().lower() in correct_variants
+                CheckpointAnswer.objects.create(
+                    attempt=attempt,
                     task=task,
-                    student=request.user,
-                    answer_text=text,
-                    file=file,
+                    answer_text=answer_text,
+                    status=CheckpointAnswer.STATUS_CHECKED,
+                    passed=passed,
+                    checked_at=timezone.now(),
                 )
-                messages.success(request, f'«{task.title}» отправлено на проверку!')
-                return redirect('checkpoint', pk=pk)
+            else:
+                CheckpointAnswer.objects.create(
+                    attempt=attempt,
+                    task=task,
+                    answer_text=request.POST.get(f'answer_text_{task.id}', ''),
+                    file=request.FILES.get(f'file_{task.id}'),
+                )
 
-            messages.warning(request, ' '.join(errors))
-            return redirect('checkpoint', pk=pk)
+        messages.success(request, 'Ответы отправлены!')
+        return redirect('checkpoint_result', pk=attempt.pk)
 
     return render(request, 'school/checkpoint.html', {
         'checkpoint': checkpoint,
         'tasks': tasks,
-        'submissions_map': submissions_map,
+        'last_attempt': last_attempt,
+    })
+
+
+@login_required
+def checkpoint_result_view(request, pk):
+    attempt = get_object_or_404(CheckpointAttempt, pk=pk)
+    if attempt.student != request.user and not request.user.is_staff:
+        return redirect('index')
+
+    answers = attempt.answers.select_related('task').all()
+    return render(request, 'school/checkpoint_result.html', {
+        'attempt': attempt,
+        'answers': answers,
     })
 
 @staff_member_required
@@ -1056,39 +1045,6 @@ def teacher_edit_checkpoint(request, pk):
         'tasks': tasks,
     })
 
-
-@staff_member_required
-def teacher_delete_checkpoint(request, pk):
-    checkpoint = get_object_or_404(Checkpoint, pk=pk)
-    course_pk = checkpoint.course.pk
-    if request.method == 'POST':
-        checkpoint.delete()
-        messages.success(request, 'Контрольная точка удалена')
-    return redirect('teacher_course_dashboard', pk=course_pk)
-
-
-@staff_member_required
-def teacher_checkpoint_submissions(request, pk):
-    task = get_object_or_404(CheckpointTask, pk=pk)
-    submissions = task.submissions.select_related('student').all()
-    return render(request, 'school/teacher/checkpoint_submissions.html', {
-        'task': task,
-        'submissions': submissions,
-    })
-
-
-@staff_member_required
-def teacher_check_checkpoint_submission(request, pk):
-    submission = get_object_or_404(CheckpointSubmission, pk=pk)
-    if request.method == 'POST':
-        submission.passed = request.POST.get('passed') == 'yes'
-        submission.teacher_comment = request.POST.get('comment', '')
-        submission.status = CheckpointSubmission.STATUS_CHECKED
-        submission.checked_at = timezone.now()
-        submission.save()
-        messages.success(request, 'Проверено!')
-    return redirect(request.META.get('HTTP_REFERER', 'teacher_all_checkpoints'))
-
 @staff_member_required
 def teacher_add_checkpoint_task(request, pk):
     checkpoint = get_object_or_404(Checkpoint, pk=pk)
@@ -1120,6 +1076,49 @@ def teacher_add_checkpoint_task(request, pk):
 
 
 @staff_member_required
+def teacher_delete_checkpoint(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+    course_pk = checkpoint.course.pk
+    if request.method == 'POST':
+        checkpoint.delete()
+        messages.success(request, 'Контрольная точка удалена')
+    return redirect('teacher_course_dashboard', pk=course_pk)
+
+@staff_member_required
+def teacher_checkpoint_attempts(request, pk):
+    checkpoint = get_object_or_404(Checkpoint, pk=pk)
+    attempts = checkpoint.attempts.select_related('student').prefetch_related('answers__task').all()
+    return render(request, 'school/teacher/checkpoint_attempts.html', {
+        'checkpoint': checkpoint,
+        'attempts': attempts,
+    })
+
+
+@staff_member_required
+def teacher_check_checkpoint_attempt(request, pk):
+    attempt = get_object_or_404(CheckpointAttempt, pk=pk)
+    answers = attempt.answers.select_related('task').all()
+
+    if request.method == 'POST':
+        for answer in answers:
+            if answer.task.task_type == CheckpointTask.TYPE_MANUAL:
+                passed_value = request.POST.get(f'passed_{answer.id}')
+                comment_value = request.POST.get(f'comment_{answer.id}', '')
+                if passed_value is not None:
+                    answer.passed = passed_value == 'yes'
+                    answer.teacher_comment = comment_value
+                    answer.status = CheckpointAnswer.STATUS_CHECKED
+                    answer.checked_at = timezone.now()
+                    answer.save()
+        messages.success(request, 'Проверено!')
+        return redirect(request.META.get('HTTP_REFERER', 'teacher_all_checkpoints'))
+
+    return render(request, 'school/teacher/check_checkpoint_attempt.html', {
+        'attempt': attempt,
+        'answers': answers,
+    })
+
+@staff_member_required
 def teacher_delete_checkpoint_task(request, pk):
     task = get_object_or_404(CheckpointTask, pk=pk)
     checkpoint_pk = task.checkpoint.pk
@@ -1130,44 +1129,49 @@ def teacher_delete_checkpoint_task(request, pk):
 
 @staff_member_required
 def teacher_all_checkpoints(request):
-    submissions = CheckpointSubmission.objects.select_related(
-        'student', 'task', 'task__checkpoint', 'task__checkpoint__course'
-    ).all()
+    attempts = CheckpointAttempt.objects.select_related(
+        'student', 'checkpoint', 'checkpoint__course'
+    ).prefetch_related('answers__task').all()
 
     course_id = request.GET.get('course')
     checkpoint_id = request.GET.get('checkpoint')
     status = request.GET.get('status')
 
     if course_id:
-        submissions = submissions.filter(task__checkpoint__course_id=course_id)
+        attempts = attempts.filter(checkpoint__course_id=course_id)
     if checkpoint_id:
-        submissions = submissions.filter(task__checkpoint_id=checkpoint_id)
-    if status:
-        submissions = submissions.filter(status=status)
+        attempts = attempts.filter(checkpoint_id=checkpoint_id)
 
-    # Группируем по (ученик, задание) — последняя попытка первая
+    # Группируем по (ученик, точка) — последняя попытка первая
     groups = {}
-    for s in submissions:
-        key = (s.student_id, s.task_id)
-        groups.setdefault(key, []).append(s)
+    for a in attempts:
+        key = (a.student_id, a.checkpoint_id)
+        groups.setdefault(key, []).append(a)
 
     grouped_list = []
-    for (student_id, task_id), items in groups.items():
+    for (student_id, checkpoint_id_), items in groups.items():
         items.sort(key=lambda x: x.submitted_at, reverse=True)
+        latest = items[0]
+
+        if status == 'pending' and not latest.has_pending:
+            continue
+        if status == 'checked' and latest.has_pending:
+            continue
+
         grouped_list.append({
-            'latest': items[0],
+            'latest': latest,
             'history': items[1:],
             'attempts_count': len(items),
         })
 
-    grouped_list.sort(key=lambda g: (g['latest'].status == 'checked', -g['latest'].submitted_at.timestamp()))
+    grouped_list.sort(key=lambda g: (not g['latest'].has_pending, -g['latest'].submitted_at.timestamp()))
 
     courses = Course.objects.all()
     checkpoints = Checkpoint.objects.all()
     if course_id:
         checkpoints = checkpoints.filter(course_id=course_id)
 
-    pending_count = CheckpointSubmission.objects.filter(status='pending').count()
+    pending_count = sum(1 for g in grouped_list if g['latest'].has_pending)
 
     return render(request, 'school/teacher/all_checkpoints.html', {
         'grouped_list': grouped_list,

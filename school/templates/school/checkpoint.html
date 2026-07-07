@@ -1,5 +1,4 @@
 {% extends 'school/base.html' %}
-{% load dict_filters %}
 
 {% block title %}{{ checkpoint.title }}{% endblock %}
 
@@ -16,64 +15,43 @@
     {% endfor %}
 {% endif %}
 
-{% for task in tasks %}
-<div class="card mb-3 p-3">
-    <h5>{{ task.title }}</h5>
-    <p class="text-muted" style="white-space: pre-line;">{{ task.description }}</p>
+{% if last_attempt %}
+<div class="alert alert-secondary d-flex justify-content-between align-items-center">
+    <span>Вы уже проходили эту точку {{ last_attempt.submitted_at|date:"d.m.Y H:i" }}</span>
+    <a href="{% url 'checkpoint_result' last_attempt.pk %}" class="btn btn-outline-primary btn-sm">
+        Посмотреть результат
+    </a>
+</div>
+{% endif %}
 
-    {% with last_submission=submissions_map|get_item:task.id %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for task in tasks %}
+    <div class="card mb-3 p-3">
+        <h5>{{ forloop.counter }}. {{ task.title }}</h5>
+        <p class="text-muted" style="white-space: pre-line;">{{ task.description }}</p>
 
-    {% if task.task_type == 'auto' %}
-        {% if last_submission and last_submission.passed %}
-            <div class="alert alert-success mb-0">✅ Верно! Ваш ответ: «{{ last_submission.answer_text }}»</div>
+        {% if task.task_type == 'auto' %}
+            <input type="text" name="answer_{{ task.id }}" class="form-control" placeholder="Ваш ответ" required>
         {% else %}
-            {% if last_submission %}
-                <div class="alert alert-warning">❌ Последний ответ «{{ last_submission.answer_text }}» неверный</div>
-            {% endif %}
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="task_id" value="{{ task.id }}">
-                <div class="input-group">
-                    <input type="text" name="answer" class="form-control" required>
-                    <button type="submit" class="btn btn-primary">Проверить</button>
-                </div>
-            </form>
-        {% endif %}
-    {% else %}
-        {% if last_submission %}
-            {% if last_submission.answer_text %}<p class="mb-2">{{ last_submission.answer_text }}</p>{% endif %}
-            {% if last_submission.file %}<a href="{{ last_submission.file.url }}" target="_blank" class="d-block mb-2">📎 Файл</a>{% endif %}
-            {% if last_submission.status == 'checked' %}
-                <div class="alert {% if last_submission.passed %}alert-success{% else %}alert-warning{% endif %} mb-0">
-                    {% if last_submission.passed %}✅ Зачтено{% else %}❌ Не зачтено{% endif %}
-                    {% if last_submission.teacher_comment %}<br>{{ last_submission.teacher_comment }}{% endif %}
-                </div>
-            {% else %}
-                <span class="badge bg-secondary">На проверке</span>
-            {% endif %}
-        {% endif %}
-
-        {% if not last_submission or not last_submission.passed %}
-        <form method="post" enctype="multipart/form-data" class="mt-2">
-            {% csrf_token %}
-            <input type="hidden" name="task_id" value="{{ task.id }}">
             {% if task.submission_type == 'text' or task.submission_type == 'both' %}
             <div class="mb-2">
-                <textarea name="answer_text" class="form-control" rows="3"></textarea>
+                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
             </div>
             {% endif %}
             {% if task.submission_type == 'file' or task.submission_type == 'both' %}
             <div class="mb-2">
-                <input type="file" name="file" class="form-control">
+                <input type="file" name="file_{{ task.id }}" class="form-control">
             </div>
             {% endif %}
-            <button type="submit" class="btn btn-primary btn-sm">Отправить на проверку</button>
-        </form>
         {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted">Задания пока не добавлены</p>
+    {% endfor %}
+
+    {% if tasks %}
+    <button type="submit" class="btn btn-primary">Отправить все ответы</button>
     {% endif %}
-    {% endwith %}
-</div>
-{% empty %}
-<p class="text-muted">Задания пока не добавлены</p>
-{% endfor %}
+</form>
 {% endblock %}

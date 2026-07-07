@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
-    HomeworkSubmission, Module, Checkpoint, CheckpointSubmission, CheckpointTask
+    HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, CheckpointAnswer
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -94,7 +94,6 @@ class CheckpointAdmin(admin.ModelAdmin):
     inlines = [CheckpointTaskInline]
 
 
-@admin.register(CheckpointSubmission)
-class CheckpointSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['student', 'task', 'status', 'submitted_at']
-    list_filter = ['status']
+@admin.register(CheckpointAttempt)
+class CheckpointAttemptAdmin(admin.ModelAdmin):
+    list_display = ['student', 'checkpoint', 'submitted_at']

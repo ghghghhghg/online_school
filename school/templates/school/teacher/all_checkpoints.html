@@ -6,12 +6,6 @@
     <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Панель преподавателя</a>
 </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-success">{{ message }}</div>
-    {% endfor %}
-{% endif %}
-
 <!-- Фильтры -->
 <div class="card mb-4 p-3">
     <form method="get" class="row g-2 align-items-end">
@@ -41,8 +35,8 @@
             <label class="form-label small">Статус</label>
             <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">Все</option>
-                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>На проверке</option>
-                <option value="checked" {% if selected_status == 'checked' %}selected{% endif %}>Проверено</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Есть на проверке</option>
+                <option value="checked" {% if selected_status == 'checked' %}selected{% endif %}>Всё проверено</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -54,81 +48,37 @@
 </div>
 
 <p class="text-muted small mb-3">
-    Найдено групп: {{ grouped_list|length }}
-    {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} на проверке</span>{% endif %}
+    Найдено: {{ grouped_list|length }}
+    {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} требуют проверки</span>{% endif %}
 </p>
 
 {% for group in grouped_list %}
-{% with submission=group.latest %}
-<div class="card mb-3 p-3">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-        <div>
-            <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
-            <p class="text-muted small mb-0">
-                {{ submission.task.checkpoint.course.title }} → {{ submission.task.checkpoint.title }} →
-                {{ submission.task.title }}
-            </p>
-        </div>
-        <div class="text-end">
-            {% if submission.status == 'pending' %}
-                <span class="badge" style="background-color: var(--accent);">На проверке</span>
-            {% else %}
-                <span class="badge bg-success">Проверено</span>
-            {% endif %}
-            <div><small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small></div>
-            {% if group.attempts_count > 1 %}
-                <div><small class="text-muted">Попытка {{ group.attempts_count }}</small></div>
-            {% endif %}
+{% with attempt=group.latest %}
+<a href="{% url 'teacher_check_checkpoint_attempt' attempt.pk %}" class="text-decoration-none">
+    <div class="card mb-2 p-3" style="cursor: pointer;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong style="color: var(--ink);">{{ attempt.student.first_name }} {{ attempt.student.last_name }}</strong>
+                <p class="text-muted small mb-0">
+                    {{ attempt.checkpoint.course.title }} → {{ attempt.checkpoint.title }}
+                </p>
+            </div>
+            <div class="text-end">
+                {% if attempt.has_pending %}
+                    <span class="badge" style="background-color: var(--accent);">На проверке</span>
+                {% elif attempt.all_passed %}
+                    <span class="badge bg-success">Пройдено</span>
+                {% else %}
+                    <span class="badge bg-danger">Есть ошибки</span>
+                {% endif %}
+                <div><small class="text-muted">{{ attempt.submitted_at|date:"d.m.Y H:i" }}</small></div>
+                {% if group.attempts_count > 1 %}
+                    <div><small class="text-muted">Попытка {{ group.attempts_count }}</small></div>
+                {% endif %}
+            </div>
         </div>
     </div>
-
-    {% if submission.answer_text %}
-        <p class="mb-2">{{ submission.answer_text }}</p>
-    {% endif %}
-    {% if submission.file %}
-        <a href="{{ submission.file.url }}" target="_blank" class="d-block mb-2">📎 Файл ответа</a>
-    {% endif %}
-
-    {% if submission.status == 'checked' %}
-        <div class="alert {% if submission.passed %}alert-success{% else %}alert-warning{% endif %} mb-0">
-            {% if submission.passed %}Зачтено{% else %}Не зачтено{% endif %}
-            {% if submission.teacher_comment %}<br>{{ submission.teacher_comment }}{% endif %}
-        </div>
-    {% else %}
-        <form method="post" action="{% url 'teacher_check_checkpoint_submission' submission.pk %}" class="mt-2">
-            {% csrf_token %}
-            <div class="mb-2">
-                <select name="passed" class="form-select form-select-sm" style="max-width: 200px;" required>
-                    <option value="yes">Зачтено</option>
-                    <option value="no">Не зачтено</option>
-                </select>
-            </div>
-            <div class="mb-2">
-                <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Комментарий ученику"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">Проверить</button>
-        </form>
-    {% endif %}
-
-    {% if group.history %}
-    <button class="btn btn-sm btn-link ps-0 mt-2" type="button"
-            data-bs-toggle="collapse" data-bs-target="#cp-history-{{ submission.pk }}">
-        Показать предыдущие попытки ({{ group.history|length }})
-    </button>
-    <div class="collapse mt-2" id="cp-history-{{ submission.pk }}">
-        {% for old in group.history %}
-        <div class="p-2 mb-2" style="border-left: 2px solid var(--line);">
-            <small class="text-muted">{{ old.submitted_at|date:"d.m.Y H:i" }}</small>
-            {% if old.answer_text %}<p class="mb-1 mt-1 small">{{ old.answer_text }}</p>{% endif %}
-            {% if old.file %}<a href="{{ old.file.url }}" target="_blank" class="small d-block">📎 Файл</a>{% endif %}
-            {% if old.status == 'checked' %}
-                <small class="text-muted">{% if old.passed %}Зачтено{% else %}Не зачтено{% endif %}</small>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
+</a>
 {% endwith %}
 {% empty %}
 <p class="text-muted">Ничего не найдено</p>
