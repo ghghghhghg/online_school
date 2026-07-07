@@ -1,4 +1,4 @@
-from .models import HomeworkSubmission, Enrollment, CheckpointAttempt
+from .models import HomeworkSubmission, Enrollment, CheckpointAttempt, Notification
 
 
 def pending_homework_count(request):
@@ -7,15 +7,19 @@ def pending_homework_count(request):
         return {'pending_homework_count': count}
     return {}
 
-
 def pending_homework_count(request):
+    context = {}
     if request.user.is_authenticated and request.user.is_staff:
         hw_count = HomeworkSubmission.objects.filter(status='pending').count()
         enrollment_count = Enrollment.objects.filter(status='pending').count()
         checkpoint_count = sum(1 for a in CheckpointAttempt.objects.all() if a.has_pending)
-        return {
+        context.update({
             'pending_homework_count': hw_count,
             'pending_enrollment_count': enrollment_count,
             'pending_checkpoint_count': checkpoint_count,
-        }
-    return {}
+        })
+    if request.user.is_authenticated and not request.user.is_staff:
+        unread = Notification.objects.filter(user=request.user, is_read=False)
+        context['unread_notifications_count'] = unread.count()
+        context['recent_notifications'] = unread[:10]
+    return context

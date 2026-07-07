@@ -97,3 +97,11 @@ class CheckpointAdmin(admin.ModelAdmin):
 @admin.register(CheckpointAttempt)
 class CheckpointAttemptAdmin(admin.ModelAdmin):
     list_display = ['student', 'checkpoint', 'submitted_at']
+
+from .models import Notification
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'text', 'is_read', 'created_at']
+    list_filter = ['is_read']

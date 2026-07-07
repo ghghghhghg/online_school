@@ -23,6 +23,36 @@
                         Панель преподавателя
                     </a>
                 {% endif %}
+            {% if not user.is_staff %}
+            <div class="dropdown me-2">
+                <button class="btn btn-outline-light btn-sm position-relative dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
+                    🔔
+                    {% if unread_notifications_count %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                              style="background-color: var(--accent); font-size: 0.6rem;">
+                            {{ unread_notifications_count }}
+                        </span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="min-width: 280px;">
+                    {% for n in recent_notifications %}
+                    <li>
+                        <a class="dropdown-item small" href="{% url 'mark_notification_read' n.pk %}">
+                            {{ n.text }}
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
+                    {% endfor %}
+                    {% if recent_notifications %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item small text-center" href="{% url 'all_notifications' %}">Все уведомления</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
                     {% if not user.is_staff %}
                     <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
                         👤 Кабинет

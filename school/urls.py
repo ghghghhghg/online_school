@@ -91,4 +91,7 @@ urlpatterns = [
     path('teacher/test/<int:pk>/question/add/', views.teacher_add_question, name='teacher_add_question'),
     path('teacher/question/<int:pk>/delete/', views.teacher_delete_question, name='teacher_delete_question'),
 
+    path('notifications/read/<int:pk>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/', views.all_notifications, name='all_notifications'),
+
 ]

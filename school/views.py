@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
-    CheckpointAttempt, CheckpointAnswer
+    CheckpointAttempt, CheckpointAnswer, Notification
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -797,6 +797,13 @@ def teacher_check_submission(request, pk):
         submission.status = HomeworkSubmission.STATUS_CHECKED
         submission.checked_at = timezone.now()
         submission.save()
+
+        Notification.objects.create(
+            user=submission.student,
+            text=f'Проверена домашка «{homework.title}»',
+            link=f'/lesson/{homework.lesson.pk}/homework/',
+        )
+
         messages.success(request, 'Проверено!')
         return redirect('teacher_homework_submissions', pk=homework.pk)
 
@@ -929,6 +936,13 @@ def teacher_approve_enrollment(request, pk):
         enrollment.status = Enrollment.STATUS_APPROVED
         enrollment.approved_at = timezone.now()
         enrollment.save()
+
+        Notification.objects.create(
+            user=enrollment.student,
+            text=f'Заявка на курс «{enrollment.course.title}» одобрена!',
+            link=f'/course/{enrollment.course.slug}/lessons/',
+        )
+
         messages.success(request, f'Заявка {enrollment.student.first_name} одобрена!')
     return redirect('teacher_enrollments')
 
@@ -1110,6 +1124,13 @@ def teacher_check_checkpoint_attempt(request, pk):
                     answer.status = CheckpointAnswer.STATUS_CHECKED
                     answer.checked_at = timezone.now()
                     answer.save()
+
+        Notification.objects.create(
+            user=attempt.student,
+            text=f'Проверена контрольная точка «{attempt.checkpoint.title}»',
+            link=f'/checkpoint-result/{attempt.pk}/',
+        )
+
         messages.success(request, 'Проверено!')
         return redirect(request.META.get('HTTP_REFERER', 'teacher_all_checkpoints'))
 
@@ -1182,3 +1203,19 @@ def teacher_all_checkpoints(request):
         'selected_status': status,
         'pending_count': pending_count,
     })
+
+@login_required
+def mark_notification_read(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    notification.is_read = True
+    notification.save()
+    if notification.link:
+        return redirect(notification.link)
+    return redirect('student_profile')
+
+
+@login_required
+def all_notifications(request):
+    notifications = Notification.objects.filter(user=request.user)
+    notifications.filter(is_read=False).update(is_read=True)
+    return render(request, 'school/notifications.html', {'notifications': notifications})
