@@ -25,8 +25,9 @@
                 {% endif %}
             {% if not user.is_staff %}
             <div class="dropdown me-2">
-                <button class="btn btn-outline-light btn-sm position-relative dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown">
+                <button class="btn position-relative" type="button"
+                        data-bs-toggle="dropdown"
+                        style="background: none; border: none; font-size: 1.1rem; padding: 0.25rem 0.4rem;">
                     🔔
                     {% if unread_notifications_count %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
