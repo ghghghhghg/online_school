@@ -55,19 +55,6 @@
             </span>
             <p class="text-muted small mb-0 mt-1">{{ task.description }}</p>
         </div>
-        <div>
-            {% if task.task_type == 'manual' %}
-            <a href="{% url 'teacher_checkpoint_submissions' task.pk %}" class="btn btn-outline-primary btn-sm me-1">
-                Ответы
-            </a>
-            {% endif %}
-            <form method="post" action="{% url 'teacher_delete_checkpoint_task' task.pk %}"
-                  style="display:inline"
-                  onsubmit="return confirm('Удалить задание?')">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
-            </form>
-        </div>
     </div>
 </div>
 {% empty %}
