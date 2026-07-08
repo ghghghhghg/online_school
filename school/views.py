@@ -143,10 +143,15 @@ def course_lessons_view(request, slug):
     lessons_without_module = lessons.filter(module__isnull=True)
     checkpoints = course.checkpoints.prefetch_related('tasks').all()
     checkpoints_before_start = checkpoints.filter(after_module__isnull=True)
+    exams = course.exams.all()
 
+    exam_attempts = {}
     if not request.user.is_staff:
         for cp in checkpoints:
             checkpoints_passed[cp.id] = is_checkpoint_passed(cp, request.user)
+        for exam in exams:
+            last = ExamAttempt.objects.filter(exam=exam, student=request.user).order_by('-started_at').first()
+            exam_attempts[exam.id] = last
 
     return render(request, 'school/course_lessons.html', {
         'course': course,
@@ -155,6 +160,8 @@ def course_lessons_view(request, slug):
         'checkpoints': checkpoints,
         'checkpoints_before_start': checkpoints_before_start,
         'checkpoints_passed': checkpoints_passed,
+        'exams': exams,
+        'exam_attempts': exam_attempts,
         'completed_ids': completed_ids,
     })
 
@@ -201,12 +208,14 @@ def teacher_course_dashboard(request, pk):
     lessons_without_module = course.lessons.filter(module__isnull=True)
     checkpoints = course.checkpoints.all()
     checkpoints_before_start = checkpoints.filter(after_module__isnull=True)
+    exams = course.exams.all()
     return render(request, 'school/teacher/course_dashboard.html', {
         'course': course,
         'modules': modules,
         'lessons_without_module': lessons_without_module,
         'checkpoints': checkpoints,
         'checkpoints_before_start': checkpoints_before_start,
+        'exams': exams,
     })
 
 
@@ -1266,3 +1275,426 @@ def delete_notification(request, pk):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'status': 'ok'})
     return redirect('all_notifications')
+
+class ExamMock(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='exams', verbose_name='Курс')
+    title = models.CharField(max_length=200, verbose_name='Название')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    duration_minutes = models.PositiveIntegerField(default=60, verbose_name='Время на выполнение (минут)')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Пробник ЕГЭ'
+        verbose_name_plural = 'Пробники ЕГЭ'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
+
+
+class ExamTask(models.Model):
+    TYPE_AUTO = 'auto'
+    TYPE_MANUAL = 'manual'
+    TYPE_CHOICES = [
+        (TYPE_AUTO, 'Автопроверка текста'),
+        (TYPE_MANUAL, 'Проверка преподавателем'),
+    ]
+
+    exam = models.ForeignKey(ExamMock, on_delete=models.CASCADE,
+                             related_name='tasks', verbose_name='Пробник')
+    title = models.CharField(max_length=200, verbose_name='Название задания')
+    description = models.TextField(verbose_name='Задание')
+    task_type = models.CharField(max_length=10, choices=TYPE_CHOICES,
+                                 default=TYPE_MANUAL, verbose_name='Тип проверки')
+    correct_answers = models.TextField(blank=True, verbose_name='Правильные ответы (по одному на строку)')
+    submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
+                                       default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Задание пробника'
+        verbose_name_plural = 'Задания пробника'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.exam.title} — {self.title}'
+
+
+class ExamAttempt(models.Model):
+    exam = models.ForeignKey(ExamMock, on_delete=models.CASCADE,
+                             related_name='attempts', verbose_name='Пробник')
+    student = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='exam_attempts', verbose_name='Ученик')
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    auto_submitted = models.BooleanField(default=False, verbose_name='Отправлено автоматически по таймеру')
+
+    class Meta:
+        verbose_name = 'Попытка пробника'
+        verbose_name_plural = 'Попытки пробника'
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f'{self.student.username} — {self.exam.title}'
+
+    @property
+    def deadline(self):
+        return self.started_at + timezone.timedelta(minutes=self.exam.duration_minutes)
+
+    @property
+    def is_finished(self):
+        return self.submitted_at is not None
+
+    @property
+    def all_passed(self):
+        answers = self.answers.select_related('task')
+        if not answers:
+            return False
+        for a in answers:
+            if a.task.task_type == ExamTask.TYPE_MANUAL and a.status != 'checked':
+                return False
+            if not a.passed:
+                return False
+        return True
+
+    @property
+    def has_pending(self):
+        return self.answers.filter(task__task_type=ExamTask.TYPE_MANUAL, status='pending').exists()
+
+    @property
+    def auto_score_percent(self):
+        auto_answers = self.answers.filter(task__task_type=ExamTask.TYPE_AUTO)
+        total = auto_answers.count()
+        if total == 0:
+            return None
+        correct = auto_answers.filter(passed=True).count()
+        return int((correct / total) * 100)
+
+
+class ExamAnswer(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_CHECKED = 'checked'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'На проверке'),
+        (STATUS_CHECKED, 'Проверено'),
+    ]
+
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE,
+                                related_name='answers', verbose_name='Попытка')
+    task = models.ForeignKey(ExamTask, on_delete=models.CASCADE,
+                             related_name='answers', verbose_name='Задание')
+    answer_text = models.TextField(blank=True, verbose_name='Ответ')
+    file = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Файл')
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES,
+                              default=STATUS_PENDING, verbose_name='Статус')
+    passed = models.BooleanField(null=True, blank=True, verbose_name='Зачтено')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий')
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Ответ на задание пробника'
+        verbose_name_plural = 'Ответы на задания пробника'
+
+    def __str__(self):
+        return f'{self.attempt} — {self.task.title}'
+
+from .models import ExamMock, ExamTask, ExamAttempt, ExamAnswer
+
+
+@login_required
+def exam_start_view(request, pk):
+    exam = get_object_or_404(ExamMock, pk=pk)
+
+    if request.user.is_staff:
+        messages.info(request, 'Вы просматриваете пробник как преподаватель')
+        return redirect('teacher_course_dashboard', pk=exam.course.pk)
+
+    # Есть ли уже незавершённая попытка — продолжаем её вместо создания новой
+    existing = ExamAttempt.objects.filter(
+        exam=exam, student=request.user, submitted_at__isnull=True
+    ).first()
+
+    if existing:
+        if timezone.now() >= existing.deadline:
+            _finalize_exam_attempt(existing, auto=True)
+            return redirect('exam_result', pk=existing.pk)
+        return redirect('exam_attempt', pk=existing.pk)
+
+    attempt = ExamAttempt.objects.create(exam=exam, student=request.user)
+    return redirect('exam_attempt', pk=attempt.pk)
+
+
+@login_required
+def exam_attempt_view(request, pk):
+    attempt = get_object_or_404(ExamAttempt, pk=pk)
+    if attempt.student != request.user:
+        return redirect('index')
+
+    if attempt.is_finished:
+        return redirect('exam_result', pk=attempt.pk)
+
+    if timezone.now() >= attempt.deadline:
+        _finalize_exam_attempt(attempt, auto=True)
+        return redirect('exam_result', pk=attempt.pk)
+
+    tasks = attempt.exam.tasks.all()
+    remaining_seconds = int((attempt.deadline - timezone.now()).total_seconds())
+
+    if request.method == 'POST':
+        _save_exam_answers(attempt, tasks, request)
+        attempt.submitted_at = timezone.now()
+        attempt.save()
+        messages.success(request, 'Пробник завершён!')
+        return redirect('exam_result', pk=attempt.pk)
+
+    return render(request, 'school/exam_attempt.html', {
+        'attempt': attempt,
+        'tasks': tasks,
+        'remaining_seconds': remaining_seconds,
+    })
+
+
+def _save_exam_answers(attempt, tasks, request):
+    for task in tasks:
+        if task.task_type == ExamTask.TYPE_AUTO:
+            answer_text = request.POST.get(f'answer_{task.id}', '').strip()
+            correct_variants = [
+                line.strip().lower()
+                for line in task.correct_answers.splitlines() if line.strip()
+            ]
+            passed = answer_text.strip().lower() in correct_variants
+            ExamAnswer.objects.create(
+                attempt=attempt,
+                task=task,
+                answer_text=answer_text,
+                status=ExamAnswer.STATUS_CHECKED,
+                passed=passed,
+                checked_at=timezone.now(),
+            )
+        else:
+            ExamAnswer.objects.create(
+                attempt=attempt,
+                task=task,
+                answer_text=request.POST.get(f'answer_text_{task.id}', ''),
+                file=request.FILES.get(f'file_{task.id}'),
+            )
+
+
+def _finalize_exam_attempt(attempt, auto=False):
+    # Автозавершение без ответов на оставшиеся задания (если что-то не успели отправить)
+    tasks = attempt.exam.tasks.all()
+    answered_task_ids = set(attempt.answers.values_list('task_id', flat=True))
+    for task in tasks:
+        if task.id not in answered_task_ids:
+            if task.task_type == ExamTask.TYPE_AUTO:
+                ExamAnswer.objects.create(
+                    attempt=attempt, task=task, answer_text='',
+                    status=ExamAnswer.STATUS_CHECKED, passed=False,
+                    checked_at=timezone.now(),
+                )
+            else:
+                ExamAnswer.objects.create(attempt=attempt, task=task, answer_text='')
+    attempt.submitted_at = timezone.now()
+    attempt.auto_submitted = auto
+    attempt.save()
+
+
+@login_required
+def exam_result_view(request, pk):
+    attempt = get_object_or_404(ExamAttempt, pk=pk)
+    if attempt.student != request.user and not request.user.is_staff:
+        return redirect('index')
+
+    answers = attempt.answers.select_related('task').all()
+    return render(request, 'school/exam_result.html', {
+        'attempt': attempt,
+        'answers': answers,
+    })
+
+
+@staff_member_required
+def teacher_add_exam(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        duration = request.POST.get('duration_minutes', '').strip()
+
+        errors = []
+        if not title:
+            errors.append('Введите название')
+        if not duration or not duration.isdigit():
+            errors.append('Укажите время в минутах числом')
+
+        if not errors:
+            exam = ExamMock.objects.create(
+                course=course,
+                title=title,
+                description=request.POST.get('description', ''),
+                duration_minutes=duration,
+                order=course.exams.count() + 1,
+            )
+            messages.success(request, 'Пробник создан! Теперь добавьте задания.')
+            return redirect('teacher_edit_exam', pk=exam.pk)
+
+        messages.warning(request, ' '.join(errors))
+        return render(request, 'school/teacher/add_exam.html', {'course': course})
+
+    return render(request, 'school/teacher/add_exam.html', {'course': course})
+
+
+@staff_member_required
+def teacher_edit_exam(request, pk):
+    exam = get_object_or_404(ExamMock, pk=pk)
+    if request.method == 'POST':
+        exam.title = request.POST.get('title', '').strip()
+        exam.description = request.POST.get('description', '')
+        duration = request.POST.get('duration_minutes', '').strip()
+        exam.duration_minutes = duration if duration.isdigit() else exam.duration_minutes
+        exam.save()
+        messages.success(request, 'Пробник обновлён!')
+        return redirect('teacher_course_dashboard', pk=exam.course.pk)
+    tasks = exam.tasks.all()
+    return render(request, 'school/teacher/edit_exam.html', {
+        'exam': exam,
+        'tasks': tasks,
+    })
+
+
+@staff_member_required
+def teacher_delete_exam(request, pk):
+    exam = get_object_or_404(ExamMock, pk=pk)
+    course_pk = exam.course.pk
+    if request.method == 'POST':
+        exam.delete()
+        messages.success(request, 'Пробник удалён')
+    return redirect('teacher_course_dashboard', pk=course_pk)
+
+
+@staff_member_required
+def teacher_add_exam_task(request, pk):
+    exam = get_object_or_404(ExamMock, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+
+        errors = []
+        if not title:
+            errors.append('Введите название задания')
+        if not description:
+            errors.append('Введите текст задания')
+
+        if not errors:
+            ExamTask.objects.create(
+                exam=exam,
+                title=title,
+                description=description,
+                task_type=request.POST.get('task_type'),
+                correct_answers=request.POST.get('correct_answers', ''),
+                submission_type=request.POST.get('submission_type', Homework.SUBMISSION_TEXT),
+                order=exam.tasks.count() + 1,
+            )
+            messages.success(request, 'Задание добавлено!')
+            return redirect('teacher_edit_exam', pk=exam.pk)
+
+        messages.warning(request, ' '.join(errors))
+    return redirect('teacher_edit_exam', pk=exam.pk)
+
+
+@staff_member_required
+def teacher_delete_exam_task(request, pk):
+    task = get_object_or_404(ExamTask, pk=pk)
+    exam_pk = task.exam.pk
+    if request.method == 'POST':
+        task.delete()
+        messages.success(request, 'Задание удалено')
+    return redirect('teacher_edit_exam', pk=exam_pk)
+
+
+@staff_member_required
+def teacher_all_exams(request):
+    attempts = ExamAttempt.objects.filter(submitted_at__isnull=False).select_related(
+        'student', 'exam', 'exam__course'
+    ).prefetch_related('answers__task').all()
+
+    course_id = request.GET.get('course')
+    exam_id = request.GET.get('exam')
+    status = request.GET.get('status')
+
+    if course_id:
+        attempts = attempts.filter(exam__course_id=course_id)
+    if exam_id:
+        attempts = attempts.filter(exam_id=exam_id)
+
+    groups = {}
+    for a in attempts:
+        key = (a.student_id, a.exam_id)
+        groups.setdefault(key, []).append(a)
+
+    grouped_list = []
+    for (student_id, exam_id_), items in groups.items():
+        items.sort(key=lambda x: x.submitted_at, reverse=True)
+        latest = items[0]
+
+        if status == 'pending' and not latest.has_pending:
+            continue
+        if status == 'checked' and latest.has_pending:
+            continue
+
+        grouped_list.append({
+            'latest': latest,
+            'history': items[1:],
+            'attempts_count': len(items),
+        })
+
+    grouped_list.sort(key=lambda g: (not g['latest'].has_pending, -g['latest'].submitted_at.timestamp()))
+
+    courses = Course.objects.all()
+    exams = ExamMock.objects.all()
+    if course_id:
+        exams = exams.filter(course_id=course_id)
+
+    pending_count = sum(1 for g in grouped_list if g['latest'].has_pending)
+
+    return render(request, 'school/teacher/all_exams.html', {
+        'grouped_list': grouped_list,
+        'courses': courses,
+        'exams': exams,
+        'selected_course': course_id,
+        'selected_exam': exam_id,
+        'selected_status': status,
+        'pending_count': pending_count,
+    })
+
+
+@staff_member_required
+def teacher_check_exam_attempt(request, pk):
+    attempt = get_object_or_404(ExamAttempt, pk=pk)
+    answers = attempt.answers.select_related('task').all()
+
+    if request.method == 'POST':
+        for answer in answers:
+            if answer.task.task_type == ExamTask.TYPE_MANUAL:
+                passed_value = request.POST.get(f'passed_{answer.id}')
+                comment_value = request.POST.get(f'comment_{answer.id}', '')
+                if passed_value is not None:
+                    answer.passed = passed_value == 'yes'
+                    answer.teacher_comment = comment_value
+                    answer.status = ExamAnswer.STATUS_CHECKED
+                    answer.checked_at = timezone.now()
+                    answer.save()
+
+        Notification.objects.create(
+            user=attempt.student,
+            text=f'Проверен пробник «{attempt.exam.title}»',
+            link=f'/exam-result/{attempt.pk}/',
+        )
+
+        messages.success(request, 'Проверено!')
+        return redirect(request.META.get('HTTP_REFERER', 'teacher_all_exams'))
+
+    return render(request, 'school/teacher/check_exam_attempt.html', {
+        'attempt': attempt,
+        'answers': answers,
+    })

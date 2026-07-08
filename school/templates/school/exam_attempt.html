@@ -1,0 +1,84 @@
+{% extends 'school/base.html' %}
+
+{% block title %}{{ attempt.exam.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>📝 {{ attempt.exam.title }}</h2>
+    <div class="card px-3 py-2" style="border: 2px solid var(--accent);">
+        <span id="timer" class="fw-bold" style="color: var(--accent); font-size: 1.2rem;">--:--</span>
+    </div>
+</div>
+
+{% if attempt.exam.description %}
+<p class="text-muted mb-4">{{ attempt.exam.description }}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" id="exam-form">
+    {% csrf_token %}
+    {% for task in tasks %}
+    <div class="card mb-3 p-3">
+        <h5>{{ forloop.counter }}. {{ task.title }}</h5>
+        <p class="text-muted" style="white-space: pre-line;">{{ task.description }}</p>
+
+        {% if task.task_type == 'auto' %}
+            <input type="text" name="answer_{{ task.id }}" class="form-control" placeholder="Ваш ответ">
+        {% else %}
+            {% if task.submission_type == 'text' %}
+            <div class="mb-2">
+                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
+            </div>
+            {% elif task.submission_type == 'file' %}
+            <div class="mb-2">
+                <input type="file" name="file_{{ task.id }}" class="form-control">
+            </div>
+            {% elif task.submission_type == 'either' %}
+            <div class="mb-2">
+                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3" placeholder="Текстовый ответ"></textarea>
+            </div>
+            <div class="mb-2">
+                <input type="file" name="file_{{ task.id }}" class="form-control">
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted">Задания пока не добавлены</p>
+    {% endfor %}
+
+    {% if tasks %}
+    <button type="submit" class="btn btn-primary">Завершить пробник</button>
+    {% endif %}
+</form>
+
+<script>
+const remainingSeconds = {{ remaining_seconds }};
+const startTime = Date.now();
+const timerEl = document.getElementById('timer');
+const form = document.getElementById('exam-form');
+let submitted = false;
+
+function updateTimer() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    let left = remainingSeconds - elapsed;
+    if (left <= 0) {
+        timerEl.textContent = '00:00';
+        if (!submitted) {
+            submitted = true;
+            form.submit();
+        }
+        return;
+    }
+    const minutes = Math.floor(left / 60);
+    const seconds = left % 60;
+    timerEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    setTimeout(updateTimer, 1000);
+}
+
+updateTimer();
+
+form.addEventListener('submit', function() {
+    submitted = true;
+});
+</script>
+{% endblock %}

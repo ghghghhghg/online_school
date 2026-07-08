@@ -25,6 +25,9 @@
                 </span>
             {% endif %}
         </a>
+        <a href="{% url 'teacher_all_exams' %}" class="btn btn-outline-secondary btn-sm me-2">
+            📝 Пробники
+        </a>
         <a href="{% url 'teacher_enrollments' %}" class="btn btn-outline-secondary btn-sm me-2 position-relative">
             ✅ Заявки на курсы
             {% if pending_enrollment_count %}

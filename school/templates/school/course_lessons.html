@@ -84,4 +84,26 @@
 {% if not modules and not lessons_without_module %}
 <p class="text-muted">Уроки скоро появятся</p>
 {% endif %}
+{% if exams %}
+<h5 class="mt-4 mb-3" style="color: var(--accent);">📝 Пробники ЕГЭ</h5>
+{% for exam in exams %}
+{% with attempt=exam_attempts|get_item:exam.id %}
+<div class="card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong style="color: var(--ink);">{{ exam.title }}</strong>
+            <p class="text-muted small mb-0">{{ exam.duration_minutes }} минут</p>
+        </div>
+        {% if attempt and attempt.is_finished %}
+            <a href="{% url 'exam_result' attempt.pk %}" class="btn btn-outline-secondary btn-sm">Результат</a>
+        {% elif attempt and not attempt.is_finished %}
+            <a href="{% url 'exam_attempt' attempt.pk %}" class="btn btn-primary btn-sm">Продолжить</a>
+        {% else %}
+            <a href="{% url 'exam_start' exam.pk %}" class="btn btn-primary btn-sm">Начать</a>
+        {% endif %}
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+{% endif %}
 {% endblock %}

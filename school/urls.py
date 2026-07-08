@@ -97,4 +97,17 @@ urlpatterns = [
     path('notifications/clear/', views.clear_notifications, name='clear_notifications'),
     path('notifications/<int:pk>/delete/', views.delete_notification, name='delete_notification'),
 
+    # Пробники — ученик
+    path('exam/<int:pk>/start/', views.exam_start_view, name='exam_start'),
+    path('exam-attempt/<int:pk>/', views.exam_attempt_view, name='exam_attempt'),
+    path('exam-result/<int:pk>/', views.exam_result_view, name='exam_result'),
+
+    # Пробники — преподаватель
+    path('teacher/course/<int:pk>/exam/add/', views.teacher_add_exam, name='teacher_add_exam'),
+    path('teacher/exam/<int:pk>/edit/', views.teacher_edit_exam, name='teacher_edit_exam'),
+    path('teacher/exam/<int:pk>/delete/', views.teacher_delete_exam, name='teacher_delete_exam'),
+    path('teacher/exam/<int:pk>/task/add/', views.teacher_add_exam_task, name='teacher_add_exam_task'),
+    path('teacher/exam-task/<int:pk>/delete/', views.teacher_delete_exam_task, name='teacher_delete_exam_task'),
+    path('teacher/exams/', views.teacher_all_exams, name='teacher_all_exams'),
+    path('teacher/exam-attempt/<int:pk>/check/', views.teacher_check_exam_attempt, name='teacher_check_exam_attempt'),
 ]

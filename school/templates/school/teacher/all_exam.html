@@ -1,0 +1,80 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Пробники ЕГЭ</h2>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary btn-sm">← Панель преподавателя</a>
+</div>
+
+<div class="card mb-4 p-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">Курс</label>
+            <select name="course" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все курсы</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}" {% if selected_course == course.id|stringformat:"s" %}selected{% endif %}>
+                    {{ course.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Пробник</label>
+            <select name="exam" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все пробники</option>
+                {% for exam in exams %}
+                <option value="{{ exam.id }}" {% if selected_exam == exam.id|stringformat:"s" %}selected{% endif %}>
+                    {{ exam.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Статус</label>
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Все</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Есть на проверке</option>
+                <option value="checked" {% if selected_status == 'checked' %}selected{% endif %}>Всё проверено</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'teacher_all_exams' %}" class="btn btn-outline-secondary btn-sm w-100">Сбросить</a>
+        </div>
+    </form>
+</div>
+
+<p class="text-muted small mb-3">
+    Найдено: {{ grouped_list|length }}
+    {% if pending_count %} • <span style="color: var(--accent);">{{ pending_count }} требуют проверки</span>{% endif %}
+</p>
+
+{% for group in grouped_list %}
+{% with attempt=group.latest %}
+<a href="{% url 'teacher_check_exam_attempt' attempt.pk %}" class="text-decoration-none">
+    <div class="card mb-2 p-3" style="cursor: pointer;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong style="color: var(--ink);">{{ attempt.student.first_name }} {{ attempt.student.last_name }}</strong>
+                <p class="text-muted small mb-0">{{ attempt.exam.course.title }} → {{ attempt.exam.title }}</p>
+            </div>
+            <div class="text-end">
+                {% if attempt.has_pending %}
+                    <span class="badge" style="background-color: var(--accent);">На проверке</span>
+                {% elif attempt.all_passed %}
+                    <span class="badge bg-success">Пройдено</span>
+                {% else %}
+                    <span class="badge bg-danger">Есть ошибки</span>
+                {% endif %}
+                <div><small class="text-muted">{{ attempt.submitted_at|date:"d.m.Y H:i" }}</small></div>
+                {% if attempt.auto_submitted %}<div><small class="text-warning">⏱ авто</small></div>{% endif %}
+                {% if group.attempts_count > 1 %}<div><small class="text-muted">Попытка {{ group.attempts_count }}</small></div>{% endif %}
+            </div>
+        </div>
+    </div>
+</a>
+{% endwith %}
+{% empty %}
+<p class="text-muted">Ничего не найдено</p>
+{% endfor %}
+{% endblock %}

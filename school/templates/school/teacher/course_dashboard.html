@@ -38,6 +38,7 @@
         <a href="#" class="btn btn-outline-secondary btn-sm me-1"
            data-bs-toggle="modal" data-bs-target="#addModuleModal">+ Раздел</a>
         <a href="{% url 'teacher_add_checkpoint' course.pk %}" class="btn btn-outline-secondary btn-sm me-1">+ Точка</a>
+        <a href="{% url 'teacher_add_exam' course.pk %}" class="btn btn-outline-secondary btn-sm me-1">+ Пробник</a>
         <a href="{% url 'teacher_add_lesson' course.pk %}" class="btn btn-primary btn-sm">+ Добавить урок</a>
     </div>
 </div>
@@ -176,6 +177,20 @@
     <p class="text-muted">Уроков пока нет. Добавьте первый!</p>
 {% endif %}
 
+{% if exams %}
+<h5 class="mt-4 mb-3">Пробники ЕГЭ</h5>
+{% for exam in exams %}
+<div class="card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ exam.title }}</strong>
+            <p class="text-muted small mb-0">{{ exam.duration_minutes }} минут • {{ exam.tasks.count }} заданий</p>
+        </div>
+        <a href="{% url 'teacher_edit_exam' exam.pk %}" class="btn btn-outline-secondary btn-sm">✏️</a>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
 <!-- Модалка добавления раздела -->
 <div class="modal fade" id="addModuleModal" tabindex="-1">
     <div class="modal-dialog">

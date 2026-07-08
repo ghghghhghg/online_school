@@ -1,0 +1,122 @@
+{% extends 'school/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">{{ exam.title }}</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" name="title" value="{{ exam.title }}" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea name="description" class="form-control" rows="3">{{ exam.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Время на выполнение (минут)</label>
+                <input type="number" name="duration_minutes" value="{{ exam.duration_minutes }}" class="form-control" required>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a href="{% url 'teacher_course_dashboard' exam.course.pk %}" class="btn btn-outline-secondary">Отмена</a>
+                <form method="post" action="{% url 'teacher_delete_exam' exam.pk %}"
+                      onsubmit="return confirm('Удалить пробник целиком?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">Удалить пробник</button>
+                </form>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>Задания ({{ tasks|length }})</h5>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+        + Добавить задание
+    </button>
+</div>
+
+{% for task in tasks %}
+<div class="card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <strong>{{ task.title }}</strong>
+            <span class="badge bg-secondary ms-2">
+                {% if task.task_type == 'auto' %}Автопроверка{% else %}Ручная проверка{% endif %}
+            </span>
+            <p class="text-muted small mb-0 mt-1">{{ task.description }}</p>
+        </div>
+        <form method="post" action="{% url 'teacher_delete_exam_task' task.pk %}"
+              onsubmit="return confirm('Удалить задание?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+        </form>
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">Заданий пока нет</p>
+{% endfor %}
+
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'teacher_add_exam_task' exam.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Новое задание</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название задания</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Текст задания</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип проверки</label>
+                        <select name="task_type" class="form-select" id="task_type" onchange="toggleFields()">
+                            <option value="manual">Проверка преподавателем</option>
+                            <option value="auto">Автопроверка текста</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="auto-field" style="display: none;">
+                        <label class="form-label">Правильные ответы (каждый вариант с новой строки)</label>
+                        <textarea name="correct_answers" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3" id="manual-field">
+                        <label class="form-label">Как ученик отправляет ответ</label>
+                        <select name="submission_type" class="form-select">
+                            <option value="text">Только текст</option>
+                            <option value="file">Только файл</option>
+                            <option value="either">Текст или файл (на выбор)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const type = document.getElementById('task_type').value;
+    document.getElementById('auto-field').style.display = type === 'auto' ? 'block' : 'none';
+    document.getElementById('manual-field').style.display = type === 'manual' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

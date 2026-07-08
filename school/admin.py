@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
-    HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, CheckpointAnswer
+    HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, CheckpointAnswer
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -105,3 +105,17 @@ from .models import Notification
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ['user', 'text', 'is_read', 'created_at']
     list_filter = ['is_read']
+
+class ExamTaskInline(admin.TabularInline):
+    model = ExamTask
+    extra = 1
+
+@admin.register(ExamMock)
+class ExamMockAdmin(admin.ModelAdmin):
+    list_display = ['title', 'course', 'duration_minutes', 'order']
+    list_editable = ['order']
+    inlines = [ExamTaskInline]
+
+@admin.register(ExamAttempt)
+class ExamAttemptAdmin(admin.ModelAdmin):
+    list_display = ['student', 'exam', 'started_at', 'submitted_at']
