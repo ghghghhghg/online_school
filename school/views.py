@@ -498,14 +498,30 @@ def add_comment(request, pk):
         parent_id = request.POST.get('parent_id')
         parent = Comment.objects.filter(id=parent_id).first() if parent_id else None
         if text:
-            Comment.objects.create(
+            comment = Comment.objects.create(
                 lesson=lesson,
                 author=request.user,
                 text=text,
                 parent=parent,
             )
-    return redirect('lesson', pk=lesson.pk)
 
+            if not request.user.is_staff:
+                # Уведомляем всех преподавателей о новом вопросе
+                for teacher in User.objects.filter(is_staff=True):
+                    Notification.objects.create(
+                        user=teacher,
+                        text=f'Новый вопрос к уроку «{lesson.title}» от {request.user.first_name} {request.user.last_name}',
+                        link=f'/lesson/{lesson.pk}/',
+                    )
+            else:
+                # Преподаватель ответил — уведомляем автора родительского комментария (если не сам себе)
+                if parent and parent.author != request.user:
+                    Notification.objects.create(
+                        user=parent.author,
+                        text=f'Ответ на ваш вопрос к уроку «{lesson.title}»',
+                        link=f'/lesson/{lesson.pk}/',
+                    )
+    return redirect('lesson', pk=lesson.pk)
 
 @login_required
 def delete_comment(request, pk):

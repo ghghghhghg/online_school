@@ -18,12 +18,12 @@
         <a class="navbar-brand" href="{% url 'index' %}">Онлайн-школа</a>
         <div class="ms-auto">
             {% if user.is_authenticated %}
-                {% if user.is_staff %}
-                    <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-warning btn-sm me-2">
-                        Панель преподавателя
-                    </a>
-                {% endif %}
-            {% if not user.is_staff %}
+            {% if user.is_staff %}
+                <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-warning btn-sm me-2">
+                    Панель преподавателя
+                </a>
+            {% endif %}
+
             <div class="dropdown me-2">
                 <button class="btn position-relative" type="button"
                         data-bs-toggle="dropdown"
@@ -53,18 +53,18 @@
                     {% endif %}
                 </ul>
             </div>
+
+            {% if not user.is_staff %}
+            <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
+                👤 Кабинет
+            </a>
             {% endif %}
-                    {% if not user.is_staff %}
-                    <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
-                        👤 Кабинет
-                    </a>
-                    {% endif %}
-                <span class="text-light me-3">{{ user.first_name }} {{ user.last_name }}</span>
-                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm me-2">Войти</a>
-                <a href="{% url 'register' %}" class="btn btn-light btn-sm">Регистрация</a>
-            {% endif %}
+            <span class="text-light me-3">{{ user.first_name }} {{ user.last_name }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm me-2">Войти</a>
+            <a href="{% url 'register' %}" class="btn btn-light btn-sm">Регистрация</a>
+        {% endif %}
         </div>
     </div>
 </nav>
