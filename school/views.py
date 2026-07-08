@@ -695,10 +695,12 @@ def homework_view(request, pk):
         file = request.FILES.get('file')
 
         errors = []
-        if homework.submission_type in [Homework.SUBMISSION_TEXT, Homework.SUBMISSION_BOTH] and not text:
+        if homework.submission_type == Homework.SUBMISSION_TEXT and not text:
             errors.append('Введите текст ответа')
-        if homework.submission_type in [Homework.SUBMISSION_FILE, Homework.SUBMISSION_BOTH] and not file:
+        elif homework.submission_type == Homework.SUBMISSION_FILE and not file:
             errors.append('Прикрепите файл')
+        elif homework.submission_type == Homework.SUBMISSION_EITHER and not text and not file:
+            errors.append('Введите текст ответа или прикрепите файл')
 
         if not errors:
             HomeworkSubmission.objects.create(

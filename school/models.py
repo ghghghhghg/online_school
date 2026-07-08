@@ -277,7 +277,7 @@ class Homework(models.Model):
     SUBMISSION_CHOICES = [
         (SUBMISSION_TEXT, 'Только текст'),
         (SUBMISSION_FILE, 'Только файл'),
-        (SUBMISSION_BOTH, 'Текст и файл'),
+        (SUBMISSION_BOTH, 'Текст или файл (на выбор)'),
     ]
 
     GRADING_SCORE = 'score'

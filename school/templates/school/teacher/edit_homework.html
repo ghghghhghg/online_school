@@ -27,7 +27,7 @@
                 <select name="submission_type" class="form-select">
                     <option value="text" {% if homework.submission_type == 'text' %}selected{% endif %}>Только текст</option>
                     <option value="file" {% if homework.submission_type == 'file' %}selected{% endif %}>Только файл</option>
-                    <option value="both" {% if homework.submission_type == 'both' %}selected{% endif %}>Текст и файл</option>
+                    <option value="either" {% if homework.submission_type == 'either' %}selected{% endif %}>Текст или файл (на выбор)</option>
                 </select>
             </div>
             <div class="mb-3">

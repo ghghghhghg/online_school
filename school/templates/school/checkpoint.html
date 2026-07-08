@@ -29,17 +29,24 @@
     {% for task in tasks %}
     <div class="card mb-3 p-3">
         <h5>{{ forloop.counter }}. {{ task.title }}</h5>
-        <p class="text-muted" style="white-space: pre-line;">{{ task.description }}</p>
+        <p style="white-space: pre-line; color: var(--ink);">{{ task.description }}</p>
 
         {% if task.task_type == 'auto' %}
             <input type="text" name="answer_{{ task.id }}" class="form-control" placeholder="Ваш ответ" required>
         {% else %}
-            {% if task.submission_type == 'text' or task.submission_type == 'both' %}
+            {% if task.submission_type == 'text' %}
             <div class="mb-2">
                 <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
             </div>
-            {% endif %}
-            {% if task.submission_type == 'file' or task.submission_type == 'both' %}
+            {% elif task.submission_type == 'file' %}
+            <div class="mb-2">
+                <input type="file" name="file_{{ task.id }}" class="form-control">
+            </div>
+            {% elif task.submission_type == 'either' %}
+            <p class="text-muted small mb-1">Заполните текст или прикрепите файл</p>
+            <div class="mb-2">
+                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
+            </div>
             <div class="mb-2">
                 <input type="file" name="file_{{ task.id }}" class="form-control">
             </div>
