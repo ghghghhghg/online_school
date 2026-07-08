@@ -28,12 +28,14 @@
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Сохранить</button>
                 <a href="{% url 'teacher_course_dashboard' exam.course.pk %}" class="btn btn-outline-secondary">Отмена</a>
-                <form method="post" action="{% url 'teacher_delete_exam' exam.pk %}"
-                      onsubmit="return confirm('Удалить пробник целиком?')">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger">Удалить пробник</button>
-                </form>
             </div>
+        </form>
+
+        <form method="post" action="{% url 'teacher_delete_exam' exam.pk %}"
+              class="mt-2"
+              onsubmit="return confirm('Удалить пробник целиком?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Удалить пробник</button>
         </form>
     </div>
 </div>
