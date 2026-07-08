@@ -1228,5 +1228,20 @@ def mark_notification_read(request, pk):
 @login_required
 def all_notifications(request):
     notifications = Notification.objects.filter(user=request.user)
-    notifications.filter(is_read=False).update(is_read=True)
     return render(request, 'school/notifications.html', {'notifications': notifications})
+
+
+@login_required
+def clear_notifications(request):
+    if request.method == 'POST':
+        Notification.objects.filter(user=request.user).delete()
+        messages.success(request, 'Уведомления очищены')
+    return redirect('all_notifications')
+
+
+@login_required
+def delete_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    if request.method == 'POST':
+        notification.delete()
+    return redirect('all_notifications')
