@@ -36,28 +36,27 @@
                         </span>
                     {% endif %}
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end" style="min-width: 280px;">
+                <ul class="dropdown-menu dropdown-menu-end" id="notifications-list" style="min-width: 280px;">
                     {% for n in recent_notifications %}
-                    <li class="d-flex align-items-start px-2">
-                        <a class="dropdown-item small flex-grow-1" href="{% url 'mark_notification_read' n.pk %}" style="width: auto;">
+                    <li class="d-flex align-items-start px-2" data-notification-id="{{ n.pk }}">
+                        <a class="dropdown-item small flex-grow-1" href="{{ n.link|default:'#' }}" style="width: auto;">
                             {{ n.text }}
                             <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
                         </a>
-                        <form method="post" action="{% url 'delete_notification' n.pk %}" class="pt-2">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
-                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mark-read-btn"
+                                data-url="{% url 'delete_notification' n.pk %}"
+                                style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
                     </li>
                     {% empty %}
-                    <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
+                    <li><span class="dropdown-item-text small text-muted" id="no-notifications-msg">Новых уведомлений нет</span></li>
                     {% endfor %}
                     {% if recent_notifications %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form method="post" action="{% url 'clear_notifications' %}" onsubmit="return confirm('Удалить все уведомления?')">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item small text-center">Прочитано — очистить все</button>
-                        </form>
+                    <li id="clear-all-divider"><hr class="dropdown-divider"></li>
+                    <li id="clear-all-li">
+                        <button type="button" class="dropdown-item small text-center" id="clear-all-btn"
+                                data-url="{% url 'clear_notifications' %}">
+                            Прочитано — очистить все
+                        </button>
                     </li>
                     {% endif %}
                 </ul>
@@ -87,5 +86,75 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+document.addEventListener('click', function(e) {
+    const markBtn = e.target.closest('.mark-read-btn');
+    if (markBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        fetch(markBtn.dataset.url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        }).then(() => {
+            const li = markBtn.closest('li');
+            li.remove();
+            const remaining = document.querySelectorAll('#notifications-list li[data-notification-id]').length;
+            const badge = document.querySelector('.navbar .badge.rounded-pill');
+            if (badge) {
+                if (remaining > 0) {
+                    badge.textContent = remaining;
+                } else {
+                    badge.remove();
+                }
+            }
+            if (remaining === 0) {
+                const clearDivider = document.getElementById('clear-all-divider');
+                const clearLi = document.getElementById('clear-all-li');
+                if (clearDivider) clearDivider.remove();
+                if (clearLi) clearLi.remove();
+                const list = document.getElementById('notifications-list');
+                const msg = document.createElement('li');
+                msg.innerHTML = '<span class="dropdown-item-text small text-muted">Новых уведомлений нет</span>';
+                list.appendChild(msg);
+            }
+        });
+    }
+
+    const clearBtn = e.target.closest('#clear-all-btn');
+    if (clearBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        fetch(clearBtn.dataset.url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        }).then(() => {
+            document.querySelectorAll('#notifications-list li[data-notification-id]').forEach(li => li.remove());
+            const badge = document.querySelector('.navbar .badge.rounded-pill');
+            if (badge) badge.remove();
+            const clearDivider = document.getElementById('clear-all-divider');
+            const clearLi = document.getElementById('clear-all-li');
+            if (clearDivider) clearDivider.remove();
+            if (clearLi) clearLi.remove();
+            const list = document.getElementById('notifications-list');
+            const msg = document.createElement('li');
+            msg.innerHTML = '<span class="dropdown-item-text small text-muted">Новых уведомлений нет</span>';
+            list.appendChild(msg);
+        });
+    }
+});
+</script>
+
 </body>
 </html>

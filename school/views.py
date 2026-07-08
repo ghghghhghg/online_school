@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.utils import timezone
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -1251,6 +1252,8 @@ def all_notifications(request):
 def clear_notifications(request):
     if request.method == 'POST':
         Notification.objects.filter(user=request.user).delete()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok'})
         messages.success(request, 'Уведомления очищены')
     return redirect('all_notifications')
 
@@ -1260,4 +1263,6 @@ def delete_notification(request, pk):
     notification = get_object_or_404(Notification, pk=pk, user=request.user)
     if request.method == 'POST':
         notification.delete()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok'})
     return redirect('all_notifications')
