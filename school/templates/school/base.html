@@ -38,18 +38,27 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" style="min-width: 280px;">
                     {% for n in recent_notifications %}
-                    <li>
-                        <a class="dropdown-item small" href="{% url 'mark_notification_read' n.pk %}">
+                    <li class="d-flex align-items-start px-2">
+                        <a class="dropdown-item small flex-grow-1" href="{% url 'mark_notification_read' n.pk %}" style="width: auto;">
                             {{ n.text }}
                             <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
                         </a>
+                        <form method="post" action="{% url 'delete_notification' n.pk %}" class="pt-2">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
+                        </form>
                     </li>
                     {% empty %}
                     <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
                     {% endfor %}
                     {% if recent_notifications %}
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item small text-center" href="{% url 'all_notifications' %}">Все уведомления</a></li>
+                    <li>
+                        <form method="post" action="{% url 'clear_notifications' %}" onsubmit="return confirm('Удалить все уведомления?')">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item small text-center">Прочитано — очистить все</button>
+                        </form>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
