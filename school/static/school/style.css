@@ -259,3 +259,15 @@ a > .card:hover {
 .navbar .ms-auto .dropdown {
   display: inline-block;
 }
+
+/* Уведомления на мобильных — меню на всю ширину экрана */
+@media (max-width: 767px) {
+  .navbar .dropdown-menu {
+    position: fixed !important;
+    top: auto !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: calc(100% - 16px);
+    max-width: none;
+  }
+}
