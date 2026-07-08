@@ -273,11 +273,11 @@ class StatBlock(models.Model):
 class Homework(models.Model):
     SUBMISSION_TEXT = 'text'
     SUBMISSION_FILE = 'file'
-    SUBMISSION_BOTH = 'both'
+    SUBMISSION_EITHER = 'either'
     SUBMISSION_CHOICES = [
         (SUBMISSION_TEXT, 'Только текст'),
         (SUBMISSION_FILE, 'Только файл'),
-        (SUBMISSION_BOTH, 'Текст или файл (на выбор)'),
+        (SUBMISSION_EITHER, 'Текст или файл (на выбор)'),
     ]
 
     GRADING_SCORE = 'score'
