@@ -1,3 +1,4 @@
+from cloudinary.models import CloudinaryField
 from django.http import JsonResponse
 from django.utils import timezone
 
@@ -11,6 +12,7 @@ from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
+from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 import uuid
@@ -1399,9 +1401,6 @@ class ExamAnswer(models.Model):
 
     def __str__(self):
         return f'{self.attempt} — {self.task.title}'
-
-from .models import ExamMock, ExamTask, ExamAttempt, ExamAnswer
-
 
 @login_required
 def exam_start_view(request, pk):
