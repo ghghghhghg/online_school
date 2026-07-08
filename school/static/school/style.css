@@ -271,3 +271,8 @@ a > .card:hover {
     max-width: none;
   }
 }
+/* Перенос длинного текста в уведомлениях */
+.dropdown-menu .dropdown-item {
+  white-space: normal;
+  word-wrap: break-word;
+}
