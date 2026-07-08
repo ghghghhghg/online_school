@@ -8,7 +8,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
-    CheckpointAttempt, CheckpointAnswer, Notification
+    CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -1278,129 +1278,6 @@ def delete_notification(request, pk):
             return JsonResponse({'status': 'ok'})
     return redirect('all_notifications')
 
-class ExamMock(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE,
-                               related_name='exams', verbose_name='Курс')
-    title = models.CharField(max_length=200, verbose_name='Название')
-    description = models.TextField(blank=True, verbose_name='Описание')
-    duration_minutes = models.PositiveIntegerField(default=60, verbose_name='Время на выполнение (минут)')
-    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
-
-    class Meta:
-        verbose_name = 'Пробник ЕГЭ'
-        verbose_name_plural = 'Пробники ЕГЭ'
-        ordering = ['order']
-
-    def __str__(self):
-        return self.title
-
-
-class ExamTask(models.Model):
-    TYPE_AUTO = 'auto'
-    TYPE_MANUAL = 'manual'
-    TYPE_CHOICES = [
-        (TYPE_AUTO, 'Автопроверка текста'),
-        (TYPE_MANUAL, 'Проверка преподавателем'),
-    ]
-
-    exam = models.ForeignKey(ExamMock, on_delete=models.CASCADE,
-                             related_name='tasks', verbose_name='Пробник')
-    title = models.CharField(max_length=200, verbose_name='Название задания')
-    description = models.TextField(verbose_name='Задание')
-    task_type = models.CharField(max_length=10, choices=TYPE_CHOICES,
-                                 default=TYPE_MANUAL, verbose_name='Тип проверки')
-    correct_answers = models.TextField(blank=True, verbose_name='Правильные ответы (по одному на строку)')
-    submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
-                                       default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
-    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
-
-    class Meta:
-        verbose_name = 'Задание пробника'
-        verbose_name_plural = 'Задания пробника'
-        ordering = ['order']
-
-    def __str__(self):
-        return f'{self.exam.title} — {self.title}'
-
-
-class ExamAttempt(models.Model):
-    exam = models.ForeignKey(ExamMock, on_delete=models.CASCADE,
-                             related_name='attempts', verbose_name='Пробник')
-    student = models.ForeignKey(User, on_delete=models.CASCADE,
-                                related_name='exam_attempts', verbose_name='Ученик')
-    started_at = models.DateTimeField(auto_now_add=True)
-    submitted_at = models.DateTimeField(null=True, blank=True)
-    auto_submitted = models.BooleanField(default=False, verbose_name='Отправлено автоматически по таймеру')
-
-    class Meta:
-        verbose_name = 'Попытка пробника'
-        verbose_name_plural = 'Попытки пробника'
-        ordering = ['-started_at']
-
-    def __str__(self):
-        return f'{self.student.username} — {self.exam.title}'
-
-    @property
-    def deadline(self):
-        return self.started_at + timezone.timedelta(minutes=self.exam.duration_minutes)
-
-    @property
-    def is_finished(self):
-        return self.submitted_at is not None
-
-    @property
-    def all_passed(self):
-        answers = self.answers.select_related('task')
-        if not answers:
-            return False
-        for a in answers:
-            if a.task.task_type == ExamTask.TYPE_MANUAL and a.status != 'checked':
-                return False
-            if not a.passed:
-                return False
-        return True
-
-    @property
-    def has_pending(self):
-        return self.answers.filter(task__task_type=ExamTask.TYPE_MANUAL, status='pending').exists()
-
-    @property
-    def auto_score_percent(self):
-        auto_answers = self.answers.filter(task__task_type=ExamTask.TYPE_AUTO)
-        total = auto_answers.count()
-        if total == 0:
-            return None
-        correct = auto_answers.filter(passed=True).count()
-        return int((correct / total) * 100)
-
-
-class ExamAnswer(models.Model):
-    STATUS_PENDING = 'pending'
-    STATUS_CHECKED = 'checked'
-    STATUS_CHOICES = [
-        (STATUS_PENDING, 'На проверке'),
-        (STATUS_CHECKED, 'Проверено'),
-    ]
-
-    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE,
-                                related_name='answers', verbose_name='Попытка')
-    task = models.ForeignKey(ExamTask, on_delete=models.CASCADE,
-                             related_name='answers', verbose_name='Задание')
-    answer_text = models.TextField(blank=True, verbose_name='Ответ')
-    file = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Файл')
-
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES,
-                              default=STATUS_PENDING, verbose_name='Статус')
-    passed = models.BooleanField(null=True, blank=True, verbose_name='Зачтено')
-    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий')
-    checked_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        verbose_name = 'Ответ на задание пробника'
-        verbose_name_plural = 'Ответы на задания пробника'
-
-    def __str__(self):
-        return f'{self.attempt} — {self.task.title}'
 
 @login_required
 def exam_start_view(request, pk):

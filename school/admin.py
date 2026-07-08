@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
-    HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, CheckpointAnswer
+    HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
+    CheckpointAnswer, Notification
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -97,9 +98,6 @@ class CheckpointAdmin(admin.ModelAdmin):
 @admin.register(CheckpointAttempt)
 class CheckpointAttemptAdmin(admin.ModelAdmin):
     list_display = ['student', 'checkpoint', 'submitted_at']
-
-from .models import Notification
-
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
