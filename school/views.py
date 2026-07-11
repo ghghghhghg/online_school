@@ -8,7 +8,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
-    CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer
+    CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer, FearBlock, \
+    ParentBlock, SiteSettings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -24,15 +25,21 @@ def index(request):
     teacher = TeacherProfile.objects.first()
     reviews = Review.objects.filter(is_published=True)
     faqs = FAQ.objects.all()
-    why_us_blocks = WhyUsBlock.objects.all()
     stats = StatBlock.objects.all()
+    fears = FearBlock.objects.all()
+    parent_blocks = ParentBlock.objects.all()
+    site_settings = SiteSettings.objects.first()
+    features = WhyUsBlock.objects.all()
     return render(request, 'school/index.html', {
         'courses': courses,
         'teacher': teacher,
         'reviews': reviews,
         'faqs': faqs,
-        'why_us_blocks': why_us_blocks,
         'stats': stats,
+        'fears': fears,
+        'parent_blocks': parent_blocks,
+        'site_settings': site_settings,
+        'features': features,
     })
 
 def courses_list(request):
@@ -680,6 +687,8 @@ def teacher_edit_course(request, pk):
         course.for_whom = request.POST.get('for_whom')
         course.how_it_works = request.POST.get('how_it_works')
         course.is_published = request.POST.get('is_published') == 'on'
+        course.card_tag = request.POST.get('card_tag', '')
+        course.card_features = request.POST.get('card_features', '')
         course.save()
         messages.success(request, 'Курс обновлён!')
         return redirect('teacher_course_dashboard', pk=course.pk)

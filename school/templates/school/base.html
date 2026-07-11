@@ -3,90 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Онлайн-школа{% endblock %}</title>
-    <meta name="description" content="{% block description %}Онлайн-курсы с личным преподавателем{% endblock %}">
+    <title>{% block title %}онлайн-школа русского языка{% endblock %}</title>
+    <meta name="description" content="{% block description %}Готовлю к ЕГЭ и ОГЭ по русскому лично{% endblock %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
     {% load static %}
     <link href="{% static 'school/style.css' %}" rel="stylesheet">
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'index' %}">Онлайн-школа</a>
-        <div class="ms-auto">
+<header>
+    <div class="container nav">
+        <a class="logo" href="{% url 'index' %}">онлайн<span>·</span>школа</a>
+        <ul class="nav-links">
+            <li><a href="{% url 'index' %}#courses">курсы</a></li>
+            <li><a href="{% url 'index' %}#about">преподаватель</a></li>
+            <li><a href="{% url 'index' %}#reviews">отзывы</a></li>
+            <li><a href="{% url 'index' %}#faq">вопросы</a></li>
+        </ul>
+        <div class="nav-actions">
             {% if user.is_authenticated %}
-            {% if user.is_staff %}
-                <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-warning btn-sm me-2">
-                    Панель преподавателя
-                </a>
-            {% endif %}
+                {% if user.is_staff %}
+                    <a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">панель</a>
+                {% endif %}
 
-            <div class="dropdown me-2">
-                <button class="btn position-relative" type="button"
-                        data-bs-toggle="dropdown"
-                        style="background: none; border: none; font-size: 1.1rem; padding: 0.25rem 0.4rem;">
-                    🔔
-                    {% if unread_notifications_count %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                              style="background-color: var(--accent); font-size: 0.6rem;">
-                            {{ unread_notifications_count }}
-                        </span>
-                    {% endif %}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" id="notifications-list" style="min-width: 280px;">
-                    {% for n in recent_notifications %}
-                    <li class="d-flex align-items-start px-2" data-notification-id="{{ n.pk }}">
-                        <a class="dropdown-item small flex-grow-1" href="{{ n.link|default:'#' }}" style="width: auto;">
-                            {{ n.text }}
-                            <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mark-read-btn"
-                                data-url="{% url 'delete_notification' n.pk %}"
-                                style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
-                    </li>
-                    {% empty %}
-                    <li><span class="dropdown-item-text small text-muted" id="no-notifications-msg">Новых уведомлений нет</span></li>
-                    {% endfor %}
-                    {% if recent_notifications %}
-                    <li id="clear-all-divider"><hr class="dropdown-divider"></li>
-                    <li id="clear-all-li">
-                        <button type="button" class="dropdown-item small text-center" id="clear-all-btn"
-                                data-url="{% url 'clear_notifications' %}">
-                            Прочитано — очистить все
-                        </button>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
+                <div class="dropdown">
+                    <button class="btn position-relative" type="button"
+                            data-bs-toggle="dropdown"
+                            style="background: none; border: none; font-size: 1.1rem; padding: 0.25rem 0.4rem;">
+                        🔔
+                        {% if unread_notifications_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                                  style="background-color: var(--pen); font-size: 0.6rem;">
+                                {{ unread_notifications_count }}
+                            </span>
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" id="notifications-list" style="min-width: 280px;">
+                        {% for n in recent_notifications %}
+                        <li class="d-flex align-items-start px-2" data-notification-id="{{ n.pk }}">
+                            <a class="dropdown-item small flex-grow-1" href="{{ n.link|default:'#' }}" style="width: auto;">
+                                {{ n.text }}
+                                <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mark-read-btn"
+                                    data-url="{% url 'delete_notification' n.pk %}"
+                                    style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
+                        </li>
+                        {% empty %}
+                        <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
+                        {% endfor %}
+                        {% if recent_notifications %}
+                        <li id="clear-all-divider"><hr class="dropdown-divider"></li>
+                        <li id="clear-all-li">
+                            <button type="button" class="dropdown-item small text-center" id="clear-all-btn"
+                                    data-url="{% url 'clear_notifications' %}">
+                                Прочитано — очистить все
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
 
-            {% if not user.is_staff %}
-            <a href="{% url 'student_profile' %}" class="btn btn-outline-light btn-sm me-2">
-                👤 Кабинет
-            </a>
+                {% if not user.is_staff %}
+                    <a class="btn btn-ghost" href="{% url 'student_profile' %}">кабинет</a>
+                {% endif %}
+                <a class="btn btn-dark" href="{% url 'logout' %}">выйти</a>
+            {% else %}
+                <a class="btn btn-ghost" href="{% url 'login' %}">войти</a>
+                <a class="btn btn-dark" href="{% url 'register' %}">попробовать бесплатно</a>
             {% endif %}
-            <span class="text-light me-3">{{ user.first_name }} {{ user.last_name }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
-        {% else %}
-            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm me-2">Войти</a>
-            <a href="{% url 'register' %}" class="btn btn-light btn-sm">Регистрация</a>
-        {% endif %}
         </div>
     </div>
-</nav>
+</header>
 
-<div class="container mt-4 flex-grow-1">
+<div class="flex-grow-1">
+{% block fullwidth %}
+<div class="container mt-4">
     {% block content %}{% endblock %}
 </div>
+{% endblock %}
+</div>
 
-<footer class="text-center py-4 mt-5" style="border-top: 1px solid var(--line); color: var(--accent); font-size: 0.85rem;">
-    Разработано ABS[16.5++]
+<footer>
+    <div class="container footer-inner">
+        <span>© 2026 онлайн-школа русского языка</span>
+        <span>разработано <a href="#">ABS[16.5++]</a></span>
+    </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+/* Появление секций при скролле */
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.reveal');
+  if (reduced || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('visible'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold:.12 });
+  items.forEach(function(el){ io.observe(el); });
+})();
+
+/* FAQ-аккордеон */
+document.querySelectorAll('.faq-q').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var item = btn.parentElement;
+    var answer = item.querySelector('.faq-a');
+    var open = item.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open);
+    answer.style.maxHeight = open ? answer.scrollHeight + 'px' : 0;
+  });
+});
+
+/* Уведомления AJAX */
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -108,23 +145,9 @@ document.addEventListener('click', function(e) {
             const li = markBtn.closest('li');
             li.remove();
             const remaining = document.querySelectorAll('#notifications-list li[data-notification-id]').length;
-            const badge = document.querySelector('.navbar .badge.rounded-pill');
+            const badge = document.querySelector('header .badge.rounded-pill');
             if (badge) {
-                if (remaining > 0) {
-                    badge.textContent = remaining;
-                } else {
-                    badge.remove();
-                }
-            }
-            if (remaining === 0) {
-                const clearDivider = document.getElementById('clear-all-divider');
-                const clearLi = document.getElementById('clear-all-li');
-                if (clearDivider) clearDivider.remove();
-                if (clearLi) clearLi.remove();
-                const list = document.getElementById('notifications-list');
-                const msg = document.createElement('li');
-                msg.innerHTML = '<span class="dropdown-item-text small text-muted">Новых уведомлений нет</span>';
-                list.appendChild(msg);
+                if (remaining > 0) { badge.textContent = remaining; } else { badge.remove(); }
             }
         });
     }
@@ -141,20 +164,11 @@ document.addEventListener('click', function(e) {
             },
         }).then(() => {
             document.querySelectorAll('#notifications-list li[data-notification-id]').forEach(li => li.remove());
-            const badge = document.querySelector('.navbar .badge.rounded-pill');
+            const badge = document.querySelector('header .badge.rounded-pill');
             if (badge) badge.remove();
-            const clearDivider = document.getElementById('clear-all-divider');
-            const clearLi = document.getElementById('clear-all-li');
-            if (clearDivider) clearDivider.remove();
-            if (clearLi) clearLi.remove();
-            const list = document.getElementById('notifications-list');
-            const msg = document.createElement('li');
-            msg.innerHTML = '<span class="dropdown-item-text small text-muted">Новых уведомлений нет</span>';
-            list.appendChild(msg);
         });
     }
 });
 </script>
-
 </body>
 </html>

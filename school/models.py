@@ -15,6 +15,9 @@ class Course(models.Model):
     image = models.ImageField(upload_to='courses/', blank=True, verbose_name='Обложка')
     is_published = models.BooleanField(default=True, verbose_name='Опубликован')
 
+    card_tag = models.CharField(max_length=50, blank=True, verbose_name='Тег на карточке (например «9 класс»)')
+    card_features = models.TextField(blank=True, verbose_name='Пункты на карточке (по одному на строку)')
+
     for_whom = models.TextField(blank=True, verbose_name='Кому подойдёт')
     what_you_learn = models.TextField(blank=True, verbose_name='Чему научитесь')
     how_it_works = models.TextField(blank=True, verbose_name='Как проходит обучение')
@@ -585,3 +588,49 @@ class ExamAnswer(models.Model):
 
     def __str__(self):
         return f'{self.attempt} — {self.task.title}'
+
+class FearBlock(models.Model):
+    question = models.CharField(max_length=200, verbose_name='Страх (вопрос в кавычках)')
+    answer = models.TextField(verbose_name='Ответ (можно с <b>жирным</b>)')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Блок «Страхи»'
+        verbose_name_plural = 'Блоки «Страхи»'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.question
+
+
+class ParentBlock(models.Model):
+    icon = models.CharField(max_length=10, default='✓', verbose_name='Эмодзи')
+    title = models.CharField(max_length=150, verbose_name='Заголовок')
+    text = models.TextField(verbose_name='Текст')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Блок «Родителям»'
+        verbose_name_plural = 'Блоки «Родителям»'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.title
+
+
+class SiteSettings(models.Model):
+    """Единственная запись — общие настройки главной страницы"""
+    hero_eyebrow = models.CharField(max_length=200, default='егэ и огэ по русскому — без паники',
+                                    verbose_name='Надпись над заголовком (рукописная)')
+    hero_title = models.CharField(max_length=300, default='сдай русский на максимум с личным преподавателем',
+                                  verbose_name='Главный заголовок')
+    hero_subtitle = models.TextField(default='', blank=True, verbose_name='Подзаголовок')
+    grade_number = models.CharField(max_length=10, default='100', verbose_name='Число в кружке на фото')
+    grade_label = models.CharField(max_length=20, default='ЕГЭ', verbose_name='Подпись в кружке')
+
+    class Meta:
+        verbose_name = 'Настройки главной'
+        verbose_name_plural = 'Настройки главной'
+
+    def __str__(self):
+        return 'Настройки главной страницы'

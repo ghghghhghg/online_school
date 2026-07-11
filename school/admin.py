@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
-    CheckpointAnswer, Notification
+    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -117,3 +117,22 @@ class ExamMockAdmin(admin.ModelAdmin):
 @admin.register(ExamAttempt)
 class ExamAttemptAdmin(admin.ModelAdmin):
     list_display = ['student', 'exam', 'started_at', 'submitted_at']
+
+
+@admin.register(FearBlock)
+class FearBlockAdmin(admin.ModelAdmin):
+    list_display = ['question', 'order']
+    list_editable = ['order']
+
+
+@admin.register(ParentBlock)
+class ParentBlockAdmin(admin.ModelAdmin):
+    list_display = ['title', 'icon', 'order']
+    list_editable = ['icon', 'order']
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        # Разрешаем создать только одну запись
+        return not SiteSettings.objects.exists()
