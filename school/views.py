@@ -22,6 +22,19 @@ from django.contrib.auth import authenticate
 
 def index(request):
     courses = Course.objects.filter(is_published=True)
+
+    exam_filter = request.GET.get('exam', '')
+    subject_filter = request.GET.get('subject', '')
+
+    if exam_filter:
+        courses = courses.filter(exam_type=exam_filter)
+    if subject_filter:
+        courses = courses.filter(subject=subject_filter)
+
+    # Список предметов для фильтра (только у опубликованных курсов)
+    subjects = Course.objects.filter(is_published=True).exclude(subject='') \
+        .values_list('subject', flat=True).distinct()
+
     teacher = TeacherProfile.objects.first()
     reviews = Review.objects.filter(is_published=True)
     faqs = FAQ.objects.all()
@@ -30,8 +43,12 @@ def index(request):
     parent_blocks = ParentBlock.objects.all()
     site_settings = SiteSettings.objects.first()
     features = WhyUsBlock.objects.all()
+
     return render(request, 'school/index.html', {
         'courses': courses,
+        'subjects': subjects,
+        'exam_filter': exam_filter,
+        'subject_filter': subject_filter,
         'teacher': teacher,
         'reviews': reviews,
         'faqs': faqs,

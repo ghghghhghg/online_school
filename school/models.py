@@ -9,6 +9,12 @@ from django.utils.text import slugify
 
 
 class Course(models.Model):
+    EXAM_EGE = 'ege'
+    EXAM_OGE = 'oge'
+    EXAM_CHOICES = [
+        (EXAM_EGE, 'ЕГЭ'),
+        (EXAM_OGE, 'ОГЭ'),
+    ]
     title = models.CharField(max_length=200, verbose_name='Название')
     slug = models.SlugField(max_length=220, unique=True, blank=True, verbose_name='Адрес страницы')
     description = models.TextField(verbose_name='Описание')
@@ -21,6 +27,10 @@ class Course(models.Model):
     for_whom = models.TextField(blank=True, verbose_name='Кому подойдёт')
     what_you_learn = models.TextField(blank=True, verbose_name='Чему научитесь')
     how_it_works = models.TextField(blank=True, verbose_name='Как проходит обучение')
+
+    exam_type = models.CharField(max_length=10, choices=EXAM_CHOICES,
+                                 blank=True, verbose_name='Тип экзамена')
+    subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
 
     created_at = models.DateTimeField(auto_now_add=True)
 

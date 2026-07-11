@@ -85,6 +85,33 @@
     <div class="container">
         <span class="eyebrow hand reveal">выбери свой экзамен</span>
         <h2 class="reveal">курсы</h2>
+
+        <!-- Фильтр по экзамену -->
+        <div class="course-filters reveal">
+            <a href="{% url 'index' %}#courses"
+               class="filter-pill {% if not exam_filter %}active{% endif %}">все</a>
+            <a href="?exam=ege#courses"
+               class="filter-pill {% if exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
+            <a href="?exam=oge#courses"
+               class="filter-pill {% if exam_filter == 'oge' %}active{% endif %}">ОГЭ</a>
+        </div>
+
+        <!-- Фильтр по предмету -->
+        {% if subjects %}
+        <div class="course-filters course-filters-subjects reveal">
+            {% for subj in subjects %}
+            <a href="?{% if exam_filter %}exam={{ exam_filter }}&{% endif %}subject={{ subj }}#courses"
+               class="filter-pill filter-pill-sm {% if subject_filter == subj %}active{% endif %}">
+                {{ subj }}
+            </a>
+            {% endfor %}
+            {% if subject_filter %}
+            <a href="?{% if exam_filter %}exam={{ exam_filter }}{% endif %}#courses"
+               class="filter-pill filter-pill-sm" style="color: var(--pen);">✕ сбросить</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="courses-grid">
             {% for course in courses %}
             <article class="course reveal">
@@ -101,12 +128,11 @@
                 <a class="btn btn-dark" href="{% url 'course' course.slug %}">подробнее →</a>
             </article>
             {% empty %}
-            <p class="section-sub">Скоро здесь появятся курсы!</p>
+            <p class="section-sub">По выбранным фильтрам курсов пока нет</p>
             {% endfor %}
         </div>
     </div>
 </section>
-
 <!-- О ПРЕПОДАВАТЕЛЕ -->
 {% if teacher %}
 <section id="about">

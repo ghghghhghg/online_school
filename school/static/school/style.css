@@ -167,6 +167,20 @@ header{
 
 /* ---------- Курсы ---------- */
 .courses-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; }
+/* ---------- Фильтры курсов ---------- */
+.course-filters{
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;
+}
+.course-filters-subjects{ margin-bottom:36px; }
+.filter-pill{
+  display:inline-block; text-decoration:none; font-weight:600; font-size:15px;
+  padding:8px 20px; border-radius:99px; color:var(--ink);
+  background:var(--white); box-shadow:0 4px 12px rgba(35,33,46,.08);
+  transition:transform .15s, background .2s;
+}
+.filter-pill:hover{ transform:translateY(-2px); color:var(--ink); }
+.filter-pill.active{ background:var(--ink); color:#fff; }
+.filter-pill-sm{ font-size:13.5px; padding:6px 16px; }
 .course{
   background:var(--white); border-radius:var(--radius); padding:30px 28px;
   box-shadow:var(--shadow); position:relative; display:flex; flex-direction:column;
