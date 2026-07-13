@@ -88,8 +88,6 @@
 
         <!-- Фильтр по экзамену -->
         <div class="course-filters reveal">
-            <a href="{% url 'index' %}#courses"
-               class="filter-pill {% if not exam_filter %}active{% endif %}">все</a>
             <a href="?exam=ege#courses"
                class="filter-pill {% if exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
             <a href="?exam=oge#courses"

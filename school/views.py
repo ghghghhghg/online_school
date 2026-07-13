@@ -23,7 +23,7 @@ from django.contrib.auth import authenticate
 def index(request):
     courses = Course.objects.filter(is_published=True)
 
-    exam_filter = request.GET.get('exam', '')
+    exam_filter = request.GET.get('exam', 'ege')
     subject_filter = request.GET.get('subject', '')
 
     if exam_filter:
