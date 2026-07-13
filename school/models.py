@@ -43,6 +43,8 @@ class Course(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        if self.subject:
+            self.subject = self.subject.strip()
         if not self.slug:
             base_slug = slugify(self.title) or 'course'
             slug = base_slug

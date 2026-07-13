@@ -33,7 +33,7 @@ def index(request):
 
     # Список предметов для фильтра (только у опубликованных курсов)
     subjects = Course.objects.filter(is_published=True).exclude(subject='') \
-        .values_list('subject', flat=True).distinct()
+        .order_by('subject').values_list('subject', flat=True).distinct()
 
     teacher = TeacherProfile.objects.first()
     reviews = Review.objects.filter(is_published=True)
