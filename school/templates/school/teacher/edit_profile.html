@@ -19,6 +19,10 @@
                           placeholder="Расскажи о себе, опыте, достижениях...">{{ profile.bio }}</textarea>
             </div>
             <div class="mb-3">
+                <label class="form-label">Предмет</label>
+                <input type="text" name="subject" value="{{ profile.subject }}" class="form-control" placeholder="Русский язык">
+            </div>
+            <div class="mb-3">
                 <label class="form-label">Фото</label>
                 {% if profile.photo %}
                     <div class="mb-2">

@@ -132,20 +132,39 @@
     </div>
 </section>
 <!-- О ПРЕПОДАВАТЕЛЕ -->
-{% if teacher %}
+{% if teachers %}
 <section id="about">
-    <div class="container about-grid">
-        {% if teacher.photo %}
-        <div class="about-photo reveal">
-            <span class="tape"></span>
-            <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+    <div class="container">
+        <span class="eyebrow hand reveal">наши преподаватели</span>
+        <h2 class="reveal">кто вас будет учить</h2>
+
+        {% if teacher_subjects|length > 1 %}
+        <div class="course-filters reveal">
+            <a href="{% url 'index' %}#about" class="filter-pill {% if not teacher_subject_filter %}active{% endif %}">все</a>
+            {% for subj in teacher_subjects %}
+            <a href="?teacher_subject={{ subj }}#about"
+               class="filter-pill {% if teacher_subject_filter == subj %}active{% endif %}">{{ subj }}</a>
+            {% endfor %}
         </div>
         {% endif %}
-        <div>
-            <span class="eyebrow hand reveal">привет!</span>
-            <h2 class="reveal">{{ teacher.name }}</h2>
-            <p class="reveal" style="white-space: pre-line;">{{ teacher.bio }}</p>
+
+        {% for teacher in teachers %}
+        <div class="about-grid reveal" style="margin-bottom: 48px;">
+            {% if teacher.photo %}
+            <div class="about-photo">
+                <span class="tape"></span>
+                <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+            </div>
+            {% endif %}
+            <div>
+                {% if teacher.subject %}<span class="eyebrow hand">{{ teacher.subject }}</span>{% endif %}
+                <h2>{{ teacher.name }}</h2>
+                <p style="white-space: pre-line;">{{ teacher.bio }}</p>
+            </div>
         </div>
+        {% empty %}
+        <p class="section-sub">Преподаватели скоро появятся</p>
+        {% endfor %}
     </div>
 </section>
 {% endif %}

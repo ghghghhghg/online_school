@@ -21,6 +21,9 @@ class Course(models.Model):
     image = models.ImageField(upload_to='courses/', blank=True, verbose_name='Обложка')
     is_published = models.BooleanField(default=True, verbose_name='Опубликован')
 
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='courses', verbose_name='Преподаватель')
+
     card_tag = models.CharField(max_length=50, blank=True, verbose_name='Тег на карточке (например «9 класс»)')
     card_features = models.TextField(blank=True, verbose_name='Пункты на карточке (по одному на строку)')
 
@@ -198,13 +201,16 @@ class TestResult(models.Model):
         return f'{self.student.username} — {self.test} — {self.score}%'
 
 class TeacherProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE,
+                                related_name='teacher_profile', verbose_name='Аккаунт')
     name = models.CharField(max_length=200, verbose_name='Имя')
+    subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
     bio = models.TextField(verbose_name='О себе')
     photo = models.ImageField(upload_to='teacher/', blank=True, verbose_name='Фото')
 
     class Meta:
         verbose_name = 'Профиль преподавателя'
-        verbose_name_plural = 'Профиль преподавателя'
+        verbose_name_plural = 'Профили преподавателей'
 
     def __str__(self):
         return self.name

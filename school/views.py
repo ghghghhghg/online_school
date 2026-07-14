@@ -31,11 +31,17 @@ def index(request):
     if subject_filter:
         courses = courses.filter(subject=subject_filter)
 
-    # Список предметов для фильтра (только у опубликованных курсов)
     subjects = Course.objects.filter(is_published=True).exclude(subject='') \
         .order_by('subject').values_list('subject', flat=True).distinct()
 
-    teacher = TeacherProfile.objects.first()
+    teacher_subject_filter = request.GET.get('teacher_subject', '')
+    teachers = TeacherProfile.objects.all()
+    if teacher_subject_filter:
+        teachers = teachers.filter(subject=teacher_subject_filter)
+
+    teacher_subjects = TeacherProfile.objects.exclude(subject='') \
+        .order_by('subject').values_list('subject', flat=True).distinct()
+
     reviews = Review.objects.filter(is_published=True)
     faqs = FAQ.objects.all()
     stats = StatBlock.objects.all()
@@ -49,7 +55,9 @@ def index(request):
         'subjects': subjects,
         'exam_filter': exam_filter,
         'subject_filter': subject_filter,
-        'teacher': teacher,
+        'teachers': teachers,
+        'teacher_subjects': teacher_subjects,
+        'teacher_subject_filter': teacher_subject_filter,
         'reviews': reviews,
         'faqs': faqs,
         'stats': stats,
@@ -223,13 +231,18 @@ def complete_lesson(request, pk):
 
 @staff_member_required
 def teacher_dashboard(request):
-    courses = Course.objects.all()
+    if request.user.is_superuser:
+        courses = Course.objects.all()
+    else:
+        courses = Course.objects.filter(teacher=request.user)
     return render(request, 'school/teacher/dashboard.html', {'courses': courses})
-
 
 @staff_member_required
 def teacher_course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = course.lessons.filter(module__isnull=True)
     checkpoints = course.checkpoints.all()
@@ -249,23 +262,24 @@ def teacher_course_dashboard(request, pk):
 def teacher_add_course(request):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
-        errors = []
-        if not title:
-            errors.append('Введите название курса')
-        if not errors:
+        if title:
             course = Course.objects.create(
                 title=title,
                 description=request.POST.get('description', ''),
+                teacher=request.user,
             )
             messages.success(request, 'Курс создан!')
             return redirect('teacher_course_dashboard', pk=course.pk)
-        return render(request, 'school/teacher/add_course.html', {'errors': errors})
+        return render(request, 'school/teacher/add_course.html', {'errors': ['Введите название']})
     return render(request, 'school/teacher/add_course.html')
 
 
 @staff_member_required
 def teacher_add_lesson(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         order = request.POST.get('order', '').strip()
@@ -478,9 +492,13 @@ def teacher_delete_question(request, pk):
 
 @staff_member_required
 def teacher_edit_profile(request):
-    profile, created = (TeacherProfile.objects.get_or_create(id=1))
+    profile, created = TeacherProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'name': request.user.first_name or request.user.username}
+    )
     if request.method == 'POST':
         profile.name = request.POST.get('name')
+        profile.subject = request.POST.get('subject', '')
         profile.bio = request.POST.get('bio')
         if request.FILES.get('photo'):
             profile.photo = request.FILES.get('photo')
@@ -488,7 +506,6 @@ def teacher_edit_profile(request):
         messages.success(request, 'Профиль обновлён!')
         return redirect('teacher_dashboard')
     return render(request, 'school/teacher/edit_profile.html', {'profile': profile})
-
 
 @login_required
 def student_profile(request):
@@ -570,6 +587,9 @@ def delete_comment(request, pk):
 @staff_member_required
 def teacher_analytics(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     total_lessons = course.lessons.count()
 
     enrollments = Enrollment.objects.filter(course=course).select_related('student')
@@ -697,6 +717,9 @@ def edit_student_profile(request):
 @staff_member_required
 def teacher_edit_course(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     if request.method == 'POST':
         course.title = request.POST.get('title')
         course.description = request.POST.get('description')
@@ -929,6 +952,9 @@ def teacher_all_homework(request):
 @staff_member_required
 def teacher_add_module(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         order = request.POST.get('order', '').strip()
@@ -1091,6 +1117,9 @@ def checkpoint_result_view(request, pk):
 @staff_member_required
 def teacher_add_checkpoint(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         after_module_id = request.POST.get('after_module') or None
@@ -1419,6 +1448,9 @@ def exam_result_view(request, pk):
 @staff_member_required
 def teacher_add_exam(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    if not request.user.is_superuser and course.teacher != request.user:
+        messages.error(request, 'У вас нет доступа к этому курсу')
+        return redirect('teacher_dashboard')
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         duration = request.POST.get('duration_minutes', '').strip()
