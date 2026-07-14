@@ -34,7 +34,7 @@ def index(request):
     subjects = Course.objects.filter(is_published=True).exclude(subject='') \
         .order_by('subject').values_list('subject', flat=True).distinct()
 
-    teacher_subject_filter = request.GET.get('teacher_subject', '')
+    teacher_subject_filter = request.GET.get('teacher_subject', 'Русский язык')
     teachers = TeacherProfile.objects.all()
     if teacher_subject_filter:
         teachers = teachers.filter(subject=teacher_subject_filter)

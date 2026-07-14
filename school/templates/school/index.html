@@ -140,7 +140,6 @@
 
         {% if teacher_subjects|length > 1 %}
         <div class="course-filters reveal">
-            <a href="{% url 'index' %}#about" class="filter-pill {% if not teacher_subject_filter %}active{% endif %}">все</a>
             {% for subj in teacher_subjects %}
             <a href="?teacher_subject={{ subj }}#about"
                class="filter-pill {% if teacher_subject_filter == subj %}active{% endif %}">{{ subj }}</a>
