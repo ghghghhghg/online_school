@@ -34,6 +34,8 @@ def index(request):
     subjects = Course.objects.filter(is_published=True).exclude(subject='') \
         .order_by('subject').values_list('subject', flat=True).distinct()
 
+    hero_teacher = TeacherProfile.objects.filter(subject='Русский язык').first() or TeacherProfile.objects.first()
+
     teacher_subject_filter = request.GET.get('teacher_subject', 'Русский язык')
     teachers = TeacherProfile.objects.all()
     if teacher_subject_filter:
@@ -64,6 +66,7 @@ def index(request):
         'fears': fears,
         'parent_blocks': parent_blocks,
         'site_settings': site_settings,
+        'hero_teacher': hero_teacher,
         'features': features,
     })
 
