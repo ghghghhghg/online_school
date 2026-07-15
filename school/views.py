@@ -146,6 +146,22 @@ def confirm_email_view(request, uidb64, token):
         user.is_active = True
         user.save()
         login(request, user, backend='school.auth_backends.EmailBackend')
+
+        send_mail(
+            'Добро пожаловать в онлайн-школу!',
+            f'Здравствуйте, {user.first_name}!\n\n'
+            f'Ваша регистрация успешно завершена — добро пожаловать!\n\n'
+            f'Что дальше:\n'
+            f'— Выберите курс на главной странице: https://abs-school.ru\n'
+            f'— Подайте заявку на курс, и преподаватель откроет вам доступ\n'
+            f'— Следите за уведомлениями в личном кабинете\n\n'
+            f'Если возникнут вопросы — задавайте их прямо под уроками, преподаватель отвечает лично.\n\n'
+            f'Удачи в подготовке!',
+            None,
+            [user.email],
+            fail_silently=True,
+        )
+
         messages.success(request, 'Почта подтверждена! Добро пожаловать!')
         return redirect('index')
 
