@@ -145,7 +145,7 @@ def confirm_email_view(request, uidb64, token):
     if user and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
-        login(request, user)
+        login(request, user, backend='school.auth_backends.EmailBackend')
         messages.success(request, 'Почта подтверждена! Добро пожаловать!')
         return redirect('index')
 
