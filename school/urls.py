@@ -111,5 +111,7 @@ urlpatterns = [
     path('teacher/exams/', views.teacher_all_exams, name='teacher_all_exams'),
     path('teacher/exam-attempt/<int:pk>/check/', views.teacher_check_exam_attempt, name='teacher_check_exam_attempt'),
 
+    path('my-analytics/', views.student_analytics, name='student_analytics'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

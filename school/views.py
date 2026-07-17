@@ -1696,3 +1696,93 @@ def teacher_check_exam_attempt(request, pk):
         'attempt': attempt,
         'answers': answers,
     })
+
+@login_required
+def student_analytics(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    enrollments = Enrollment.objects.filter(
+        student=request.user, status=Enrollment.STATUS_APPROVED
+    ).select_related('course')
+
+    courses_data = []
+    for enrollment in enrollments:
+        course = enrollment.course
+        lessons = course.lessons.all()
+        total_lessons = lessons.count()
+
+        completed_ids = set(LessonProgress.objects.filter(
+            student=request.user, lesson__in=lessons
+        ).values_list('lesson_id', flat=True))
+
+        percent = int((len(completed_ids) / total_lessons) * 100) if total_lessons else 0
+
+        # Тесты — лучший результат по каждому
+        test_rows = []
+        weak_lessons = []
+        for lesson in lessons:
+            if hasattr(lesson, 'test'):
+                results = TestResult.objects.filter(student=request.user, test=lesson.test)
+                best = results.order_by('-score').first()
+                attempts = results.count()
+                test_rows.append({
+                    'lesson': lesson,
+                    'best_score': best.score if best else None,
+                    'passed': best.passed if best else False,
+                    'attempts': attempts,
+                })
+                if best and not best.passed:
+                    weak_lessons.append(lesson)
+                elif not best:
+                    pass  # ещё не проходил — не считаем пробелом, просто не начат
+
+        avg_score = None
+        scored = [t['best_score'] for t in test_rows if t['best_score'] is not None]
+        if scored:
+            avg_score = int(sum(scored) / len(scored))
+
+        # Домашки
+        homeworks = Homework.objects.filter(lesson__course=course)
+        hw_rows = []
+        for hw in homeworks:
+            last = HomeworkSubmission.objects.filter(
+                homework=hw, student=request.user
+            ).first()
+            hw_rows.append({
+                'homework': hw,
+                'submission': last,
+            })
+            if last and last.status == 'checked' and last.passed is False:
+                weak_lessons.append(hw.lesson)
+
+        # Пробники — динамика
+        exam_rows = []
+        for exam in course.exams.all():
+            attempts = ExamAttempt.objects.filter(
+                exam=exam, student=request.user, submitted_at__isnull=False
+            ).order_by('started_at')
+            scores = [a.auto_score_percent for a in attempts if a.auto_score_percent is not None]
+            exam_rows.append({
+                'exam': exam,
+                'attempts_count': attempts.count(),
+                'scores': scores,
+                'last_score': scores[-1] if scores else None,
+                'trend': (scores[-1] - scores[0]) if len(scores) >= 2 else None,
+            })
+
+        courses_data.append({
+            'course': course,
+            'total_lessons': total_lessons,
+            'completed': len(completed_ids),
+            'percent': percent,
+            'test_rows': test_rows,
+            'avg_score': avg_score,
+            'hw_rows': hw_rows,
+            'exam_rows': exam_rows,
+            'weak_lessons': list({l.pk: l for l in weak_lessons}.values()),
+        })
+
+    return render(request, 'school/student_analytics.html', {
+        'courses_data': courses_data,
+    })
