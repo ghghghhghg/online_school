@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
     CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer, FearBlock, \
-    ParentBlock, SiteSettings
+    ParentBlock, SiteSettings, TestAnswerLog
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -427,24 +427,33 @@ def test_view(request, pk):
     if request.method == 'POST':
         total = questions.count()
         correct = 0
+        answers_log = []
 
         for question in questions:
             answer_id = request.POST.get(f'question_{question.id}')
-            if answer_id:
-                answer = Answer.objects.filter(id=answer_id, is_correct=True).first()
-                if answer:
-                    correct += 1
+            chosen = Answer.objects.filter(id=answer_id, question=question).first() if answer_id else None
+            is_correct = bool(chosen and chosen.is_correct)
+            if is_correct:
+                correct += 1
+            answers_log.append((question, chosen, is_correct))
 
         score = int((correct / total) * 100) if total > 0 else 0
         passed = score >= test.pass_score
 
         if not request.user.is_staff:
-            TestResult.objects.create(
+            result = TestResult.objects.create(
                 student=request.user,
                 test=test,
                 score=score,
                 passed=passed
             )
+            for question, chosen, is_correct in answers_log:
+                TestAnswerLog.objects.create(
+                    result=result,
+                    question=question,
+                    chosen_answer=chosen,
+                    is_correct=is_correct,
+                )
             if passed:
                 LessonProgress.objects.get_or_create(
                     student=request.user, lesson=lesson
@@ -467,10 +476,14 @@ def test_result_view(request, pk):
     result = TestResult.objects.filter(
         student=request.user, test=test
     ).first()
+    answer_logs = result.answer_logs.select_related(
+        'question', 'chosen_answer'
+    ).all() if result else []
     return render(request, 'school/test_result.html', {
         'lesson': lesson,
         'test': test,
         'result': result,
+        'answer_logs': answer_logs,
     })
 
 
@@ -527,6 +540,7 @@ def teacher_add_question(request, pk):
             question = Question.objects.create(
                 test=test,
                 text=text,
+                explanation=request.POST.get('explanation', ''),
                 order=test.questions.count() + 1,
             )
             for i, answer_text in enumerate(answers, start=1):

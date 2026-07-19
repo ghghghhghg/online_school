@@ -159,6 +159,7 @@ class Question(models.Model):
                              related_name='questions', verbose_name='Тест')
     text = models.TextField(verbose_name='Вопрос')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    explanation = models.TextField(blank=True, verbose_name='Объяснение (показывается при ошибке)')
 
     class Meta:
         verbose_name = 'Вопрос'
@@ -199,6 +200,18 @@ class TestResult(models.Model):
 
     def __str__(self):
         return f'{self.student.username} — {self.test} — {self.score}%'
+
+class TestAnswerLog(models.Model):
+    result = models.ForeignKey(TestResult, on_delete=models.CASCADE,
+                               related_name='answer_logs', verbose_name='Результат')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='Вопрос')
+    chosen_answer = models.ForeignKey(Answer, on_delete=models.CASCADE,
+                                      null=True, blank=True, verbose_name='Выбранный ответ')
+    is_correct = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Ответ в тесте'
+        verbose_name_plural = 'Ответы в тестах'
 
 class TeacherProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,
