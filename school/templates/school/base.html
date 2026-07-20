@@ -158,11 +158,11 @@
   }
 
   // Телепорт: если заехали в зону клонов — мгновенно смещаемся на ширину оригиналов назад
-  function checkLoop(){
+function checkLoop(){
     if (carousel.scrollLeft >= originalsWidth()) {
+      carousel.style.scrollBehavior = 'auto';
       carousel.scrollLeft = carousel.scrollLeft - originalsWidth();
-    } else if (carousel.scrollLeft < 0) {
-      carousel.scrollLeft = carousel.scrollLeft + originalsWidth();
+      carousel.style.scrollBehavior = '';
     }
   }
 
@@ -175,10 +175,16 @@
 
   prev.addEventListener('click', function(){
     if (carousel.scrollLeft <= 5) {
-      // мгновенный прыжок в зону клонов, затем плавный шаг назад
+      // телепорт в зону клонов без анимации, затем — плавный шаг в следующем кадре
+      carousel.style.scrollBehavior = 'auto';
       carousel.scrollLeft = originalsWidth();
+      requestAnimationFrame(function(){
+        carousel.style.scrollBehavior = '';
+        carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+      });
+    } else {
+      carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
     }
-    carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
   });
   next.addEventListener('click', function(){
     carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
