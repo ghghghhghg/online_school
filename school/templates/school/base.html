@@ -147,13 +147,21 @@
   }
   carousel.addEventListener('scroll', function(){ requestAnimationFrame(updateDots); });
 
-  prev.addEventListener('click', function(){
-    carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+prev.addEventListener('click', function(){
+    if (carousel.scrollLeft <= 5) {
+      carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' });
+    } else {
+      carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+    }
   });
   next.addEventListener('click', function(){
-    carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
+    var maxScroll = carousel.scrollWidth - carousel.clientWidth;
+    if (carousel.scrollLeft >= maxScroll - 5) {
+      carousel.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
+    }
   });
-})();
 
 /* FAQ-аккордеон */
 document.querySelectorAll('.faq-q').forEach(function(btn){
