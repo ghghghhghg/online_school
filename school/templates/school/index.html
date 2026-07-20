@@ -1,76 +1,141 @@
 {% extends 'school/base.html' %}
 
-{% block title %}онлайн-школа русского языка — егэ и огэ без паники{% endblock %}
+{% block title %}ABS School — подготовка к ЕГЭ и ОГЭ по русскому языку{% endblock %}
 
 {% block fullwidth %}
 
 <!-- HERO -->
 <section class="hero">
-    <span class="doodle" style="top:60px; left:4%;">✨</span>
-    <span class="doodle" style="bottom:80px; left:8%;">📚</span>
-    <span class="doodle" style="top:100px; right:6%;">⭐</span>
-    <div class="container hero-grid">
-        <div>
-            <span class="eyebrow hand">{{ site_settings.hero_eyebrow|default:'егэ и огэ по русскому — без паники' }}</span>
-            <h1>{{ site_settings.hero_title|default:'сдай русский на максимум' }}</h1>
-            <p>{{ site_settings.hero_subtitle }}</p>
-            <div class="hero-cta">
-                {% if user.is_authenticated %}
-                    <a class="btn btn-dark btn-lg" href="{% url 'student_profile' %}">в кабинет →</a>
-                {% else %}
-                    <a class="btn btn-dark btn-lg" href="{% url 'register' %}">попробовать за 0 ₽</a>
+    <div class="container">
+        <div class="hero-grid">
+            <div>
+                <span class="hero-badge">Онлайн-школа подготовки к ЕГЭ</span>
+                <h1>{{ site_settings.hero_title|default:'Подготовка к ЕГЭ по русскому языку на <span class="accent">80+</span>'|safe }}</h1>
+                <p class="lead-text">{{ site_settings.hero_subtitle|default:'Короткие уроки, много практики, пробники, проверка экспертом — всё, чтобы уверенно сдать экзамен.' }}</p>
+                <div class="hero-cta">
+                    {% if user.is_authenticated %}
+                        <a class="btn btn-terra btn-lg" href="{% url 'student_profile' %}">В кабинет →</a>
+                    {% else %}
+                        <a class="btn btn-terra btn-lg" href="{% url 'register' %}">Начать бесплатно</a>
+                    {% endif %}
+                    <a class="btn btn-outline btn-lg" href="#courses">Смотреть курсы</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-blob"></div>
+                {% if hero_teacher.photo %}
+                <img class="hero-photo" src="{{ hero_teacher.photo.url }}" alt="{{ hero_teacher.name }}">
                 {% endif %}
-                <a class="btn btn-ghost btn-lg" href="#courses">смотреть курсы</a>
+                <div class="hero-sticker">
+                    <span class="em">🎓</span>
+                    <b>Первый шаг</b>
+                    <span class="price">0 ₽</span>
+                </div>
             </div>
-            {% if stats %}
-            <div class="hero-stats">
-                {% for stat in stats %}
-                <div class="stat"><b>{{ stat.number }}</b><span>{{ stat.label }}</span></div>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
-        {% if hero_teacher.photo %}
-        <div class="hero-photo">
-            <span class="tape"></span>
-            <img src="{{ hero_teacher.photo.url }}" alt="{{ hero_teacher.name }}">
-            {% if site_settings %}
-            <div class="grade">{{ site_settings.grade_number }}<small>{{ site_settings.grade_label }}</small></div>
-            {% endif %}
+
+        {% if stats %}
+        <div class="stats-bar reveal">
+            {% for stat in stats %}
+            <div class="stat-item">
+                <div class="stat-icon">{{ stat.icon|default:'⭐' }}</div>
+                <div><b>{{ stat.number }}</b><span>{{ stat.label }}</span></div>
+            </div>
+            {% endfor %}
         </div>
         {% endif %}
     </div>
 </section>
 
-<!-- СТРАХИ -->
-{% if fears %}
-<section class="fears">
+<!-- ВЫБЕРИ СВОЙ ПУТЬ -->
+<section id="paths">
     <div class="container">
-        <span class="eyebrow hand reveal" style="color:var(--lemon)">знакомо?</span>
-        <h2 class="reveal">страшно, что не получится?</h2>
-        <p class="section-sub reveal">Собрала самые частые страхи учеников — и рассказываю, как мы закрываем каждый.</p>
-        <div class="fears-grid">
-            {% for fear in fears %}
-            <div class="fear reveal">
-                <span class="fear-q">{{ fear.question }}</span>
-                <p>{{ fear.answer|safe }}</p>
-            </div>
-            {% endfor %}
+        <h2 class="section-title reveal">Выбери свой путь</h2>
+        <div class="paths-grid">
+            <a href="?exam=ege#courses" class="path-card terra reveal">
+                <div>
+                    <h3>ЕГЭ</h3>
+                    <span class="path-sub">по русскому языку</span>
+                </div>
+                <span class="path-tag">10–11 класс →</span>
+                <span class="path-emoji">📕</span>
+            </a>
+            <a href="?exam=oge#courses" class="path-card cream reveal">
+                <div>
+                    <h3>ОГЭ</h3>
+                    <span class="path-sub">по русскому языку</span>
+                </div>
+                <span class="path-tag">8–9 класс →</span>
+                <span class="path-emoji">📝</span>
+            </a>
         </div>
     </div>
 </section>
-{% endif %}
 
-<!-- ПРЕИМУЩЕСТВА -->
-{% if features %}
-<section id="features">
+<!-- КАК УСТРОЕНА ПОДГОТОВКА -->
+<section id="how">
     <div class="container">
-        <span class="eyebrow hand reveal">почему со мной</span>
-        <h2 class="reveal">подготовка, где тебя видят</h2>
-        <div class="features-grid">
+        <h2 class="section-title reveal">Как устроена подготовка</h2>
+        <div class="steps-grid">
+            <div class="step reveal">
+                <span class="step-num">1</span>
+                <div class="step-icon">🎯</div>
+                <h3>Регистрация</h3>
+                <p>Создаёшь аккаунт бесплатно и выбираешь свой курс</p>
+            </div>
+            <div class="step reveal">
+                <span class="step-num">2</span>
+                <div class="step-icon">🗺️</div>
+                <h3>Доступ к курсу</h3>
+                <p>Преподаватель открывает доступ к урокам</p>
+            </div>
+            <div class="step reveal">
+                <span class="step-num">3</span>
+                <div class="step-icon">▶️</div>
+                <h3>Уроки и практика</h3>
+                <p>Видео, конспекты, тесты, домашки и пробники</p>
+            </div>
+            <div class="step reveal">
+                <span class="step-num">4</span>
+                <div class="step-icon">📊</div>
+                <h3>Проверка и прогресс</h3>
+                <p>Разбор ошибок, аналитика и личная обратная связь</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ЧТО ВНУТРИ ПЛАТФОРМЫ -->
+<section id="platform">
+    <div class="container">
+        <h2 class="section-title reveal">Что внутри платформы</h2>
+        <div class="platform-wrap reveal">
+            {% if site_settings.platform_screenshot %}
+                <img class="platform-shot" src="{{ site_settings.platform_screenshot.url }}" alt="Личный кабинет ученика">
+            {% else %}
+                <div class="platform-placeholder">Скриншот личного кабинета появится здесь</div>
+            {% endif %}
+            <div class="platform-features">
+                <div class="pf-item"><div class="pf-icon">🎬</div><div><b>Видеоуроки</b><span>Короткие и понятные</span></div></div>
+                <div class="pf-item"><div class="pf-icon">📝</div><div><b>Тесты после уроков</b><span>Автопроверка и пояснения</span></div></div>
+                <div class="pf-item"><div class="pf-icon">📚</div><div><b>Конспекты</b><span>PDF к каждому уроку</span></div></div>
+                <div class="pf-item"><div class="pf-icon">⏱️</div><div><b>Пробники с таймером</b><span>Формат реального экзамена</span></div></div>
+                <div class="pf-item"><div class="pf-icon">📕</div><div><b>Тетрадь ошибок</b><span>Собираем и анализируем</span></div></div>
+                <div class="pf-item"><div class="pf-icon">📈</div><div><b>Статистика</b><span>Динамика и рекомендации</span></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ЧТО ПОЛУЧАЕТ УЧЕНИК -->
+{% if features %}
+<section id="gets">
+    <div class="container">
+        <h2 class="section-title reveal">Что получает ученик</h2>
+        <div class="gets-grid">
             {% for f in features %}
-            <div class="feature reveal">
-                <span class="em">{{ f.icon }}</span>
+            <div class="get-card reveal">
+                <div class="get-icon">{{ f.icon }}</div>
                 <h3>{{ f.title }}</h3>
                 <p>{{ f.text }}</p>
             </div>
@@ -83,29 +148,22 @@
 <!-- КУРСЫ -->
 <section id="courses">
     <div class="container">
-        <span class="eyebrow hand reveal">выбери свой экзамен</span>
-        <h2 class="reveal">курсы</h2>
+        <h2 class="section-title reveal">Курсы</h2>
 
-        <!-- Фильтр по экзамену -->
         <div class="course-filters reveal">
-            <a href="?exam=ege#courses"
-               class="filter-pill {% if exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
-            <a href="?exam=oge#courses"
-               class="filter-pill {% if exam_filter == 'oge' %}active{% endif %}">ОГЭ</a>
+            <a href="?exam=ege#courses" class="filter-pill {% if exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
+            <a href="?exam=oge#courses" class="filter-pill {% if exam_filter == 'oge' %}active{% endif %}">ОГЭ</a>
         </div>
 
-        <!-- Фильтр по предмету -->
         {% if subjects %}
-        <div class="course-filters course-filters-subjects reveal">
+        <div class="course-filters reveal">
             {% for subj in subjects %}
             <a href="?{% if exam_filter %}exam={{ exam_filter }}&{% endif %}subject={{ subj }}#courses"
-               class="filter-pill filter-pill-sm {% if subject_filter == subj %}active{% endif %}">
-                {{ subj }}
-            </a>
+               class="filter-pill filter-pill-sm {% if subject_filter == subj %}active{% endif %}">{{ subj }}</a>
             {% endfor %}
             {% if subject_filter %}
             <a href="?{% if exam_filter %}exam={{ exam_filter }}{% endif %}#courses"
-               class="filter-pill filter-pill-sm" style="color: var(--pen);">✕ сбросить</a>
+               class="filter-pill filter-pill-sm" style="color:var(--terra);">✕ сбросить</a>
             {% endif %}
         </div>
         {% endif %}
@@ -123,7 +181,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                <a class="btn btn-dark" href="{% url 'course' course.slug %}">подробнее →</a>
+                <a class="btn btn-terra" href="{% url 'course' course.slug %}">Подробнее →</a>
             </article>
             {% empty %}
             <p class="section-sub">По выбранным фильтрам курсов пока нет</p>
@@ -131,12 +189,52 @@
         </div>
     </div>
 </section>
-<!-- О ПРЕПОДАВАТЕЛЕ -->
+
+<!-- РЕЗУЛЬТАТЫ УЧЕНИКОВ -->
+{% if reviews %}
+<section id="results">
+    <div class="container">
+        <h2 class="section-title reveal">Результаты учеников</h2>
+        <div class="results-grid">
+            {% for review in reviews %}
+            <div class="result-card reveal">
+                <div class="result-head">
+                    {% if review.photo %}
+                        <img src="{{ review.photo.url }}" class="result-avatar" alt="{{ review.student_name }}">
+                    {% else %}
+                        <div class="result-avatar">{{ review.student_name|first }}</div>
+                    {% endif %}
+                    <div>
+                        <b>{{ review.student_name }}</b>
+                        {% if review.city %}<span>{{ review.city }}</span>{% endif %}
+                    </div>
+                </div>
+                {% if review.score_before and review.score_after %}
+                <div class="result-scores">
+                    <div>
+                        <span class="score-num">{{ review.score_before }}</span>
+                        <span class="score-label">Было</span>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div>
+                        <span class="score-num after">{{ review.score_after }}</span>
+                        <span class="score-label">Стало</span>
+                    </div>
+                </div>
+                {% endif %}
+                <p>«{{ review.text }}»</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ПРЕПОДАВАТЕЛИ -->
 {% if teachers %}
 <section id="about">
     <div class="container">
-        <span class="eyebrow hand reveal">наши преподаватели</span>
-        <h2 class="reveal">кто вас будет учить</h2>
+        <h2 class="section-title reveal">Преподаватели</h2>
 
         {% if teacher_subjects|length > 1 %}
         <div class="course-filters reveal">
@@ -147,23 +245,22 @@
         </div>
         {% endif %}
 
-        {% for teacher in teachers %}
-        <div class="about-grid reveal" style="margin-bottom: 48px;">
-            {% if teacher.photo %}
-            <div class="about-photo">
-                <span class="tape"></span>
-                <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+        <div class="teachers-grid">
+            {% for teacher in teachers %}
+            <div class="teacher-card reveal">
+                {% if teacher.photo %}
+                <img class="teacher-photo" src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+                {% endif %}
+                <div>
+                    {% if teacher.subject %}<span class="t-subject">{{ teacher.subject }}</span>{% endif %}
+                    <h3>{{ teacher.name }}</h3>
+                    <p style="white-space: pre-line;">{{ teacher.bio|truncatewords:40 }}</p>
+                </div>
             </div>
-            {% endif %}
-            <div>
-                {% if teacher.subject %}<span class="eyebrow hand">{{ teacher.subject }}</span>{% endif %}
-                <h2>{{ teacher.name }}</h2>
-                <p style="white-space: pre-line;">{{ teacher.bio }}</p>
-            </div>
+            {% empty %}
+            <p class="section-sub">Преподаватели скоро появятся</p>
+            {% endfor %}
         </div>
-        {% empty %}
-        <p class="section-sub">Преподаватели скоро появятся</p>
-        {% endfor %}
     </div>
 </section>
 {% endif %}
@@ -172,38 +269,13 @@
 {% if parent_blocks %}
 <section>
     <div class="container">
-        <span class="eyebrow hand reveal">родителям</span>
-        <h2 class="reveal">спокойно и прозрачно</h2>
-        <div class="parents reveal">
+        <h2 class="section-title reveal">Родителям</h2>
+        <div class="gets-grid">
             {% for pb in parent_blocks %}
-            <div>
-                <h3>{{ pb.icon }} {{ pb.title }}</h3>
+            <div class="get-card reveal">
+                <div class="get-icon">{{ pb.icon }}</div>
+                <h3>{{ pb.title }}</h3>
                 <p>{{ pb.text }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- ОТЗЫВЫ -->
-{% if reviews %}
-<section id="reviews">
-    <div class="container">
-        <span class="eyebrow hand reveal">у них получилось</span>
-        <h2 class="reveal">отзывы учеников</h2>
-        <div class="reviews-grid">
-            {% for review in reviews %}
-            <div class="review reveal">
-                <p>«{{ review.text }}»</p>
-                <div class="review-author">
-                    {% if review.photo %}
-                        <img src="{{ review.photo.url }}" class="avatar" style="object-fit: cover;">
-                    {% else %}
-                        <div class="avatar" style="background:var(--mint)">{{ review.student_name|first }}</div>
-                    {% endif %}
-                    <div><b>{{ review.student_name }}</b></div>
-                </div>
             </div>
             {% endfor %}
         </div>
@@ -215,8 +287,7 @@
 {% if faqs %}
 <section id="faq">
     <div class="container">
-        <span class="eyebrow hand reveal">коротко и честно</span>
-        <h2 class="reveal">частые вопросы</h2>
+        <h2 class="section-title reveal">Частые вопросы</h2>
         <div class="faq">
             {% for faq in faqs %}
             <div class="faq-item reveal">
@@ -233,13 +304,14 @@
 <section>
     <div class="container">
         <div class="cta-final reveal">
-            <span class="eyebrow hand" style="font-size:26px">осталось одно действие ↓</span>
-            <h2>начни готовиться сегодня</h2>
-            <p>Зарегистрируйся бесплатно, посмотри как устроено обучение — и реши, подходит ли тебе такой формат.</p>
+            <div>
+                <h2>Готов к высокому баллу?</h2>
+                <p>Начни бесплатно уже сегодня — без оплат и обязательств</p>
+            </div>
             {% if user.is_authenticated %}
-                <a class="btn btn-dark btn-lg" href="{% url 'student_profile' %}">в кабинет →</a>
+                <a class="btn btn-lime btn-lg" href="{% url 'student_profile' %}">В кабинет →</a>
             {% else %}
-                <a class="btn btn-dark btn-lg" href="{% url 'register' %}">попробовать за 0 ₽</a>
+                <a class="btn btn-lime btn-lg" href="{% url 'register' %}">Начать бесплатно</a>
             {% endif %}
         </div>
     </div>

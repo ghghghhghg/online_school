@@ -18,17 +18,20 @@
 
 <header>
     <div class="container nav">
-        <a class="logo" href="{% url 'index' %}">онлайн<span>·</span>школа</a>
+        <a class="logo" href="{% url 'index' %}">
+            <span class="logo-mark">✚</span> ABS <span class="thin">SCHOOL</span>
+        </a>
         <ul class="nav-links">
-            <li><a href="{% url 'index' %}#courses">курсы</a></li>
-            <li><a href="{% url 'index' %}#about">преподаватель</a></li>
-            <li><a href="{% url 'index' %}#reviews">отзывы</a></li>
-            <li><a href="{% url 'index' %}#faq">вопросы</a></li>
+            <li><a href="{% url 'index' %}#how">О школе</a></li>
+            <li><a href="{% url 'index' %}#courses">Курсы</a></li>
+            <li><a href="{% url 'index' %}#about">Преподаватели</a></li>
+            <li><a href="{% url 'index' %}#results">Результаты</a></li>
+            <li><a href="{% url 'index' %}#faq">FAQ</a></li>
         </ul>
         <div class="nav-actions">
             {% if user.is_authenticated %}
                 {% if user.is_staff %}
-                    <a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">панель</a>
+                    <a class="btn btn-outline" href="{% url 'teacher_dashboard' %}">панель</a>
                 {% endif %}
 
                 <div class="dropdown">
@@ -70,12 +73,12 @@
                 </div>
 
                 {% if not user.is_staff %}
-                    <a class="btn btn-ghost" href="{% url 'student_profile' %}">кабинет</a>
+                    <a class="btn btn-outline" href="{% url 'student_profile' %}">кабинет</a>
                 {% endif %}
-                <a class="btn btn-dark" href="{% url 'logout' %}">выйти</a>
+                <a class="btn btn-terra" href="{% url 'logout' %}">выйти</a>
             {% else %}
-                <a class="btn btn-ghost" href="{% url 'login' %}">войти</a>
-                <a class="btn btn-dark" href="{% url 'register' %}">попробовать бесплатно</a>
+                <a class="btn btn-outline" href="{% url 'login' %}">войти</a>
+                <a class="btn btn-lime" href="{% url 'register' %}">попробовать бесплатно</a>
             {% endif %}
         </div>
     </div>

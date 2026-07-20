@@ -43,8 +43,8 @@ class LessonProgressAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['student_name', 'rating', 'is_published', 'order']
-    list_editable = ['is_published', 'order']
+    list_display = ['student_name', 'city', 'score_before', 'score_after', 'is_published']
+    list_editable = ['is_published']
 
 
 @admin.register(FAQ)
@@ -65,8 +65,8 @@ class WhyUsBlockAdmin(admin.ModelAdmin):
 
 @admin.register(StatBlock)
 class StatBlockAdmin(admin.ModelAdmin):
-    list_display = ['id', 'number', 'label', 'order']
-    list_editable = ['number', 'label', 'order']
+    list_display = ['icon', 'number', 'label', 'order']
+    list_editable = ['order']
 
 @admin.register(Homework)
 class HomeworkAdmin(admin.ModelAdmin):

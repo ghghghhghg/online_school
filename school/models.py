@@ -236,6 +236,9 @@ class Review(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     is_published = models.BooleanField(default=True, verbose_name='Опубликован')
     created_at = models.DateTimeField(auto_now_add=True)
+    city = models.CharField(max_length=100, blank=True, verbose_name='Город')
+    score_before = models.CharField(max_length=10, blank=True, verbose_name='Балл «было»')
+    score_after = models.CharField(max_length=10, blank=True, verbose_name='Балл «стало»')
 
     class Meta:
         verbose_name = 'Отзыв'
@@ -294,6 +297,7 @@ class WhyUsBlock(models.Model):
 
 
 class StatBlock(models.Model):
+    icon = models.CharField(max_length=10, default='⭐', verbose_name='Эмодзи')
     number = models.CharField(max_length=20, verbose_name='Число')
     label = models.CharField(max_length=100, verbose_name='Подпись')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -658,6 +662,8 @@ class SiteSettings(models.Model):
     hero_subtitle = models.TextField(default='', blank=True, verbose_name='Подзаголовок')
     grade_number = models.CharField(max_length=10, default='100', verbose_name='Число в кружке на фото')
     grade_label = models.CharField(max_length=20, default='ЕГЭ', verbose_name='Подпись в кружке')
+    platform_screenshot = models.ImageField(upload_to='site/', blank=True,
+                                            verbose_name='Скриншот личного кабинета')
 
     class Meta:
         verbose_name = 'Настройки главной'
