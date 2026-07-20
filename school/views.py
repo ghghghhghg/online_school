@@ -1840,3 +1840,44 @@ def continue_learning(request, course_pk):
     # Всё пройдено — на список уроков
     messages.success(request, '🎉 Все уроки курса пройдены!')
     return redirect('course_lessons', slug=course.slug)
+
+@login_required
+def error_notebook(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    # Берём последний результат по каждому тесту и его ошибки
+    results = TestResult.objects.filter(student=request.user).select_related(
+        'test', 'test__lesson', 'test__lesson__course'
+    )
+
+    # Оставляем только самый свежий результат по каждому тесту
+    latest_by_test = {}
+    for r in results:
+        if r.test_id not in latest_by_test or r.created_at > latest_by_test[r.test_id].created_at:
+            latest_by_test[r.test_id] = r
+
+    # Собираем ошибки, группируем по курсам
+    courses_map = {}
+    for result in latest_by_test.values():
+        wrong_logs = result.answer_logs.filter(is_correct=False).select_related(
+            'question', 'chosen_answer'
+        )
+        if not wrong_logs:
+            continue
+        lesson = result.test.lesson
+        course = lesson.course
+        courses_map.setdefault(course, []).append({
+            'lesson': lesson,
+            'result': result,
+            'wrong_logs': wrong_logs,
+        })
+
+    courses_data = [
+        {'course': course, 'lessons': lessons}
+        for course, lessons in courses_map.items()
+    ]
+
+    return render(request, 'school/error_notebook.html', {
+        'courses_data': courses_data,
+    })

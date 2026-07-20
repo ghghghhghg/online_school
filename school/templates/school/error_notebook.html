@@ -1,0 +1,44 @@
+{% extends 'school/base.html' %}
+
+{% block title %}Тетрадь ошибок{% endblock %}
+
+{% block content %}
+<h2 class="mb-2">📕 Тетрадь ошибок</h2>
+<p class="text-muted mb-4">Здесь собраны вопросы из последних попыток тестов, где были ошибки — повтори тему и пройди тест заново.</p>
+
+{% for data in courses_data %}
+<h5 class="mt-4 mb-3">{{ data.course.title }}</h5>
+{% for item in data.lessons %}
+<div class="card mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>{{ item.lesson.title }}</strong>
+        <div>
+            <a href="{% url 'lesson' item.lesson.pk %}" class="btn btn-outline-secondary btn-sm me-1">К уроку</a>
+            <a href="{% url 'test' item.lesson.pk %}" class="btn btn-primary btn-sm">Пройти тест ещё раз</a>
+        </div>
+    </div>
+    {% for log in item.wrong_logs %}
+    <div class="py-2" style="border-top: 1px solid var(--line);">
+        <p class="mb-1"><strong>{{ log.question.text }}</strong></p>
+        <p class="mb-1 small">
+            Ваш ответ: <span style="color: var(--pen);">{{ log.chosen_answer.text|default:'— не отвечено —' }}</span>
+        </p>
+        {% for answer in log.question.answers.all %}
+            {% if answer.is_correct %}
+            <p class="mb-1 small">Правильный: <strong>{{ answer.text }}</strong></p>
+            {% endif %}
+        {% endfor %}
+        {% if log.question.explanation %}
+        <p class="mb-0 small text-muted">💡 {{ log.question.explanation }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+{% empty %}
+<div class="card p-4 text-center">
+    <div style="font-size: 3rem;">🎉</div>
+    <p class="text-muted mb-0">Ошибок нет — либо все тесты сданы чисто, либо ещё не проходили тесты</p>
+</div>
+{% endfor %}
+{% endblock %}
