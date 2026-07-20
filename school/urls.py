@@ -113,5 +113,7 @@ urlpatterns = [
 
     path('my-analytics/', views.student_analytics, name='student_analytics'),
 
+    path('course/<int:course_pk>/continue/', views.continue_learning, name='continue_learning'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

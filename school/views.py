@@ -1800,3 +1800,43 @@ def student_analytics(request):
     return render(request, 'school/student_analytics.html', {
         'courses_data': courses_data,
     })
+
+@login_required
+def continue_learning(request, course_pk):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    course = get_object_or_404(Course, pk=course_pk)
+
+    enrollment = Enrollment.objects.filter(
+        student=request.user, course=course, status=Enrollment.STATUS_APPROVED
+    ).first()
+    if not enrollment:
+        return redirect('course', slug=course.slug)
+
+    completed_ids = LessonProgress.objects.filter(
+        student=request.user, lesson__course=course
+    ).values_list('lesson_id', flat=True)
+
+    # Первый непройденный урок: сначала по модулям (в порядке модулей и уроков), потом без модуля
+    next_lesson = None
+    for module in course.modules.prefetch_related('lessons').all():
+        for lesson in module.lessons.all():
+            if lesson.id not in completed_ids:
+                next_lesson = lesson
+                break
+        if next_lesson:
+            break
+
+    if not next_lesson:
+        for lesson in course.lessons.filter(module__isnull=True):
+            if lesson.id not in completed_ids:
+                next_lesson = lesson
+                break
+
+    if next_lesson:
+        return redirect('lesson', pk=next_lesson.pk)
+
+    # Всё пройдено — на список уроков
+    messages.success(request, '🎉 Все уроки курса пройдены!')
+    return redirect('course_lessons', slug=course.slug)
