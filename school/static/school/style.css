@@ -405,3 +405,5 @@ a > .card:hover{ background-color:var(--cream); }
     width:calc(100% - 16px); max-width:none;
   }
 }
+.path-card.path-inactive{ opacity:.55; }
+.path-card.path-inactive:hover{ opacity:1; }
