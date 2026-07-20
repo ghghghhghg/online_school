@@ -154,7 +154,7 @@ prev.addEventListener('click', function(){
       carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
     }
   });
-  next.addEventListener('click', function(){
+next.addEventListener('click', function(){
     var maxScroll = carousel.scrollWidth - carousel.clientWidth;
     if (carousel.scrollLeft >= maxScroll - 5) {
       carousel.scrollTo({ left: 0, behavior: 'smooth' });
@@ -162,6 +162,7 @@ prev.addEventListener('click', function(){
       carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
     }
   });
+})();
 
 /* FAQ-аккордеон */
 document.querySelectorAll('.faq-q').forEach(function(btn){
