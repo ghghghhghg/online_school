@@ -202,7 +202,43 @@ header{
 .get-card p{ font-size:13.5px; color:var(--ink-soft); }
 
 /* ---------- Результаты учеников ---------- */
-.results-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+/* ---------- Результаты учеников — карусель ---------- */
+.results-carousel-wrap{ position:relative; }
+.results-carousel{
+  display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory;
+  scrollbar-width:none; -ms-overflow-style:none; padding:6px 2px 18px;
+}
+.results-carousel::-webkit-scrollbar{ display:none; }
+.results-carousel .result-card{
+  flex:0 0 calc((100% - 40px) / 3);
+  scroll-snap-align:start;
+  background:var(--white); border-radius:var(--radius); padding:26px;
+  box-shadow:var(--shadow);
+}
+@media (max-width: 900px){
+  .results-carousel .result-card{ flex:0 0 calc((100% - 20px) / 2); }
+}
+@media (max-width: 600px){
+  .results-carousel .result-card{ flex:0 0 92%; }
+}
+
+.carousel-btn{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:5;
+  width:42px; height:42px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--white); box-shadow:var(--shadow); color:var(--ink);
+  font-size:24px; line-height:1; display:grid; place-items:center;
+  transition:background .2s, color .2s;
+}
+.carousel-btn:hover{ background:var(--terra); color:#fff; }
+.carousel-btn.prev{ left:-14px; }
+.carousel-btn.next{ right:-14px; }
+
+.carousel-dots{ display:flex; gap:8px; justify-content:center; margin-top:6px; }
+.carousel-dots .dot{
+  width:8px; height:8px; border-radius:50%; background:var(--line);
+  cursor:pointer; transition:background .2s, transform .2s;
+}
+.carousel-dots .dot.active{ background:var(--terra); transform:scale(1.25); }
 .result-card{
   background:var(--white); border-radius:var(--radius); padding:26px;
   box-shadow:var(--shadow);

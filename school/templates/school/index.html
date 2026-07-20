@@ -181,42 +181,47 @@
     </div>
 </section>
 
-<!-- РЕЗУЛЬТАТЫ УЧЕНИКОВ -->
+<<!-- РЕЗУЛЬТАТЫ УЧЕНИКОВ -->
 {% if reviews %}
 <section id="results">
     <div class="container">
         <h2 class="section-title reveal">Результаты учеников</h2>
-        <div class="results-grid">
-            {% for review in reviews %}
-            <div class="result-card reveal">
-                <div class="result-head">
-                    {% if review.photo %}
-                        <img src="{{ review.photo.url }}" class="result-avatar" alt="{{ review.student_name }}">
-                    {% else %}
-                        <div class="result-avatar">{{ review.student_name|first }}</div>
+        <div class="results-carousel-wrap reveal">
+            <button class="carousel-btn prev" type="button" aria-label="Назад">‹</button>
+            <div class="results-carousel" id="results-carousel">
+                {% for review in reviews %}
+                <div class="result-card">
+                    <div class="result-head">
+                        {% if review.photo %}
+                            <img src="{{ review.photo.url }}" class="result-avatar" alt="{{ review.student_name }}">
+                        {% else %}
+                            <div class="result-avatar">{{ review.student_name|first }}</div>
+                        {% endif %}
+                        <div>
+                            <b>{{ review.student_name }}</b>
+                            {% if review.city %}<span>{{ review.city }}</span>{% endif %}
+                        </div>
+                    </div>
+                    {% if review.score_before and review.score_after %}
+                    <div class="result-scores">
+                        <div>
+                            <span class="score-num">{{ review.score_before }}</span>
+                            <span class="score-label">Было</span>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div>
+                            <span class="score-num after">{{ review.score_after }}</span>
+                            <span class="score-label">Стало</span>
+                        </div>
+                    </div>
                     {% endif %}
-                    <div>
-                        <b>{{ review.student_name }}</b>
-                        {% if review.city %}<span>{{ review.city }}</span>{% endif %}
-                    </div>
+                    <p>«{{ review.text }}»</p>
                 </div>
-                {% if review.score_before and review.score_after %}
-                <div class="result-scores">
-                    <div>
-                        <span class="score-num">{{ review.score_before }}</span>
-                        <span class="score-label">Было</span>
-                    </div>
-                    <span class="arrow">→</span>
-                    <div>
-                        <span class="score-num after">{{ review.score_after }}</span>
-                        <span class="score-label">Стало</span>
-                    </div>
-                </div>
-                {% endif %}
-                <p>«{{ review.text }}»</p>
+                {% endfor %}
             </div>
-            {% endfor %}
+            <button class="carousel-btn next" type="button" aria-label="Вперёд">›</button>
         </div>
+        <div class="carousel-dots" id="carousel-dots"></div>
     </div>
 </section>
 {% endif %}

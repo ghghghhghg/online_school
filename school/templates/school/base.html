@@ -116,7 +116,44 @@
   }, { threshold:.12 });
   items.forEach(function(el){ io.observe(el); });
 })();
+<script>
+(function(){
+  var carousel = document.getElementById('results-carousel');
+  if (!carousel) return;
+  var cards = carousel.querySelectorAll('.result-card');
+  var dotsWrap = document.getElementById('carousel-dots');
+  var prev = document.querySelector('.carousel-btn.prev');
+  var next = document.querySelector('.carousel-btn.next');
 
+  function cardWidth(){
+    return cards.length ? cards[0].offsetWidth + 20 : 0;
+  }
+
+  cards.forEach(function(_, i){
+    var dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', function(){
+      carousel.scrollTo({ left: cardWidth() * i, behavior: 'smooth' });
+    });
+    dotsWrap.appendChild(dot);
+  });
+
+  function updateDots(){
+    var idx = Math.round(carousel.scrollLeft / cardWidth());
+    dotsWrap.querySelectorAll('.dot').forEach(function(d, i){
+      d.classList.toggle('active', i === idx);
+    });
+  }
+  carousel.addEventListener('scroll', function(){ requestAnimationFrame(updateDots); });
+
+  prev.addEventListener('click', function(){
+    carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+  });
+  next.addEventListener('click', function(){
+    carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
+  });
+})();
+</script>
 /* FAQ-аккордеон */
 document.querySelectorAll('.faq-q').forEach(function(btn){
   btn.addEventListener('click', function(){
