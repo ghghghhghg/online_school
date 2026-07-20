@@ -127,6 +127,7 @@
   var dotsWrap = document.getElementById('carousel-dots');
   var prev = document.querySelector('.carousel-btn.prev');
   var next = document.querySelector('.carousel-btn.next');
+    var skipLoopCheck = false;
 
   // Клонируем все карточки в конец
   originals.forEach(function(card){
@@ -159,6 +160,7 @@
 
   // Телепорт: если заехали в зону клонов — мгновенно смещаемся на ширину оригиналов назад
 function checkLoop(){
+    if (skipLoopCheck) return;
     if (carousel.scrollLeft >= originalsWidth()) {
       carousel.style.scrollBehavior = 'auto';
       carousel.scrollLeft = carousel.scrollLeft - originalsWidth();
@@ -173,14 +175,15 @@ function checkLoop(){
     });
   });
 
-  prev.addEventListener('click', function(){
+prev.addEventListener('click', function(){
     if (carousel.scrollLeft <= 5) {
-      // телепорт в зону клонов без анимации, затем — плавный шаг в следующем кадре
+      skipLoopCheck = true;
       carousel.style.scrollBehavior = 'auto';
       carousel.scrollLeft = originalsWidth();
       requestAnimationFrame(function(){
         carousel.style.scrollBehavior = '';
         carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+        setTimeout(function(){ skipLoopCheck = false; }, 600);
       });
     } else {
       carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
