@@ -117,20 +117,31 @@
   items.forEach(function(el){ io.observe(el); });
 })();
 
-/* Карусель результатов */
+/* Карусель результатов — бесконечная лента */
 (function(){
   var carousel = document.getElementById('results-carousel');
   if (!carousel) return;
-  var cards = carousel.querySelectorAll('.result-card');
+  var originals = Array.from(carousel.querySelectorAll('.result-card'));
+  var count = originals.length;
+  if (count === 0) return;
   var dotsWrap = document.getElementById('carousel-dots');
   var prev = document.querySelector('.carousel-btn.prev');
   var next = document.querySelector('.carousel-btn.next');
 
+  // Клонируем все карточки в конец
+  originals.forEach(function(card){
+    carousel.appendChild(card.cloneNode(true));
+  });
+
   function cardWidth(){
-    return cards.length ? cards[0].offsetWidth + 20 : 0;
+    return originals[0].offsetWidth + 20;
+  }
+  function originalsWidth(){
+    return cardWidth() * count;
   }
 
-  cards.forEach(function(_, i){
+  // Точки — только по оригиналам
+  originals.forEach(function(_, i){
     var dot = document.createElement('span');
     dot.className = 'dot' + (i === 0 ? ' active' : '');
     dot.addEventListener('click', function(){
@@ -140,27 +151,37 @@
   });
 
   function updateDots(){
-    var idx = Math.round(carousel.scrollLeft / cardWidth());
+    var idx = Math.round(carousel.scrollLeft / cardWidth()) % count;
     dotsWrap.querySelectorAll('.dot').forEach(function(d, i){
       d.classList.toggle('active', i === idx);
     });
   }
-  carousel.addEventListener('scroll', function(){ requestAnimationFrame(updateDots); });
 
-prev.addEventListener('click', function(){
-    if (carousel.scrollLeft <= 5) {
-      carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' });
-    } else {
-      carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+  // Телепорт: если заехали в зону клонов — мгновенно смещаемся на ширину оригиналов назад
+  function checkLoop(){
+    if (carousel.scrollLeft >= originalsWidth()) {
+      carousel.scrollLeft = carousel.scrollLeft - originalsWidth();
+    } else if (carousel.scrollLeft < 0) {
+      carousel.scrollLeft = carousel.scrollLeft + originalsWidth();
     }
+  }
+
+  carousel.addEventListener('scroll', function(){
+    requestAnimationFrame(function(){
+      checkLoop();
+      updateDots();
+    });
   });
-next.addEventListener('click', function(){
-    var maxScroll = carousel.scrollWidth - carousel.clientWidth;
-    if (carousel.scrollLeft >= maxScroll - 5) {
-      carousel.scrollTo({ left: 0, behavior: 'smooth' });
-    } else {
-      carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
+
+  prev.addEventListener('click', function(){
+    if (carousel.scrollLeft <= 5) {
+      // мгновенный прыжок в зону клонов, затем плавный шаг назад
+      carousel.scrollLeft = originalsWidth();
     }
+    carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+  });
+  next.addEventListener('click', function(){
+    carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
   });
 })();
 
