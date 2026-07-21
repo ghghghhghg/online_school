@@ -126,9 +126,12 @@
   if (count === 0) return;
   var prev = document.querySelector('.carousel-btn.prev');
   var next = document.querySelector('.carousel-btn.next');
-    var skipLoopCheck = false;
+  var skipLoopCheck = false;
 
-  // Клонируем все карточки в конец
+  // Клоны слева (в обратном порядке) и клоны справа
+  for (var i = count - 1; i >= 0; i--) {
+    carousel.insertBefore(originals[i].cloneNode(true), carousel.firstChild);
+  }
   originals.forEach(function(card){
     carousel.appendChild(card.cloneNode(true));
   });
@@ -140,39 +143,38 @@
     return cardWidth() * count;
   }
 
+  // Стартуем с середины — сразу на оригиналах
+  carousel.style.scrollBehavior = 'auto';
+  carousel.scrollLeft = originalsWidth();
+  carousel.style.scrollBehavior = '';
 
-
-  // Телепорт: если заехали в зону клонов — мгновенно смещаемся на ширину оригиналов назад
-function checkLoop(){
+  function checkLoop(){
     if (skipLoopCheck) return;
-    if (carousel.scrollLeft >= originalsWidth()) {
+    if (carousel.scrollLeft >= originalsWidth() * 2) {
       carousel.style.scrollBehavior = 'auto';
       carousel.scrollLeft = carousel.scrollLeft - originalsWidth();
+      carousel.style.scrollBehavior = '';
+    } else if (carousel.scrollLeft <= 0) {
+      carousel.style.scrollBehavior = 'auto';
+      carousel.scrollLeft = carousel.scrollLeft + originalsWidth();
       carousel.style.scrollBehavior = '';
     }
   }
 
-carousel.addEventListener('scroll', function(){
+  carousel.addEventListener('scroll', function(){
     requestAnimationFrame(checkLoop);
   });
 
-prev.addEventListener('click', function(){
-    if (carousel.scrollLeft <= 5) {
-      skipLoopCheck = true;
-      carousel.style.scrollBehavior = 'auto';
-      carousel.scrollLeft = originalsWidth();
-      requestAnimationFrame(function(){
-        carousel.style.scrollBehavior = '';
-        carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
-        setTimeout(function(){ skipLoopCheck = false; }, 600);
-      });
-    } else {
+  if (prev) {
+    prev.addEventListener('click', function(){
       carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
-    }
-  });
-  next.addEventListener('click', function(){
-    carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
-  });
+    });
+  }
+  if (next) {
+    next.addEventListener('click', function(){
+      carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
+    });
+  }
 })();
 
 /* FAQ-аккордеон */
