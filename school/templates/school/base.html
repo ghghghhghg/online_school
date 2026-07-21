@@ -124,7 +124,6 @@
   var originals = Array.from(carousel.querySelectorAll('.result-card'));
   var count = originals.length;
   if (count === 0) return;
-  var dotsWrap = document.getElementById('carousel-dots');
   var prev = document.querySelector('.carousel-btn.prev');
   var next = document.querySelector('.carousel-btn.next');
     var skipLoopCheck = false;
@@ -141,22 +140,7 @@
     return cardWidth() * count;
   }
 
-  // Точки — только по оригиналам
-  originals.forEach(function(_, i){
-    var dot = document.createElement('span');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.addEventListener('click', function(){
-      carousel.scrollTo({ left: cardWidth() * i, behavior: 'smooth' });
-    });
-    dotsWrap.appendChild(dot);
-  });
 
-  function updateDots(){
-    var idx = Math.round(carousel.scrollLeft / cardWidth()) % count;
-    dotsWrap.querySelectorAll('.dot').forEach(function(d, i){
-      d.classList.toggle('active', i === idx);
-    });
-  }
 
   // Телепорт: если заехали в зону клонов — мгновенно смещаемся на ширину оригиналов назад
 function checkLoop(){
@@ -168,11 +152,8 @@ function checkLoop(){
     }
   }
 
-  carousel.addEventListener('scroll', function(){
-    requestAnimationFrame(function(){
-      checkLoop();
-      updateDots();
-    });
+carousel.addEventListener('scroll', function(){
+    requestAnimationFrame(checkLoop);
   });
 
 prev.addEventListener('click', function(){
