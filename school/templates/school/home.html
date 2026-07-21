@@ -3,70 +3,56 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-<h2 class="mb-1">Привет, {{ user.first_name }}!</h2>
-<p class="text-muted mb-4">Продолжай в том же темпе — у тебя всё получится 💪</p>
+{% block content %}
+<h2 style="font-size: 26px; margin: 0 0 4px; font-weight: 700;">Привет, {{ user.first_name }}!</h2>
+<p style="color: var(--ink-soft); margin: 0 0 24px; font-size: 15px;">Продолжай в том же темпе — у тебя всё получится</p>
 
 {% if pending_enrollments %}
-<div class="alert alert-warning">
-    <strong>Заявки на рассмотрении:</strong>
-    {% for pe in pending_enrollments %}
-        {{ pe.course.title }}{% if not forloop.last %}, {% endif %}
-    {% endfor %}
+<div class="pf-alert">
+    <span>⏳</span>
+    <span><b>Заявка на рассмотрении:</b>
+    {% for pe in pending_enrollments %}{{ pe.course.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
 </div>
 {% endif %}
 
 {% if next_course %}
-<div class="card p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-            <span class="text-muted small">Продолжить обучение</span>
-            <h4 class="mb-1">{{ next_course.course.title }}</h4>
-            <div class="d-flex align-items-center gap-2" style="max-width: 260px;">
-                <div class="progress flex-grow-1" style="height: 6px;">
-                    <div class="progress-bar" style="width: {{ next_course.percent }}%;"></div>
-                </div>
-                <small class="text-muted">{{ next_course.completed }}/{{ next_course.total }}</small>
+<div class="pf-continue-card">
+    <div>
+        <span style="color: var(--ink-soft); font-size: 13px; font-weight: 500;">Продолжить обучение</span>
+        <h4 style="margin: 4px 0 12px; font-size: 20px; font-weight: 700;">{{ next_course.course.title }}</h4>
+        <div style="display: flex; align-items: center; gap: 10px; max-width: 280px;">
+            <div class="pf-progress-track">
+                <div class="pf-progress-fill" style="width: {{ next_course.percent }}%;"></div>
             </div>
+            <small style="color: var(--ink-soft); font-size: 12.5px; white-space: nowrap;">{{ next_course.completed }}/{{ next_course.total }} уроков</small>
         </div>
-        <a href="{% url 'continue_learning' next_course.course.pk %}" class="btn btn-terra">
-            ▶ Продолжить урок
-        </a>
     </div>
+    <a href="{% url 'continue_learning' next_course.course.pk %}" class="btn btn-terra">
+        ▶ Продолжить урок
+    </a>
 </div>
 {% endif %}
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'student_courses' %}" class="text-decoration-none">
-            <div class="card p-4 text-center h-100">
-                <div style="font-size: 2rem;">📚</div>
-                <b class="mt-2" style="color: var(--ink);">Мои курсы</b>
-                <span class="text-muted small">{{ courses_progress|length }} курсов</span>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'error_notebook' %}" class="text-decoration-none">
-            <div class="card p-4 text-center h-100">
-                <div style="font-size: 2rem;">📕</div>
-                <b class="mt-2" style="color: var(--ink);">Практика</b>
-                <span class="text-muted small">Повторить ошибки</span>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'student_analytics' %}" class="text-decoration-none">
-            <div class="card p-4 text-center h-100">
-                <div style="font-size: 2rem;">📊</div>
-                <b class="mt-2" style="color: var(--ink);">Результаты</b>
-                <span class="text-muted small">Полная статистика</span>
-            </div>
-        </a>
-    </div>
+<div class="pf-tile-grid">
+    <a href="{% url 'student_courses' %}" class="pf-tile">
+        <div class="pf-tile-icon">📚</div>
+        <b>Мои курсы</b>
+        <span>{{ courses_progress|length }} курсов</span>
+    </a>
+    <a href="{% url 'error_notebook' %}" class="pf-tile">
+        <div class="pf-tile-icon">📕</div>
+        <b>Практика</b>
+        <span>Повторить ошибки</span>
+    </a>
+    <a href="{% url 'student_analytics' %}" class="pf-tile">
+        <div class="pf-tile-icon">📊</div>
+        <b>Результаты</b>
+        <span>Полная статистика</span>
+    </a>
 </div>
 
 {% if not courses_progress %}
-<div class="card p-4 text-center">
+<div class="card p-4 text-center mt-3">
     <p class="text-muted mb-3">Вы пока не записаны ни на один курс</p>
     <a href="{% url 'index' %}#courses" class="btn btn-terra">Выбрать курс</a>
 </div>

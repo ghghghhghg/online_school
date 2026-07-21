@@ -477,3 +477,59 @@ a > .card:hover{ background-color:var(--cream); }
 .result-photos-4 img{ aspect-ratio:1/1; }
 
 .nav-links a.active-link{ color:var(--terra); font-weight:600; }
+
+/* ---------- Платформа: карточки кабинета ---------- */
+.platform-header{
+  height:72px; display:flex; align-items:center; justify-content:space-between; gap:18px;
+}
+.platform-logo-mark{
+  width:38px; height:38px; border-radius:50%; background:var(--terra);
+  display:grid; place-items:center; color:#fff; font-size:18px; flex:none;
+}
+.platform-nav-link{ text-decoration:none; font-size:14.5px; font-weight:500; color:var(--ink-soft); }
+.platform-nav-link.active-link{ font-weight:700; color:var(--terra); }
+
+.pf-alert{
+  display:flex; align-items:center; gap:14px; background:var(--lemon);
+  border-radius:16px; padding:16px 20px; margin-bottom:20px; font-size:14.5px; color:#6E5A0A;
+}
+.pf-continue-card{
+  background:var(--white); border-radius:20px; box-shadow:var(--shadow);
+  padding:28px 30px; margin-bottom:24px; display:flex; align-items:center;
+  justify-content:space-between; gap:24px; flex-wrap:wrap;
+}
+.pf-tile-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
+.pf-tile{
+  background:var(--white); border:none; border-radius:20px; box-shadow:var(--shadow);
+  padding:26px; text-align:center; cursor:pointer; font-family:inherit; text-decoration:none; display:block;
+}
+.pf-tile-icon{
+  width:52px; height:52px; border-radius:16px; background:var(--peach);
+  display:grid; place-items:center; margin:0 auto 14px; font-size:22px;
+}
+.pf-tile b{ display:block; font-size:15px; color:var(--ink); }
+.pf-tile span{ color:var(--ink-soft); font-size:13px; }
+
+.pf-course-row{
+  background:var(--white); border-radius:20px; box-shadow:var(--shadow);
+  padding:24px 26px; margin-bottom:16px; display:flex; align-items:center;
+  justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.pf-progress-track{ flex:1; max-width:240px; height:6px; border-radius:99px; background:var(--line); }
+.pf-progress-fill{ height:100%; border-radius:99px; background:var(--terra); }
+.pf-progress-fill.done{ background:#4A8B5C; }
+
+.pf-lesson-video{
+  aspect-ratio:16/9; border-radius:16px; background:var(--cream-2);
+  border:2px dashed var(--line); display:grid; place-items:center; margin-bottom:20px;
+  color:var(--ink-soft); font-size:13px;
+}
+.pf-lesson-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; }
+.pf-passed-banner{
+  display:flex; align-items:center; gap:12px; background:#E7F3D9;
+  border-radius:16px; padding:16px 20px; margin-bottom:28px; color:#2E5B39; font-size:14.5px;
+}
+.pf-comment-card{
+  background:var(--white); border-radius:16px; box-shadow:0 4px 14px rgba(43,35,32,.05);
+  padding:18px 20px; margin-bottom:12px;
+}

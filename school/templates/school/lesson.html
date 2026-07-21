@@ -15,10 +15,12 @@
 
 {% if lesson.video_file %}
 <div class="ratio ratio-16x9 my-4">
-    <video controls style="border-radius: 8px; width: 100%;">
-        <source src="{{ lesson.video_file.url }}" type="video/mp4">
-        Ваш браузер не поддерживает видео.
-    </video>
+    <div class="pf-lesson-video" style="position: relative; overflow: hidden;">
+        <video controls style="border-radius: 8px; width: 100%;">
+            <source src="{{ lesson.video_file.url }}" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+    </div>
 </div>
 {% elif lesson.video_url %}
 <div class="ratio ratio-16x9 my-4">
@@ -31,10 +33,12 @@
 </div>
 {% endif %}
 {% if lesson.conspect %}
-<a href="{{ lesson.conspect.url }}" target="_blank"
-   class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-3">
-    📄 Скачать конспект урока
-</a>
+<div class="pf-lesson-actions">
+    <a href="{{ lesson.conspect.url }}" target="_blank"
+       class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-3">
+        📄 Скачать конспект урока
+    </a>
+</div>
 {% endif %}
 {% if lesson.homework %}
 <a href="{% url 'homework' lesson.pk %}" class="btn btn-outline-primary mb-3">
@@ -47,8 +51,9 @@
     {% elif lesson.test %}
         {% if test_result %}
             {% if test_result.passed %}
-                <div class="alert alert-success">
-                    ✅ Урок пройден — тест сдан на {{ test_result.score }}%
+                <div class="pf-passed-banner">
+                    ✅ <span style="flex: 1;">Урок пройден — тест сдан на {{ test_result.score }}%</span>
+                    <a href="{% url 'test' lesson.pk %}" class="btn btn-sm" style="border: 2px solid #2E5B39; color: #2E5B39; background: transparent;">Пройти ещё раз</a>
                 </div>
                 <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary">
                     🔄 Пройти тест ещё раз
@@ -94,7 +99,7 @@
 </form>
 
 {% for comment in comments %}
-<div class="card mb-2 p-3">
+<div class="pf-comment-card mb-2 p-3">
     <div class="d-flex justify-content-between align-items-start">
         <div>
             <strong>
