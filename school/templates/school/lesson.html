@@ -16,12 +16,10 @@
 
 {% if lesson.video_file %}
 <div class="ratio ratio-16x9 my-4">
-    <div class="pf-lesson-video" style="position: relative; overflow: hidden;">
-        <video controls style="border-radius: 8px; width: 100%;">
-            <source src="{{ lesson.video_file.url }}" type="video/mp4">
-            Ваш браузер не поддерживает видео.
-        </video>
-    </div>
+    <video controls style="border-radius: 8px; width: 100%;">
+        <source src="{{ lesson.video_file.url }}" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
 </div>
 {% elif lesson.video_url %}
 <div class="ratio ratio-16x9 my-4">
