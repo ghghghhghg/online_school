@@ -191,12 +191,14 @@
             <div class="results-carousel" id="results-carousel">
                 {% for review in reviews %}
                 <div class="result-card">
+                    {% if review.photos.all %}
+                    <div class="result-photos result-photos-{{ review.photos.all|length }}">
+                        {% for photo in review.photos.all %}
+                        <img src="{{ photo.image.url }}" alt="{{ review.student_name }}">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <div class="result-head">
-                        {% if review.photo %}
-                            <img src="{{ review.photo.url }}" class="result-avatar" alt="{{ review.student_name }}">
-                        {% else %}
-                            <div class="result-avatar">{{ review.student_name|first }}</div>
-                        {% endif %}
                         <div>
                             <b>{{ review.student_name }}</b>
                             {% if review.city %}<span>{{ review.city }}</span>{% endif %}
@@ -220,6 +222,9 @@
                 {% endfor %}
             </div>
             <button class="carousel-btn next" type="button" aria-label="Вперёд">›</button>
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'all_reviews' %}" class="btn btn-outline">Читать все отзывы</a>
         </div>
     </div>
 </section>

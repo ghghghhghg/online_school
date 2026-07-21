@@ -49,7 +49,7 @@ def index(request):
     teacher_subjects = TeacherProfile.objects.exclude(subject='') \
         .order_by('subject').values_list('subject', flat=True).distinct()
 
-    reviews = Review.objects.filter(is_published=True)
+    reviews = Review.objects.filter(is_published=True).prefetch_related('photos')[:10]
     faqs = FAQ.objects.all()
     stats = StatBlock.objects.all()
     fears = FearBlock.objects.all()
@@ -1881,3 +1881,7 @@ def error_notebook(request):
     return render(request, 'school/error_notebook.html', {
         'courses_data': courses_data,
     })
+
+def all_reviews_view(request):
+    reviews = Review.objects.filter(is_published=True).prefetch_related('photos')
+    return render(request, 'school/all_reviews.html', {'reviews': reviews})

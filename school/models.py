@@ -229,24 +229,33 @@ class TeacherProfile(models.Model):
         return self.name
 
 class Review(models.Model):
-    student_name = models.CharField(max_length=200, verbose_name='Имя ученика')
-    text = models.TextField(verbose_name='Текст отзыва')
-    rating = models.PositiveIntegerField(default=5, verbose_name='Оценка (1-5)')
-    photo = models.ImageField(upload_to='reviews/', blank=True, verbose_name='Фото')
-    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
-    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
-    created_at = models.DateTimeField(auto_now_add=True)
+    student_name = models.CharField(max_length=100, verbose_name='Имя ученика')
     city = models.CharField(max_length=100, blank=True, verbose_name='Город')
+    text = models.TextField(verbose_name='Текст отзыва')
     score_before = models.CharField(max_length=10, blank=True, verbose_name='Балл «было»')
     score_after = models.CharField(max_length=10, blank=True, verbose_name='Балл «стало»')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
-        ordering = ['order', '-created_at']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.student_name} — {self.rating}★'
+        return self.student_name
+
+
+class ReviewPhoto(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE,
+                               related_name='photos', verbose_name='Отзыв')
+    image = models.ImageField(upload_to='reviews/', verbose_name='Фото')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Фото к отзыву'
+        verbose_name_plural = 'Фото к отзыву'
+        ordering = ['order']
 
 
 class FAQ(models.Model):

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
-    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings
+    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -41,10 +41,16 @@ class EnrollmentAdmin(admin.ModelAdmin):
 class LessonProgressAdmin(admin.ModelAdmin):
     list_display = ['student', 'lesson', 'completed_at']
 
+class ReviewPhotoInline(admin.TabularInline):
+    model = ReviewPhoto
+    extra = 1
+    max_num = 4
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['student_name', 'city', 'score_before', 'score_after', 'is_published']
     list_editable = ['is_published']
+    inlines = [ReviewPhotoInline]
 
 
 @admin.register(FAQ)

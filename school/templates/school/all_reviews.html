@@ -1,0 +1,48 @@
+{% extends 'school/base.html' %}
+
+{% block title %}Отзывы учеников{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Все отзывы</h2>
+    <a href="{% url 'index' %}#results" class="btn btn-outline-secondary btn-sm">← На главную</a>
+</div>
+
+<div class="row g-4">
+    {% for review in reviews %}
+    <div class="col-md-4">
+        <div class="result-card" style="height: 100%;">
+            {% if review.photos.all %}
+            <div class="result-photos result-photos-{{ review.photos.all|length }}">
+                {% for photo in review.photos.all %}
+                <img src="{{ photo.image.url }}" alt="{{ review.student_name }}">
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="result-head">
+                <div>
+                    <b>{{ review.student_name }}</b>
+                    {% if review.city %}<span>{{ review.city }}</span>{% endif %}
+                </div>
+            </div>
+            {% if review.score_before and review.score_after %}
+            <div class="result-scores">
+                <div>
+                    <span class="score-num">{{ review.score_before }}</span>
+                    <span class="score-label">Было</span>
+                </div>
+                <span class="arrow">→</span>
+                <div>
+                    <span class="score-num after">{{ review.score_after }}</span>
+                    <span class="score-label">Стало</span>
+                </div>
+            </div>
+            {% endif %}
+            <p>«{{ review.text }}»</p>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">Отзывов пока нет</p>
+    {% endfor %}
+</div>
+{% endblock %}

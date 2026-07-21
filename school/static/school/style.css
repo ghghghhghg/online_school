@@ -456,3 +456,22 @@ a > .card:hover{ background-color:var(--cream); }
 
 #results{ background:var(--cream); }
 #results .container{ background:var(--cream); }
+
+/* ---------- Фото в отзывах ---------- */
+.result-photos{
+  display:grid; gap:6px; margin-bottom:16px; border-radius:var(--radius-sm); overflow:hidden;
+}
+.result-photos img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.result-photos-1{ grid-template-columns:1fr; }
+.result-photos-1 img{ aspect-ratio:16/10; }
+
+.result-photos-2{ grid-template-columns:1fr 1fr; }
+.result-photos-2 img{ aspect-ratio:1/1; }
+
+.result-photos-3{ grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
+.result-photos-3 img:nth-child(1){ grid-row:1 / 3; aspect-ratio:auto; height:100%; }
+.result-photos-3 img:nth-child(2), .result-photos-3 img:nth-child(3){ aspect-ratio:2/1; }
+
+.result-photos-4{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.result-photos-4 img{ aspect-ratio:1/1; }
