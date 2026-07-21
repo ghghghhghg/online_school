@@ -5,7 +5,8 @@
 
 {% block content %}
 <a href="{% url 'course_lessons' lesson.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
-    ← Назад к урокам
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A6F68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+Назад к урокам
 </a>
 
 <h2>{{ lesson.title }}</h2>
@@ -36,13 +37,13 @@
 <div class="pf-lesson-actions">
     <a href="{{ lesson.conspect.url }}" target="_blank"
        class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-3">
-        📄 Скачать конспект урока
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg> Скачать конспект урока
     </a>
 </div>
 {% endif %}
 {% if lesson.homework %}
 <a href="{% url 'homework' lesson.pk %}" class="btn btn-outline-primary mb-3">
-    Домашнее задание
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7A6F68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6M9 13h6M9 17h6"></path></svg>Домашнее задание
 </a>
 {% endif %}
 <div class="mt-4">
@@ -52,7 +53,7 @@
         {% if test_result %}
             {% if test_result.passed %}
                 <div class="pf-passed-banner">
-                    ✅ <span style="flex: 1;">Урок пройден — тест сдан на {{ test_result.score }}%</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5B39" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="m9 12 2 2 4-4"></path></svg> <span style="flex: 1;">Урок пройден — тест сдан на {{ test_result.score }}%</span>
                     <a href="{% url 'test' lesson.pk %}" class="btn btn-sm" style="border: 2px solid #2E5B39; color: #2E5B39; background: transparent;">Пройти ещё раз</a>
                 </div>
                 <a href="{% url 'test' lesson.pk %}" class="btn btn-outline-primary">
@@ -74,12 +75,12 @@
         {% endif %}
     {% else %}
         {% if is_completed %}
-            <span class="text-success fw-bold">✅ Урок пройден</span>
+            <span class="text-success fw-bold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5B39" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="m9 12 2 2 4-4"></path></svg> Урок пройден</span>
         {% else %}
             <form method="post" action="{% url 'complete_lesson' lesson.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-success">
-                    ✅ Отметить как пройденный
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5B39" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="m9 12 2 2 4-4"></path></svg> Отметить как пройденный
                 </button>
             </form>
         {% endif %}

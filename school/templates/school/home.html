@@ -8,7 +8,7 @@
 
 {% if pending_enrollments %}
 <div class="pf-alert">
-    <span>⏳</span>
+    <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E5A0A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
     <span><b>Заявка на рассмотрении:</b>
     {% for pe in pending_enrollments %}{{ pe.course.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
 </div>
@@ -27,24 +27,31 @@
         </div>
     </div>
     <a href="{% url 'continue_learning' next_course.course.pk %}" class="btn btn-terra">
-        ▶ Продолжить урок
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" style="margin-right: 6px;"><path d="M8 5v14l11-7Z"></path></svg>
+Продолжить урок
     </a>
 </div>
 {% endif %}
 
 <div class="pf-tile-grid">
     <a href="{% url 'student_courses' %}" class="pf-tile">
-        <div class="pf-tile-icon">📚</div>
+        <div class="pf-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
+        </div>
         <b>Мои курсы</b>
         <span>{{ courses_progress|length }} курсов</span>
     </a>
     <a href="{% url 'error_notebook' %}" class="pf-tile">
-        <div class="pf-tile-icon">📕</div>
+        <div class="pf-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 15h6M9 11h2"></path></svg>
+        </div>
         <b>Практика</b>
         <span>Повторить ошибки</span>
     </a>
     <a href="{% url 'student_analytics' %}" class="pf-tile">
-        <div class="pf-tile-icon">📊</div>
+        <div class="pf-tile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15v3M12 10v8M17 6v12"></path></svg>
+        </div>
         <b>Результаты</b>
         <span>Полная статистика</span>
     </a>
