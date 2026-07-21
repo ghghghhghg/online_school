@@ -16,19 +16,31 @@
 
 {% if lesson.video_file %}
 <div class="ratio ratio-16x9 my-4">
-    <video controls style="border-radius: 8px; width: 100%;">
-        <source src="{{ lesson.video_file.url }}" type="video/mp4">
-        Ваш браузер не поддерживает видео.
-    </video>
+    <video id="lesson-video" controls style="width: 100%; border-radius: 16px;">
+    <source src="{{ lesson.video_file.url }}" type="video/mp4">
+</video>
 </div>
 {% elif lesson.video_url %}
 <div class="ratio ratio-16x9 my-4">
-    <iframe src="{{ lesson.video_url }}"
+    <iframe id="lesson-video-vk" src="{{ lesson.video_url }}"
             allowfullscreen
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             frameborder="0"
             allowtransparency>
     </iframe>
+</div>
+{% endif %}
+{% if timecodes %}
+<div class="mb-4">
+    <h6 class="mb-2" style="color: var(--ink-soft); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em;">
+        Содержание урока
+    </h6>
+    {% for tc in timecodes %}
+    <button type="button" class="timecode-btn" data-seconds="{{ tc.time_seconds }}">
+        <span class="timecode-time">{{ tc.formatted_time }}</span>
+        <span class="timecode-label">{{ tc.label }}</span>
+    </button>
+    {% endfor %}
 </div>
 {% endif %}
 {% if lesson.conspect %}
@@ -179,4 +191,27 @@
 {% empty %}
 <p class="text-muted">Пока нет вопросов. Будьте первым!</p>
 {% endfor %}
+<script>
+document.querySelectorAll('.timecode-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var seconds = parseInt(btn.dataset.seconds, 10);
+
+    // HTML5-видео (загруженные файлы)
+    var video = document.getElementById('lesson-video');
+    if (video) {
+      video.currentTime = seconds;
+      video.play();
+      return;
+    }
+
+    // VK-плеер — перезагружаем iframe с параметром времени
+    var vkFrame = document.getElementById('lesson-video-vk');
+    if (vkFrame) {
+      var src = vkFrame.src.split('&t=')[0].split('?t=')[0];
+      var separator = src.includes('?') ? '&' : '?';
+      vkFrame.src = src + separator + 't=' + seconds;
+    }
+  });
+});
+</script>
 {% endblock %}

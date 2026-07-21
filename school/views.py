@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
     CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer, FearBlock, \
-    ParentBlock, SiteSettings, TestAnswerLog
+    ParentBlock, SiteSettings, TestAnswerLog, Timecode
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -283,6 +283,7 @@ def lesson_view(request, pk):
         'is_completed': is_completed,
         'test_result': test_result,
         'comments': comments,
+        'timecodes': lesson.timecodes.all(),
     })
 
 
@@ -404,7 +405,10 @@ def teacher_edit_lesson(request, pk):
         lesson.save()
         messages.success(request, 'Урок обновлён!')
         return redirect('teacher_course_dashboard', pk=lesson.course.pk)
-    return render(request, 'school/teacher/edit_lesson.html', {'lesson': lesson})
+    return render(request, 'school/teacher/edit_lesson.html', {
+        'lesson': lesson,
+        'timecodes': lesson.timecodes.all(),
+    })
 
 @staff_member_required
 def teacher_delete_lesson(request, pk):
@@ -1924,3 +1928,30 @@ def error_notebook(request):
 def all_reviews_view(request):
     reviews = Review.objects.filter(is_published=True).prefetch_related('photos')
     return render(request, 'school/all_reviews.html', {'reviews': reviews})
+
+@staff_member_required
+def teacher_add_timecode(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST':
+        minutes = int(request.POST.get('minutes', 0) or 0)
+        seconds = int(request.POST.get('seconds', 0) or 0)
+        label = request.POST.get('label', '').strip()
+        if label:
+            Timecode.objects.create(
+                lesson=lesson,
+                time_seconds=minutes * 60 + seconds,
+                label=label,
+                order=lesson.timecodes.count() + 1,
+            )
+            messages.success(request, 'Таймкод добавлен!')
+    return redirect('teacher_edit_lesson', pk=lesson.pk)
+
+
+@staff_member_required
+def teacher_delete_timecode(request, pk):
+    timecode = get_object_or_404(Timecode, pk=pk)
+    lesson_pk = timecode.lesson.pk
+    if request.method == 'POST':
+        timecode.delete()
+        messages.success(request, 'Таймкод удалён')
+    return redirect('teacher_edit_lesson', pk=lesson_pk)

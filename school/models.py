@@ -680,3 +680,24 @@ class SiteSettings(models.Model):
 
     def __str__(self):
         return 'Настройки главной страницы'
+
+class Timecode(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE,
+                               related_name='timecodes', verbose_name='Урок')
+    time_seconds = models.PositiveIntegerField(verbose_name='Время (в секундах)')
+    label = models.CharField(max_length=200, verbose_name='Подпись')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Таймкод'
+        verbose_name_plural = 'Таймкоды'
+        ordering = ['time_seconds']
+
+    def __str__(self):
+        return f'{self.time_seconds}с — {self.label}'
+
+    @property
+    def formatted_time(self):
+        minutes = self.time_seconds // 60
+        seconds = self.time_seconds % 60
+        return f'{minutes}:{seconds:02d}'

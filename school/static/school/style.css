@@ -533,3 +533,15 @@ a > .card:hover{ background-color:var(--cream); }
   background:var(--white); border-radius:16px; box-shadow:0 4px 14px rgba(43,35,32,.05);
   padding:18px 20px; margin-bottom:12px;
 }
+
+.timecode-btn{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:var(--white); border:none; border-radius:12px; padding:10px 14px;
+  margin-bottom:6px; cursor:pointer; box-shadow:0 2px 8px rgba(43,35,32,.05);
+  transition:background .15s;
+}
+.timecode-btn:hover{ background:var(--cream-2); }
+.timecode-time{
+  font-weight:700; color:var(--terra); font-size:13.5px; min-width:44px;
+}
+.timecode-label{ font-size:14px; color:var(--ink); }

@@ -75,6 +75,41 @@
                    class="btn btn-outline-secondary">Отмена</a>
             </div>
         </form>
+        <div class="card mt-4 p-4">
+    <h5 class="mb-3">Таймкоды видео</h5>
+
+    {% for tc in timecodes %}
+    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--line);">
+        <span><strong>{{ tc.formatted_time }}</strong> — {{ tc.label }}</span>
+        <form method="post" action="{% url 'teacher_delete_timecode' tc.pk %}"
+              onsubmit="return confirm('Удалить таймкод?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+        </form>
+    </div>
+    {% empty %}
+    <p class="text-muted small">Таймкодов пока нет</p>
+    {% endfor %}
+
+    <form method="post" action="{% url 'teacher_add_timecode' lesson.pk %}" class="row g-2 align-items-end mt-3">
+        {% csrf_token %}
+        <div class="col-auto">
+            <label class="form-label small">Минуты</label>
+            <input type="number" name="minutes" class="form-control" style="width: 80px;" min="0" value="0" required>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small">Секунды</label>
+            <input type="number" name="seconds" class="form-control" style="width: 80px;" min="0" max="59" value="0" required>
+        </div>
+        <div class="col">
+            <label class="form-label small">Подпись</label>
+            <input type="text" name="label" class="form-control" placeholder="Например: Разбор задания 5" required>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">+ Добавить</button>
+        </div>
+    </form>
+</div>
     </div>
 </div>
 {% endblock %}

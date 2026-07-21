@@ -1,17 +1,23 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
-    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto
+    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode
 
 
 class CheckpointTaskInline(admin.TabularInline):
     model = CheckpointTask
     extra = 1
 
+
+class TimecodeInline(admin.TabularInline):
+    model = Timecode
+    extra = 1
+
+
 class LessonInline(admin.TabularInline):
     """Уроки прямо внутри страницы курса"""
     model = Lesson
-    extra = 1  # одно пустое поле для нового урока
+    extra = 1
     fields = ['order', 'title', 'description', 'video_url']
 
 
@@ -25,9 +31,8 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ['order', 'title', 'course']
-    list_filter = ['course']
-    ordering = ['course', 'order']
+    list_display = ['title', 'course', 'module', 'order']
+    inlines = [TimecodeInline]
 
 
 @admin.register(Enrollment)
@@ -83,12 +88,6 @@ class HomeworkAdmin(admin.ModelAdmin):
 class HomeworkSubmissionAdmin(admin.ModelAdmin):
     list_display = ['student', 'homework', 'status', 'submitted_at']
     list_filter = ['status', 'homework']
-
-class LessonInline(admin.TabularInline):
-    model = Lesson
-    extra = 1
-    fields = ['order', 'module', 'title', 'description', 'video_url']
-
 
 @admin.register(Module)
 class ModuleAdmin(admin.ModelAdmin):
