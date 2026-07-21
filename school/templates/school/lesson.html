@@ -1,4 +1,4 @@
-{% extends 'school/base.html' %}
+{% extends 'school/base_platform.html' %}
 
 {% block title %}{{ lesson.title }} — {{ lesson.course.title }}{% endblock %}
 {% block description %}{{ lesson.description|default:lesson.title|truncatewords:20 }}{% endblock %}
