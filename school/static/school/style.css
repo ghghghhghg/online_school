@@ -146,6 +146,7 @@ header{
   border-radius:99px; padding:8px 18px; width:fit-content;
 }
 .path-emoji{ position:absolute; right:24px; bottom:18px; font-size:64px; opacity:.9; }
+.path-emoji svg{ display:block; }
 
 /* ---------- Как устроена подготовка ---------- */
 .steps-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:26px; }
