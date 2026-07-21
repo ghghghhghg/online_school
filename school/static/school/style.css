@@ -434,6 +434,14 @@ a > .card:hover{ background-color:var(--cream); }
     width:calc(100% - 16px); max-width:none;
   }
 }
+@media (max-width: 767px){
+  .carousel-btn.prev{ left:4px; }
+  .carousel-btn.next{ right:4px; }
+}
+@media (max-width: 767px){
+  .results-carousel .result-card{ padding-left:20px; padding-right:20px; }
+}
+
 .path-card.path-inactive{ opacity:.45; }
 .path-card.path-inactive:hover{ opacity:.85; }
 
