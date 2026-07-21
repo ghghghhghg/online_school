@@ -224,14 +224,13 @@ header{
 .carousel-btn{
   position:absolute; top:50%; transform:translateY(-50%); z-index:5;
   width:42px; height:42px; border-radius:50%; border:none; cursor:pointer;
-  background:none; box-shadow:none; color:var(--ink);
+  background:var(--white); box-shadow:var(--shadow); color:var(--ink);
   font-size:24px; line-height:1; display:grid; place-items:center;
-  transition:color .2s;
+  transition:background .2s, color .2s;
 }
-.carousel-btn:hover{ color:var(--terra); }
+.carousel-btn:hover{ background:var(--terra); color:#fff; }
 .carousel-btn.prev{ left:-48px; }
 .carousel-btn.next{ right:-48px; }
-
 
 .result-card{
   background:var(--white); border-radius:var(--radius); padding:26px;
@@ -437,3 +436,6 @@ a > .card:hover{ background-color:var(--cream); }
 }
 .path-card.path-inactive{ opacity:.45; }
 .path-card.path-inactive:hover{ opacity:.85; }
+
+#results{ background:var(--cream); }
+#results .container{ background:var(--cream); }
