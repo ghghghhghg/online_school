@@ -1,0 +1,65 @@
+{% extends 'school/base.html' %}
+
+{% block header %}
+<header>
+    <div class="container nav">
+        <a class="logo" href="{% url 'student_profile' %}">
+            <img src="{% static 'school/favicon.png' %}" alt="" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 4px;"> ABS <span class="thin">SCHOOL</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="{% url 'student_profile' %}" class="{% if request.resolver_match.url_name == 'student_profile' %}active-link{% endif %}">Главная</a></li>
+            <li><a href="{% url 'student_courses' %}" class="{% if request.resolver_match.url_name == 'student_courses' %}active-link{% endif %}">Мои курсы</a></li>
+            <li><a href="{% url 'error_notebook' %}" class="{% if request.resolver_match.url_name == 'error_notebook' %}active-link{% endif %}">Практика</a></li>
+            <li><a href="{% url 'student_analytics' %}" class="{% if request.resolver_match.url_name == 'student_analytics' %}active-link{% endif %}">Результаты</a></li>
+            <li><a href="{% url 'edit_student_profile' %}" class="{% if request.resolver_match.url_name == 'edit_student_profile' %}active-link{% endif %}">Профиль</a></li>
+        </ul>
+        <div class="nav-actions">
+            <div class="dropdown">
+                <button class="btn position-relative" type="button"
+                        data-bs-toggle="dropdown"
+                        style="background: none; border: none; font-size: 1.1rem; padding: 0.25rem 0.4rem;">
+                    🔔
+                    {% if unread_notifications_count %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                              style="background-color: var(--terra); font-size: 0.6rem;">
+                            {{ unread_notifications_count }}
+                        </span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" id="notifications-list" style="min-width: 280px;">
+                    {% for n in recent_notifications %}
+                    <li class="d-flex align-items-start px-2" data-notification-id="{{ n.pk }}">
+                        <a class="dropdown-item small flex-grow-1" href="{{ n.link|default:'#' }}" style="width: auto;">
+                            {{ n.text }}
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ n.created_at|date:"d.m.Y H:i" }}</div>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 mark-read-btn"
+                                data-url="{% url 'delete_notification' n.pk %}"
+                                style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">✓</button>
+                    </li>
+                    {% empty %}
+                    <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
+                    {% endfor %}
+                    {% if recent_notifications %}
+                    <li id="clear-all-divider"><hr class="dropdown-divider"></li>
+                    <li id="clear-all-li">
+                        <button type="button" class="dropdown-item small text-center" id="clear-all-btn"
+                                data-url="{% url 'clear_notifications' %}">
+                            Прочитано — очистить все
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <span class="text-muted me-2 d-none d-md-inline">{{ user.first_name }}</span>
+            <a class="btn btn-outline" href="{% url 'logout' %}">Выйти</a>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block fullwidth %}
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+{% endblock %}

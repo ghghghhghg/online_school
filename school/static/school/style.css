@@ -475,3 +475,5 @@ a > .card:hover{ background-color:var(--cream); }
 
 .result-photos-4{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
 .result-photos-4 img{ aspect-ratio:1/1; }
+
+.nav-links a.active-link{ color:var(--terra); font-weight:600; }

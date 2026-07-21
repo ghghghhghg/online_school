@@ -1,0 +1,74 @@
+{% extends 'school/base_platform.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<h2 class="mb-1">Привет, {{ user.first_name }}!</h2>
+<p class="text-muted mb-4">Продолжай в том же темпе — у тебя всё получится 💪</p>
+
+{% if pending_enrollments %}
+<div class="alert alert-warning">
+    <strong>Заявки на рассмотрении:</strong>
+    {% for pe in pending_enrollments %}
+        {{ pe.course.title }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if next_course %}
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <span class="text-muted small">Продолжить обучение</span>
+            <h4 class="mb-1">{{ next_course.course.title }}</h4>
+            <div class="d-flex align-items-center gap-2" style="max-width: 260px;">
+                <div class="progress flex-grow-1" style="height: 6px;">
+                    <div class="progress-bar" style="width: {{ next_course.percent }}%;"></div>
+                </div>
+                <small class="text-muted">{{ next_course.completed }}/{{ next_course.total }}</small>
+            </div>
+        </div>
+        <a href="{% url 'continue_learning' next_course.course.pk %}" class="btn btn-terra">
+            ▶ Продолжить урок
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a href="{% url 'student_courses' %}" class="text-decoration-none">
+            <div class="card p-4 text-center h-100">
+                <div style="font-size: 2rem;">📚</div>
+                <b class="mt-2" style="color: var(--ink);">Мои курсы</b>
+                <span class="text-muted small">{{ courses_progress|length }} курсов</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'error_notebook' %}" class="text-decoration-none">
+            <div class="card p-4 text-center h-100">
+                <div style="font-size: 2rem;">📕</div>
+                <b class="mt-2" style="color: var(--ink);">Практика</b>
+                <span class="text-muted small">Повторить ошибки</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'student_analytics' %}" class="text-decoration-none">
+            <div class="card p-4 text-center h-100">
+                <div style="font-size: 2rem;">📊</div>
+                <b class="mt-2" style="color: var(--ink);">Результаты</b>
+                <span class="text-muted small">Полная статистика</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% if not courses_progress %}
+<div class="card p-4 text-center">
+    <p class="text-muted mb-3">Вы пока не записаны ни на один курс</p>
+    <a href="{% url 'index' %}#courses" class="btn btn-terra">Выбрать курс</a>
+</div>
+{% endif %}
+{% endblock %}

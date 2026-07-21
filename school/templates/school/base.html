@@ -16,6 +16,7 @@
 </head>
 <body>
 
+{% block header %}
 <header>
     <div class="container nav">
         <a class="logo" href="{% url 'index' %}">
@@ -83,6 +84,7 @@
         </div>
     </div>
 </header>
+{% endblock %}
 
 <div class="flex-grow-1">
 {% block fullwidth %}

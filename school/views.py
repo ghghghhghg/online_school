@@ -593,7 +593,6 @@ def student_profile(request):
     enrollments = Enrollment.objects.filter(
         student=request.user, status=Enrollment.STATUS_APPROVED
     ).select_related('course')
-    test_results = TestResult.objects.filter(student=request.user).select_related('test')
 
     courses_progress = []
     for enrollment in enrollments:
@@ -603,7 +602,6 @@ def student_profile(request):
             student=request.user, lesson__course=course
         ).count()
         percent = int((completed / total) * 100) if total > 0 else 0
-
         courses_progress.append({
             'course': course,
             'total': total,
@@ -615,9 +613,50 @@ def student_profile(request):
         student=request.user, status=Enrollment.STATUS_PENDING
     ).select_related('course')
 
-    return render(request, 'school/profile.html', {
+    # Ближайший непройденный курс — для быстрой кнопки "Продолжить"
+    next_course = None
+    for cp in courses_progress:
+        if cp['percent'] < 100:
+            next_course = cp
+            break
+
+    return render(request, 'school/home.html', {
         'courses_progress': courses_progress,
-        'test_results': test_results,
+        'pending_enrollments': pending_enrollments,
+        'next_course': next_course,
+    })
+
+
+@login_required
+def student_courses(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    enrollments = Enrollment.objects.filter(
+        student=request.user, status=Enrollment.STATUS_APPROVED
+    ).select_related('course')
+
+    courses_progress = []
+    for enrollment in enrollments:
+        course = enrollment.course
+        total = course.lessons.count()
+        completed = LessonProgress.objects.filter(
+            student=request.user, lesson__course=course
+        ).count()
+        percent = int((completed / total) * 100) if total > 0 else 0
+        courses_progress.append({
+            'course': course,
+            'total': total,
+            'completed': completed,
+            'percent': percent,
+        })
+
+    pending_enrollments = Enrollment.objects.filter(
+        student=request.user, status=Enrollment.STATUS_PENDING
+    ).select_related('course')
+
+    return render(request, 'school/courses.html', {
+        'courses_progress': courses_progress,
         'pending_enrollments': pending_enrollments,
     })
 

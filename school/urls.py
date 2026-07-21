@@ -119,5 +119,7 @@ urlpatterns = [
 
     path('reviews/', views.all_reviews_view, name='all_reviews'),
 
+    path('my-courses/', views.student_courses, name='student_courses'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

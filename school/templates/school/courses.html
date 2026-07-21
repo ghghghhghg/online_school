@@ -1,0 +1,43 @@
+{% extends 'school/base_platform.html' %}
+
+{% block title %}Мои курсы{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Мои курсы</h2>
+
+{% if pending_enrollments %}
+<div class="alert alert-warning">
+    <strong>Заявки на рассмотрении:</strong>
+    {% for pe in pending_enrollments %}
+        {{ pe.course.title }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% for cp in courses_progress %}
+<div class="card p-4 mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div style="flex: 1; min-width: 200px;">
+            <h5 class="mb-2">{{ cp.course.title }}</h5>
+            <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 6px; max-width: 260px;">
+                    <div class="progress-bar" style="width: {{ cp.percent }}%;"></div>
+                </div>
+                <small class="text-muted">{{ cp.completed }}/{{ cp.total }} уроков</small>
+            </div>
+        </div>
+        <div>
+            {% if cp.percent < 100 %}
+            <a href="{% url 'continue_learning' cp.course.pk %}" class="btn btn-terra btn-sm me-1">▶ Продолжить</a>
+            {% endif %}
+            <a href="{% url 'course_lessons' cp.course.slug %}" class="btn btn-outline-secondary btn-sm">Все уроки</a>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="card p-4 text-center">
+    <p class="text-muted mb-3">Вы пока не записаны ни на один курс</p>
+    <a href="{% url 'index' %}#courses" class="btn btn-terra">Выбрать курс</a>
+</div>
+{% endfor %}
+{% endblock %}
