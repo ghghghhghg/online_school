@@ -218,7 +218,16 @@ header{
   .results-carousel .result-card{ flex:0 0 calc((100% - 20px) / 2); }
 }
 @media (max-width: 767px){
-  .results-carousel .result-card{ flex:0 0 100%; padding-left:20px; padding-right:20px; }
+  .results-carousel{ padding:6px 8% 10px; scroll-padding:0 8%; }
+  .results-carousel .result-card{
+    flex:0 0 84%;
+    padding-left:20px; padding-right:20px;
+    transform:scale(.92); opacity:.55;
+    transition:transform .25s ease, opacity .25s ease;
+  }
+  .results-carousel .result-card.is-active{
+    transform:scale(1); opacity:1;
+  }
 }
 
 .carousel-btn{
