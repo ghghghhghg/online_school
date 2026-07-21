@@ -435,8 +435,7 @@ a > .card:hover{ background-color:var(--cream); }
   }
 }
 @media (max-width: 767px){
-  .carousel-btn.prev{ left:4px; }
-  .carousel-btn.next{ right:4px; }
+  .carousel-btn{ display:none; }
 }
 @media (max-width: 767px){
   .results-carousel .result-card{ padding-left:20px; padding-right:20px; }
