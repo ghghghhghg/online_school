@@ -1,4 +1,5 @@
 {% extends 'school/base.html' %}
+{% load icons %}
 
 {% block title %}ABS School — подготовка к ЕГЭ и ОГЭ по русскому языку{% endblock %}
 
@@ -27,7 +28,7 @@
                 <img class="hero-photo" src="{{ hero_teacher.photo.url }}" alt="{{ hero_teacher.name }}">
                 {% endif %}
                 <div class="hero-sticker">
-                    <span class="em">🎓</span>
+                    <span class="em">{% icon 'graduation-cap' %}</span>
                     <b>Первый шаг</b>
                     <span class="price">0 ₽</span>
                 </div>
@@ -38,7 +39,7 @@
         <div class="stats-bar reveal">
             {% for stat in stats %}
             <div class="stat-item">
-                <div class="stat-icon">{{ stat.icon|default:'⭐' }}</div>
+                <div class="stat-icon">{{ stat.icon|default:'{% icon 'sparkle' %}' }}</div>
                 <div><b>{{ stat.number }}</b><span>{{ stat.label }}</span></div>
             </div>
             {% endfor %}
@@ -56,25 +57,25 @@
         <div class="steps-grid">
             <div class="step reveal">
                 <span class="step-num">1</span>
-                <div class="step-icon">🎯</div>
+                <div class="step-icon">{% icon 'target' %}</div>
                 <h3>Регистрация</h3>
                 <p>Создаёшь аккаунт бесплатно и выбираешь свой курс</p>
             </div>
             <div class="step reveal">
                 <span class="step-num">2</span>
-                <div class="step-icon">🗺️</div>
+                <div class="step-icon">{% icon 'map' %}</div>
                 <h3>Доступ к курсу</h3>
                 <p>Преподаватель открывает доступ к урокам</p>
             </div>
             <div class="step reveal">
                 <span class="step-num">3</span>
-                <div class="step-icon">▶️</div>
+                <div class="step-icon">{% icon 'play-circle' %}</div>
                 <h3>Уроки и практика</h3>
                 <p>Видео, конспекты, тесты, домашки и пробники</p>
             </div>
             <div class="step reveal">
                 <span class="step-num">4</span>
-                <div class="step-icon">📊</div>
+                <div class="step-icon">{% icon 'bar-chart' %}</div>
                 <h3>Проверка и прогресс</h3>
                 <p>Разбор ошибок, аналитика и личная обратная связь</p>
             </div>
@@ -93,12 +94,12 @@
                 <div class="platform-placeholder">Скриншот личного кабинета появится здесь</div>
             {% endif %}
             <div class="platform-features">
-                <div class="pf-item"><div class="pf-icon">🎬</div><div><b>Видеоуроки</b><span>Короткие и понятные</span></div></div>
-                <div class="pf-item"><div class="pf-icon">📝</div><div><b>Тесты после уроков</b><span>Автопроверка и пояснения</span></div></div>
-                <div class="pf-item"><div class="pf-icon">📚</div><div><b>Конспекты</b><span>PDF к каждому уроку</span></div></div>
+                <div class="pf-item"><div class="pf-icon">{% icon 'play-circle' %}</div><div><b>Видеоуроки</b><span>Короткие и понятные</span></div></div>
+                <div class="pf-item"><div class="pf-icon">{% icon 'pencil' %}</div><div><b>Тесты после уроков</b><span>Автопроверка и пояснения</span></div></div>
+                <div class="pf-item"><div class="pf-icon">{% icon 'book-open' %}</div><div><b>Конспекты</b><span>PDF к каждому уроку</span></div></div>
                 <div class="pf-item"><div class="pf-icon">⏱️</div><div><b>Пробники с таймером</b><span>Формат реального экзамена</span></div></div>
-                <div class="pf-item"><div class="pf-icon">📕</div><div><b>Тетрадь ошибок</b><span>Собираем и анализируем</span></div></div>
-                <div class="pf-item"><div class="pf-icon">📈</div><div><b>Статистика</b><span>Динамика и рекомендации</span></div></div>
+                <div class="pf-item"><div class="pf-icon">{% icon 'book' %}</div><div><b>Тетрадь ошибок</b><span>Собираем и анализируем</span></div></div>
+                <div class="pf-item"><div class="pf-icon">{% icon 'bar-chart' %}</div><div><b>Статистика</b><span>Динамика и рекомендации</span></div></div>
             </div>
         </div>
     </div>
@@ -134,7 +135,7 @@
                     <span class="path-sub">по русскому языку</span>
                 </div>
                 <span class="path-tag">10–11 класс</span>
-                <span class="path-emoji">📕</span>
+                <span class="path-emoji">{% icon 'book' %}</span>
             </a>
             <a href="?exam=oge#courses" class="path-card terra {% if exam_filter != 'oge' %}path-inactive{% endif %}">
                 <div>
@@ -142,7 +143,7 @@
                     <span class="path-sub">по русскому языку</span>
                 </div>
                 <span class="path-tag">8–9 класс</span>
-                <span class="path-emoji">📝</span>
+                <span class="path-emoji">{% icon 'pencil' %}</span>
             </a>
         </div>
 
