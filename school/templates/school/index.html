@@ -274,7 +274,7 @@
         <div class="gets-grid">
             {% for pb in parent_blocks %}
             <div class="get-card reveal">
-                <div class="get-icon">{{ pb.icon }}</div>
+                <div class="get-icon">{% icon pb.icon size=22 %}</div>
                 <h3>{{ pb.title }}</h3>
                 <p>{{ pb.text }}</p>
             </div>
