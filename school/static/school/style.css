@@ -550,3 +550,13 @@ a > .card:hover{ background-color:var(--cream); }
   font-weight:700; color:var(--terra); font-size:13.5px; min-width:44px;
 }
 .timecode-label{ font-size:14px; color:var(--ink); }
+
+.course-how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+@media (max-width: 767px){
+  .course-how-grid{ grid-template-columns:1fr; }
+}
+
+.course-2col-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+@media (max-width: 600px){
+  .course-2col-grid{ grid-template-columns:1fr; }
+}

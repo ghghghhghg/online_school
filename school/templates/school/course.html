@@ -1,113 +1,124 @@
 {% extends 'school/base.html' %}
+{% load icons %}
 
-{% block title %}{{ course.title }} — Онлайн-школа{% endblock %}
-{% block description %}{{ course.description|truncatewords:20 }}{% endblock %}
+{% block title %}{{ course.title }}{% endblock %}
 
-{% block content %}
+{% block fullwidth %}
+<div class="container" style="max-width: 1180px; padding-top: 36px;">
 
-<section class="py-5">
-    <h1 class="display-5 fw-bold mb-3">{{ course.title }}</h1>
-    <p class="lead" style="color: var(--muted); max-width: 600px;">{{ course.description }}</p>
-</section>
+    <a href="{% url 'index' %}#courses" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:#7A6F68; font-size:13.5px; font-weight:600; margin-bottom:22px;">
+        {% icon 'flag' size=14 %}
+        Все курсы
+    </a>
 
-{% if course.what_you_learn %}
-<section class="py-4">
-    <h3 class="mb-4">Что будет в курсе</h3>
-    <div class="row g-3">
-        {% for item in course.what_you_learn.splitlines %}
-        {% if item %}
-        <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 p-3 card">
-                <span style="color: var(--accent); font-size: 1.3rem;">✦</span>
-                <span>{{ item }}</span>
-            </div>
-        </div>
+    <section style="padding-bottom:40px;">
+        {% if course.card_tag %}
+        <span style="display:inline-block; background:#FBE3D6; color:#C8442A; font-size:12px; font-weight:700; border-radius:99px; padding:5px 14px; margin-bottom:16px;">
+            {{ course.card_tag }}
+        </span>
         {% endif %}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+        <h1 style="font-size:36px; font-weight:800; margin:0 0 14px;">{{ course.title }}</h1>
+        <p style="color:#7A6F68; font-size:16.5px; max-width:640px; margin:0;">{{ course.description }}</p>
+    </section>
 
-{% if course.for_whom %}
-<section class="py-4">
-    <h3 class="mb-4">Кому подойдёт курс</h3>
-    <div class="row g-3">
-        {% for item in course.for_whom.splitlines %}
-        {% if item %}
-        <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 p-3 card">
-                <span style="color: var(--accent);">→</span>
-                <span>{{ item }}</span>
+    {% if course.what_you_learn %}
+    <section style="padding-bottom:48px;">
+        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Что будет в курсе</h3>
+        <div class="course-2col-grid">
+            {% for item in course.what_you_learn.splitlines %}
+            {% if item %}
+            <div style="display:flex; align-items:flex-start; gap:12px; background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
+                <div style="width:26px; height:26px; border-radius:8px; background:#FBE3D6; display:grid; place-items:center; flex:none; margin-top:1px;">
+                    {% icon 'check' size=14 color='#C8442A' %}
+                </div>
+                <span style="font-size:14.5px;">{{ item }}</span>
             </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+    </section>
+    {% endif %}
 
-{% if course.how_it_works %}
-<section class="py-4">
-    <h3 class="mb-4">Как проходит обучение</h3>
-    <div class="row g-3">
-        {% for item in course.how_it_works.splitlines %}
-        {% if item %}
-        <div class="col-md-4">
-            <div class="card p-3 h-100">
-                <div class="fw-bold mb-1" style="color: var(--accent);">0{{ forloop.counter }}</div>
-                <div>{{ item }}</div>
+    {% if course.for_whom %}
+    <section style="padding-bottom:48px;">
+        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Кому подойдёт курс</h3>
+        <div class="course-2col-grid">
+            {% for item in course.for_whom.splitlines %}
+            {% if item %}
+            <div style="display:flex; align-items:flex-start; gap:12px; background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
+                <div style="width:26px; height:26px; border-radius:8px; background:#FBE3D6; display:grid; place-items:center; flex:none; margin-top:1px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                </div>
+                <span style="font-size:14.5px;">{{ item }}</span>
             </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+    </section>
+    {% endif %}
 
-<section class="py-5 text-center" style="background-color: var(--ink);">
-    <h2 class="mb-3" style="color: white;">Готов начать?</h2>
-    <p class="mb-4" style="color: rgba(255,255,255,0.6);">
-        {{ lessons.count }} уроков
-        {% if enrollment.status == 'approved' %} • {{ completed_ids|length }} уже пройдено{% endif %}
-    </p>
-    {% if lessons %}
-        {% if user.is_authenticated %}
-            {% if user.is_staff %}
-                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
-                    Просмотреть уроки →
-                </a>
-            {% elif enrollment.status == 'approved' %}
-                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-primary btn-lg px-5">
-                    {% if completed_ids %}Продолжить обучение →{% else %}Начать учиться →{% endif %}
-                </a>
-            {% elif enrollment.status == 'pending' %}
-                <button class="btn btn-lg px-5" disabled
-                        style="background-color: rgba(255,255,255,0.15); color: white; border: none;">
-                    ⏳ Заявка на рассмотрении
-                </button>
-            {% elif enrollment.status == 'rejected' %}
-                <p style="color: rgba(255,255,255,0.6);">Заявка была отклонена. Свяжитесь с преподавателем.</p>
+    {% if course.how_it_works %}
+    <section style="padding-bottom:48px;">
+        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Как проходит обучение</h3>
+        <div class="course-how-grid">
+            {% for item in course.how_it_works.splitlines %}
+            {% if item %}
+            <div style="background:#fff; border-radius:14px; padding:22px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
+                <div style="font-weight:800; color:#C8442A; font-size:15px; margin-bottom:10px;">0{{ forloop.counter }}</div>
+                <div style="font-size:14.5px;">{{ item }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section style="background:#7E2413; border-radius:22px; padding:48px; text-align:center; margin-bottom:60px;">
+        <h2 style="color:#fff; margin:0 0 10px; font-size:27px; font-weight:800;">Готов начать?</h2>
+        <p style="color:rgba(255,255,255,.65); margin:0 0 28px; font-size:15px;">
+            {{ lessons.count }} уроков
+        </p>
+
+        {% if lessons %}
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a href="{% url 'course_lessons' course.slug %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px;">
+                        Просмотреть уроки
+                        {% icon 'sparkle' size=16 color='#2B2320' %}
+                    </a>
+                {% elif enrollment.status == 'approved' %}
+                    <a href="{% url 'course_lessons' course.slug %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px;">
+                        {% if completed_ids %}Продолжить обучение{% else %}Начать учиться{% endif %}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B2320" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                    </a>
+                {% elif enrollment.status == 'pending' %}
+                    <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,.12); border-radius:14px; padding:12px 24px;">
+                        {% icon 'stopwatch' size=18 color='#fff' %}
+                        <span style="color:#fff; font-size:14px;">Заявка на рассмотрении</span>
+                    </div>
+                {% elif enrollment.status == 'rejected' %}
+                    <p style="color: rgba(255,255,255,.65);">Заявка была отклонена. Свяжитесь с преподавателем.</p>
+                {% else %}
+                    <form method="post" action="{% url 'apply_to_course' course.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border:none; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px; cursor:pointer; font-family:inherit;">
+                            Подать заявку
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B2320" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                        </button>
+                    </form>
+                {% endif %}
             {% else %}
-                <form method="post" action="{% url 'apply_to_course' course.slug %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary btn-lg px-5">
-                        Подать заявку →
-                    </button>
-                </form>
+                <a href="{% url 'register' %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px; margin-right: 10px;">
+                    Зарегистрироваться
+                </a>
+                <a href="{% url 'login' %}" style="text-decoration:none; display:inline-block; border:2px solid rgba(255,255,255,.4); color:#fff; border-radius:14px; padding:14px 30px; font-weight:600; font-size:15px;">
+                    Войти
+                </a>
             {% endif %}
         {% else %}
-            <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 me-2">
-                Зарегистрироваться →
-            </a>
-            <a href="{% url 'login' %}"
-               class="btn btn-lg px-5"
-               style="border: 1px solid rgba(255,255,255,0.3); color: white;">
-                Войти
-            </a>
+            <p style="color: rgba(255,255,255,.65);">Уроки скоро появятся</p>
         {% endif %}
-    {% else %}
-        <p style="color: rgba(255,255,255,0.6);">Уроки скоро появятся</p>
-    {% endif %}
-</section>
+    </section>
 
+</div>
 {% endblock %}
