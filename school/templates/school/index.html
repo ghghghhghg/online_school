@@ -113,7 +113,7 @@
         <div class="gets-grid">
             {% for f in features %}
             <div class="get-card reveal">
-                <div class="get-icon">{{ f.icon }}</div>
+                <div class="get-icon">{% icon f.icon size=22 %}</div>
                 <h3>{{ f.title }}</h3>
                 <p>{{ f.text }}</p>
             </div>

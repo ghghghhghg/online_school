@@ -291,7 +291,7 @@ class Comment(models.Model):
         return f'{self.author.username}: {self.text[:50]}'
 
 class WhyUsBlock(models.Model):
-    icon = models.CharField(max_length=10, default='✦', verbose_name='Иконка (эмодзи)')
+    icon = models.CharField(max_length=30, default='✦', verbose_name='Иконка (эмодзи)')
     title = models.CharField(max_length=100, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -306,7 +306,7 @@ class WhyUsBlock(models.Model):
 
 
 class StatBlock(models.Model):
-    icon = models.CharField(max_length=10, default='⭐', verbose_name='Эмодзи')
+    icon = models.CharField(max_length=30, default='⭐', verbose_name='Эмодзи')
     number = models.CharField(max_length=20, verbose_name='Число')
     label = models.CharField(max_length=100, verbose_name='Подпись')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -648,7 +648,7 @@ class FearBlock(models.Model):
 
 
 class ParentBlock(models.Model):
-    icon = models.CharField(max_length=10, default='✓', verbose_name='Эмодзи')
+    icon = models.CharField(max_length=30, default='✓', verbose_name='Эмодзи')
     title = models.CharField(max_length=150, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
