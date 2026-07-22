@@ -34,6 +34,7 @@ ICONS = {
     'play-first': ('none', '#4A8B5C', '<path d="M8 5v14l11-7Z"></path><path d="M3 5v14"></path>'),
     'stopwatch': ('none', '#C8442A', '<circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l3 2"></path><path d="M9 2h6M18.5 6.5l1.5-1.5"></path>'),
     'exam-sheet': ('none', '#C8442A', '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v3M16 4v3"></path><path d="m9 14 2 2 4-4"></path>'),
+    'arrow-left': ('none', '#7A6F68', '<path d="M19 12H5M12 19l-7-7 7-7"></path>'),
     'heart': ('none', '#C8442A', '<path d="M12 21s-7-4.5-9.5-9C1 8.5 2 5 5.5 5c2 0 3.3 1.2 4 2.3.7-1.1 2-2.3 4-2.3 3.5 0 4.5 3.5 3 7-2.5 4.5-9.5 9-9.5 9Z"></path>'),
 }
 
