@@ -39,7 +39,7 @@
         <div class="stats-bar reveal">
             {% for stat in stats %}
             <div class="stat-item">
-                <div class="stat-icon">{{ stat.icon|default:'🤩' }}</div>
+                <div class="stat-icon">{% icon stat.icon|default:'star' size=22 %}</div>
                 <div><b>{{ stat.number }}</b><span>{{ stat.label }}</span></div>
             </div>
             {% endfor %}

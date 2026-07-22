@@ -29,6 +29,8 @@ ICONS = {
     'clipboard': ('none', '#C8442A', '<rect x="6" y="4" width="12" height="17" rx="1.5"></rect><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"></path>'),
     'file-text': ('none', '#7A6F68', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6M9 13h6M9 17h6"></path>'),
     'graduation-cap': ('none', '#C8442A', '<path d="M22 10 12 5 2 10l10 5 10-5Z"></path><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"></path>'),
+    'star': ('#C8442A', None, '<path d="m12 2 2.9 6.3 6.9.9-5 4.8 1.3 6.9L12 17.3 5.9 20.9l1.3-6.9-5-4.8 6.9-.9Z"></path>'),
+    'heart': ('none', '#C8442A', '<path d="M12 21s-7-4.5-9.5-9C1 8.5 2 5 5.5 5c2 0 3.3 1.2 4 2.3.7-1.1 2-2.3 4-2.3 3.5 0 4.5 3.5 3 7-2.5 4.5-9.5 9-9.5 9Z"></path>'),
 }
 
 
