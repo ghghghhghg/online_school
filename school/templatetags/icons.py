@@ -30,6 +30,10 @@ ICONS = {
     'file-text': ('none', '#7A6F68', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6M9 13h6M9 17h6"></path>'),
     'graduation-cap': ('none', '#C8442A', '<path d="M22 10 12 5 2 10l10 5 10-5Z"></path><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"></path>'),
     'star': ('#C8442A', None, '<path d="m12 2 2.9 6.3 6.9.9-5 4.8 1.3 6.9L12 17.3 5.9 20.9l1.3-6.9-5-4.8 6.9-.9Z"></path>'),
+    'message-teacher': ('none', '#C8442A', '<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20l1-5.2A8.5 8.5 0 1 1 21 11.5Z"></path><path d="M8 11h.01M12 11h.01M16 11h.01"></path>'),
+    'play-first': ('none', '#4A8B5C', '<path d="M8 5v14l11-7Z"></path><path d="M3 5v14"></path>'),
+    'stopwatch': ('none', '#C8442A', '<circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l3 2"></path><path d="M9 2h6M18.5 6.5l1.5-1.5"></path>'),
+    'exam-sheet': ('none', '#C8442A', '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v3M16 4v3"></path><path d="m9 14 2 2 4-4"></path>'),
     'heart': ('none', '#C8442A', '<path d="M12 21s-7-4.5-9.5-9C1 8.5 2 5 5.5 5c2 0 3.3 1.2 4 2.3.7-1.1 2-2.3 4-2.3 3.5 0 4.5 3.5 3 7-2.5 4.5-9.5 9-9.5 9Z"></path>'),
 }
 
