@@ -198,6 +198,10 @@ def course_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
+    course_teacher = None
+    if course.teacher:
+        course_teacher = TeacherProfile.objects.filter(user=course.teacher).first()
+
     completed_ids = []
     enrollment = None
     if request.user.is_authenticated and not request.user.is_staff:
@@ -213,6 +217,7 @@ def course_view(request, slug):
         'lessons': lessons,
         'completed_ids': completed_ids,
         'enrollment': enrollment,
+        'course_teacher': course_teacher,
     })
 
 def is_checkpoint_passed(checkpoint, user):
