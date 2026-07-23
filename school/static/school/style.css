@@ -282,19 +282,29 @@ header{
 .faq-a p{ padding:0 22px 20px; color:var(--ink-soft); font-size:15px; }
 
 /* ---------- Преподаватели ---------- */
-.teachers-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
-.teacher-card{
+.teachers-panel{
   background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-  padding:28px; display:flex; flex-direction:column;
+  padding:36px;
 }
-.teacher-photo{
-  width:50%; aspect-ratio:1/1;
-  border-radius:var(--radius-sm);
-  object-fit:cover; object-position:top;
-  margin-bottom:18px;
+.teachers-panel-header{
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:16px; margin-bottom:28px;
 }
-.teacher-card h3{ font-size:19px; margin-bottom:8px; }
-.teacher-card p{ font-size:14px; color:var(--ink-soft); }
+.teachers-list{ display:flex; flex-direction:column; gap:32px; }
+.teacher-item + .teacher-item{ padding-top:32px; border-top:1px solid var(--line); }
+
+.teacher-photo-wrap{ width:50%; }
+.teacher-photo-half{
+  width:100%; aspect-ratio:1/1; border-radius:16px;
+  object-fit:cover; object-position:top; display:block; margin-bottom:16px;
+}
+.teacher-photo-wrap h3{ font-size:19px; margin-bottom:8px; }
+.teacher-photo-wrap p{ font-size:14px; color:var(--ink-soft); }
+
+@media (max-width: 600px){
+  .teachers-panel{ padding:24px; }
+  .teacher-photo-wrap{ width:100%; }
+}
 
 /* ---------- Фильтры ---------- */
 .course-filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; justify-content:center; }

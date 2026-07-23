@@ -235,30 +235,34 @@
 {% if teachers %}
 <section id="about">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3" style="margin-bottom: 24px;">
-            <h2 class="section-title reveal" style="margin-bottom: 0; text-align: left;">Преподаватели</h2>
-            {% if teacher_subjects|length > 1 %}
-            <div class="course-filters reveal" style="margin-bottom: 0;">
-                {% for subj in teacher_subjects %}
-                <a href="?teacher_subject={{ subj }}#about"
-                   class="filter-pill {% if teacher_subject_filter == subj %}active{% endif %}">{{ subj }}</a>
+        <div class="teachers-panel reveal">
+            <div class="teachers-panel-header">
+                <h2 style="margin-bottom: 0;">Преподаватели</h2>
+                {% if teacher_subjects|length > 1 %}
+                <div class="course-filters" style="margin-bottom: 0;">
+                    {% for subj in teacher_subjects %}
+                    <a href="?teacher_subject={{ subj }}#about"
+                       class="filter-pill {% if teacher_subject_filter == subj %}active{% endif %}">{{ subj }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="teachers-list">
+                {% for teacher in teachers %}
+                <div class="teacher-item">
+                    <div class="teacher-photo-wrap">
+                        {% if teacher.photo %}
+                        <img class="teacher-photo-half" src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+                        {% endif %}
+                        <h3>{{ teacher.name }}</h3>
+                        <p style="white-space: pre-line;">{{ teacher.bio|truncatewords:40 }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="section-sub">Преподаватели скоро появятся</p>
                 {% endfor %}
             </div>
-            {% endif %}
-        </div>
-
-        <div class="teachers-grid">
-            {% for teacher in teachers %}
-            <div class="teacher-card reveal">
-                {% if teacher.photo %}
-                <img class="teacher-photo" src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
-                {% endif %}
-                <h3>{{ teacher.name }}</h3>
-                <p style="white-space: pre-line;">{{ teacher.bio|truncatewords:40 }}</p>
-            </div>
-            {% empty %}
-            <p class="section-sub">Преподаватели скоро появятся</p>
-            {% endfor %}
         </div>
     </div>
 </section>
