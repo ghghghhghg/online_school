@@ -298,7 +298,7 @@ header{
   display:flex; align-items:flex-start; gap:24px; width:100%; max-width:640px;
 }
 .teacher-photo-half{
-  width:50%; aspect-ratio:1/1; border-radius:16px; flex:none;
+  width:70%; aspect-ratio:1/1; border-radius:16px; flex:none;
   object-fit:cover; object-position:top; display:block;
 }
 .teacher-photo-wrap .teacher-text{ flex:1; padding-top:8px; }
