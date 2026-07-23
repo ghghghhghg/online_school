@@ -221,6 +221,8 @@ class TeacherProfile(models.Model):
                                 related_name='teacher_profile', verbose_name='Аккаунт')
     name = models.CharField(max_length=200, verbose_name='Короткая фраза или имя')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
+    exam_type = models.CharField(max_length=10, choices=Course.EXAM_CHOICES,
+                                 blank=True, verbose_name='Тип экзамена')
     bio = models.TextField(verbose_name='О себе')
     photo = models.ImageField(upload_to='teacher/', blank=True, verbose_name='Фото')
 

@@ -199,6 +199,24 @@ updateActiveCard();
   }
 })();
 
+/* Переключатель преподавателей */
+(function(){
+  var tabs = document.getElementById('teacher-tabs');
+  if (!tabs) return;
+  var items = document.querySelectorAll('#teachers-list .teacher-item');
+
+  tabs.querySelectorAll('.teacher-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var idx = tab.dataset.teacherIndex;
+      tabs.querySelectorAll('.teacher-tab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      items.forEach(function(item){
+        item.style.display = item.dataset.teacherIndex === idx ? 'block' : 'none';
+      });
+    });
+  });
+})();
+
 /* FAQ-аккордеон */
 document.querySelectorAll('.faq-q').forEach(function(btn){
   btn.addEventListener('click', function(){

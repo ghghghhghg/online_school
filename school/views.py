@@ -41,13 +41,15 @@ def index(request):
 
     hero_teacher = TeacherProfile.objects.filter(subject='Русский язык').first() or TeacherProfile.objects.first()
 
+    teacher_exam_filter = request.GET.get('teacher_exam', 'ege')
     teacher_subject_filter = request.GET.get('teacher_subject', 'Русский язык')
-    teachers = TeacherProfile.objects.all()
+
+    teachers = TeacherProfile.objects.filter(exam_type=teacher_exam_filter)
     if teacher_subject_filter:
         teachers = teachers.filter(subject=teacher_subject_filter)
 
-    teacher_subjects = TeacherProfile.objects.exclude(subject='') \
-        .order_by('subject').values_list('subject', flat=True).distinct()
+    teacher_subjects = TeacherProfile.objects.filter(exam_type=teacher_exam_filter) \
+        .exclude(subject='').order_by('subject').values_list('subject', flat=True).distinct()
 
     reviews = Review.objects.filter(is_published=True).prefetch_related('photos')[:10]
     faqs = FAQ.objects.all()
@@ -65,6 +67,7 @@ def index(request):
         'teachers': teachers,
         'teacher_subjects': teacher_subjects,
         'teacher_subject_filter': teacher_subject_filter,
+        'teacher_exam_filter': teacher_exam_filter,
         'reviews': reviews,
         'faqs': faqs,
         'stats': stats,

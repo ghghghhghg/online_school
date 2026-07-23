@@ -594,3 +594,12 @@ a > .card:hover{ background-color:var(--cream); }
   .course-teachers-pair{ grid-template-columns:1fr; }
   .course-teacher-photo-large{ max-width:220px; margin:0 auto; }
 }
+/* ---------- Переключатель преподавателей ---------- */
+.teacher-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.teacher-tab{
+  background:var(--cream); border:none; border-radius:99px;
+  padding:9px 20px; font-size:14px; font-weight:600; color:var(--ink-soft);
+  cursor:pointer; font-family:inherit; transition:background .2s, color .2s;
+}
+.teacher-tab.active{ background:var(--terra); color:#fff; }
+.teacher-tab:hover:not(.active){ background:var(--cream-2); }

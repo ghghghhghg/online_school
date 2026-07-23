@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
-    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay
+    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay, \
+    TeacherProfile
 
 
 class CheckpointTaskInline(admin.TabularInline):
@@ -144,3 +145,8 @@ class CourseAdmin(admin.ModelAdmin):
     list_editable = ['is_published', 'exam_type', 'subject']
     prepopulated_fields = {'slug': ('title',)}
     inlines = [LessonInline, CourseTeacherDisplayInline]
+
+@admin.register(TeacherProfile)
+class TeacherProfileAdmin(admin.ModelAdmin):
+    list_display = ['name', 'subject', 'exam_type']
+    list_editable = ['subject', 'exam_type']
