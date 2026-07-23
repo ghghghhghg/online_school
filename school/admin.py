@@ -24,14 +24,6 @@ class LessonInline(admin.TabularInline):
     fields = ['order', 'title', 'description', 'video_url']
 
 
-@admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ['title', 'exam_type', 'subject', 'slug', 'is_published', 'created_at']
-    list_editable = ['is_published', 'exam_type', 'subject']
-    prepopulated_fields = {'slug': ('title',)}
-    inlines = [LessonInline]
-
-
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ['title', 'course', 'module', 'order']
