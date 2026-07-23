@@ -282,17 +282,17 @@ header{
 .faq-a p{ padding:0 22px 20px; color:var(--ink-soft); font-size:15px; }
 
 /* ---------- Преподаватели ---------- */
+/* ---------- Единый блок преподавателей на главной ---------- */
 .teachers-panel{
   background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
   padding:36px;
 }
-.teachers-panel-header{
-  display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:16px; margin-bottom:28px;
-}
-.teachers-list{ display:flex; flex-direction:column; gap:32px; }
-.teacher-item + .teacher-item{ padding-top:32px; border-top:1px solid var(--line); }
+.teachers-panel-body{ display:flex; gap:36px; align-items:flex-start; }
+.teachers-sidebar{ width:220px; flex:none; }
+.teachers-sidebar .course-filters{ flex-direction:column; align-items:flex-start; }
+.teacher-tabs{ display:flex; flex-direction:column; gap:8px; margin-bottom:0; }
 
+.teachers-list{ flex:1; }
 .teacher-photo-wrap{ width:50%; }
 .teacher-photo-half{
   width:100%; aspect-ratio:1/1; border-radius:16px;
@@ -301,10 +301,15 @@ header{
 .teacher-photo-wrap h3{ font-size:19px; margin-bottom:8px; }
 .teacher-photo-wrap p{ font-size:14px; color:var(--ink-soft); }
 
-@media (max-width: 600px){
+@media (max-width: 700px){
   .teachers-panel{ padding:24px; }
+  .teachers-panel-body{ flex-direction:column; gap:20px; }
+  .teachers-sidebar{ width:100%; }
+  .teachers-sidebar .course-filters{ flex-direction:row; }
+  .teacher-tabs{ flex-direction:row; flex-wrap:wrap; }
   .teacher-photo-wrap{ width:100%; }
 }
+
 
 /* ---------- Фильтры ---------- */
 .course-filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; justify-content:center; }
