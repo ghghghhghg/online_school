@@ -258,7 +258,12 @@
                     <div class="teacher-tabs" id="teacher-tabs">
                         {% for teacher in teachers %}
                         <button type="button" class="teacher-tab {% if forloop.first %}active{% endif %}" data-teacher-index="{{ forloop.counter0 }}">
-                            {{ teacher.name }}
+                            {% if teacher.photo %}
+                            <img src="{{ teacher.photo.url }}" alt="" class="teacher-tab-avatar">
+                            {% else %}
+                            <span class="teacher-tab-avatar teacher-tab-avatar-placeholder">{{ teacher.name|first }}</span>
+                            {% endif %}
+                            <span class="teacher-tab-name">{{ teacher.name }}</span>
                         </button>
                         {% endfor %}
                     </div>

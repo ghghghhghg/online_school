@@ -1,7 +1,32 @@
 /* ============================================================
    ABS SCHOOL — терракота и крем, продуктовый лендинг
+   ============================================================
+   Оглавление:
+   1. Переменные и сброс
+   2. Типографика и кнопки
+   3. Шапка (публичная)
+   4. Hero
+   5. Полоса статистики
+   6. Выбор пути (ЕГЭ/ОГЭ) + шаги подготовки
+   7. Что внутри платформы / что получает ученик
+   8. Фильтры (общие)
+   9. Курсы (карточки + сетки на странице курса)
+   10. Преподаватели (главная страница)
+   11. Преподаватели (страница курса)
+   12. Результаты учеников (карусель отзывов)
+   13. FAQ
+   14. Финальный CTA + футер
+   15. Анимации reveal
+   16. Внутренние страницы (Bootstrap-переопределения)
+   17. Платформа (личный кабинет ученика)
+   18. Таймкоды видео
+   19. Адаптив (медиа-запросы по разделам)
    ============================================================ */
 
+
+/* ============================================================
+   1. ПЕРЕМЕННЫЕ И СБРОС
+   ============================================================ */
 :root{
   --cream:   #FAF3ED;
   --cream-2: #F5EAE0;
@@ -18,7 +43,7 @@
   --shadow:  0 8px 30px rgba(43,35,32,.08);
   --shadow-hover:0 14px 40px rgba(43,35,32,.14);
 
-  /* Алиасы для внутренних страниц */
+  /* Алиасы для внутренних страниц (Bootstrap) */
   --accent: #C8442A;
   --accent-dark:#A83620;
   --paper:  #FAF3ED;
@@ -41,6 +66,10 @@ body{
   display:flex; flex-direction:column; min-height:100vh;
 }
 
+
+/* ============================================================
+   2. ТИПОГРАФИКА И КНОПКИ
+   ============================================================ */
 h1,h2,h3{ line-height:1.18; letter-spacing:-.01em; font-weight:700; }
 h2{ font-size:clamp(26px,3.6vw,38px); margin-bottom:14px; }
 .section-title{ text-align:center; margin-bottom:40px; }
@@ -48,7 +77,6 @@ h2{ font-size:clamp(26px,3.6vw,38px); margin-bottom:14px; }
 section{ padding:72px 0; }
 .accent{ color:var(--terra); }
 
-/* ---------- Кнопки ---------- */
 .btn{
   display:inline-block; text-decoration:none; font-weight:600; font-size:15px;
   padding:13px 26px; border-radius:14px; transition:transform .15s, box-shadow .2s, background .2s;
@@ -63,7 +91,10 @@ section{ padding:72px 0; }
 .btn-outline:hover{ background:var(--terra); color:#fff; }
 .btn-lg{ padding:16px 32px; font-size:16.5px; }
 
-/* ---------- Шапка ---------- */
+
+/* ============================================================
+   3. ШАПКА (публичная)
+   ============================================================ */
 header{
   position:sticky; top:0; z-index:50;
   background:rgba(250,243,237,.88); backdrop-filter:blur(12px);
@@ -78,10 +109,14 @@ header{
 .nav-links{ display:flex; gap:22px; list-style:none; margin:0; }
 .nav-links a{ color:var(--ink-soft); text-decoration:none; font-size:14.5px; font-weight:500; transition:color .2s; }
 .nav-links a:hover{ color:var(--terra); }
+.nav-links a.active-link{ color:var(--terra); font-weight:600; }
 .nav-actions{ display:flex; gap:10px; align-items:center; }
 .nav-actions .btn{ padding:9px 18px; font-size:14px; }
 
-/* ---------- Hero ---------- */
+
+/* ============================================================
+   4. HERO
+   ============================================================ */
 .hero{ padding:64px 0 40px; position:relative; overflow:hidden; }
 .hero-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:44px; align-items:center; }
 .hero-badge{
@@ -113,7 +148,10 @@ header{
 .hero-sticker b{ display:block; font-size:15px; }
 .hero-sticker .price{ font-size:26px; font-weight:800; color:var(--terra); }
 
-/* ---------- Полоса статистики ---------- */
+
+/* ============================================================
+   5. ПОЛОСА СТАТИСТИКИ
+   ============================================================ */
 .stats-bar{
   background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
   display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -122,12 +160,15 @@ header{
 .stat-item{ display:flex; align-items:center; gap:14px; padding:0 18px; }
 .stat-icon{
   width:52px; height:52px; flex:none; border-radius:50%;
-  background:var(--peach); display:grid; place-items:center; font-size:22px;
+  background:var(--peach); display:grid; place-items:center;
 }
 .stat-item b{ font-size:21px; font-weight:800; display:block; line-height:1.2; }
 .stat-item span{ font-size:13px; color:var(--ink-soft); line-height:1.35; display:block; }
 
-/* ---------- Выбор пути (ЕГЭ/ОГЭ) ---------- */
+
+/* ============================================================
+   6. ВЫБОР ПУТИ (ЕГЭ/ОГЭ) + ШАГИ ПОДГОТОВКИ
+   ============================================================ */
 .paths-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
 .path-card{
   border-radius:var(--radius); padding:34px 30px; min-height:210px;
@@ -138,6 +179,8 @@ header{
 .path-card:hover{ transform:translateY(-5px); box-shadow:var(--shadow-hover); }
 .path-card.terra{ background:var(--terra); color:#fff; }
 .path-card.cream{ background:var(--cream-2); color:var(--ink); }
+.path-card.path-inactive{ opacity:.45; }
+.path-card.path-inactive:hover{ opacity:.85; }
 .path-card h3{ font-size:30px; margin-bottom:4px; }
 .path-card .path-sub{ font-size:16px; opacity:.85; }
 .path-tag{
@@ -148,7 +191,6 @@ header{
 .path-emoji{ position:absolute; right:24px; bottom:18px; font-size:64px; opacity:.9; }
 .path-emoji svg{ display:block; }
 
-/* ---------- Как устроена подготовка ---------- */
 .steps-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:26px; }
 .step{ text-align:center; position:relative; padding:0 8px; }
 .step-num{
@@ -157,12 +199,15 @@ header{
 }
 .step-icon{
   width:64px; height:64px; margin:0 auto 14px; border-radius:50%;
-  background:var(--peach); display:grid; place-items:center; font-size:26px;
+  background:var(--peach); display:grid; place-items:center;
 }
 .step h3{ font-size:16.5px; margin-bottom:6px; }
 .step p{ font-size:14px; color:var(--ink-soft); }
 
-/* ---------- Что внутри платформы ---------- */
+
+/* ============================================================
+   7. ЧТО ВНУТРИ ПЛАТФОРМЫ / ЧТО ПОЛУЧАЕТ УЧЕНИК
+   ============================================================ */
 .platform-wrap{
   background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
   padding:30px;
@@ -183,12 +228,11 @@ header{
 }
 .pf-icon{
   width:40px; height:40px; flex:none; border-radius:12px;
-  background:var(--peach); display:grid; place-items:center; font-size:18px;
+  background:var(--peach); display:grid; place-items:center;
 }
 .pf-item b{ font-size:14.5px; display:block; }
 .pf-item span{ font-size:13px; color:var(--ink-soft); }
 
-/* ---------- Что получает ученик ---------- */
 .gets-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:18px; }
 .get-card{
   background:var(--white); border-radius:var(--radius); padding:24px 22px;
@@ -197,12 +241,136 @@ header{
 .get-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-hover); }
 .get-icon{
   width:48px; height:48px; border-radius:14px; margin-bottom:14px;
-  background:var(--peach); display:grid; place-items:center; font-size:21px;
+  background:var(--peach); display:grid; place-items:center;
 }
 .get-card h3{ font-size:16px; margin-bottom:6px; }
 .get-card p{ font-size:13.5px; color:var(--ink-soft); }
 
-/* ---------- Результаты учеников ---------- */
+
+/* ============================================================
+   8. ФИЛЬТРЫ (общие: курсы + преподаватели)
+   ============================================================ */
+.course-filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; justify-content:center; }
+.filter-pill{
+  display:inline-block; text-decoration:none; font-weight:600; font-size:14.5px;
+  padding:9px 22px; border-radius:99px; color:var(--ink);
+  background:var(--white); box-shadow:0 4px 12px rgba(43,35,32,.07);
+  transition:transform .15s, background .2s, color .2s;
+}
+.filter-pill:hover{ transform:translateY(-2px); color:var(--terra); }
+.filter-pill.active{ background:var(--terra); color:#fff; }
+.filter-pill-sm{ font-size:13px; padding:7px 16px; }
+
+/* Переключатель ЕГЭ/ОГЭ (сегмент-контрол, визуально отличается от filter-pill) */
+.exam-toggle{
+  display:inline-flex; background:var(--cream); border-radius:99px; padding:4px;
+}
+.exam-toggle-btn{
+  text-decoration:none; font-size:13.5px; font-weight:700; color:var(--ink-soft);
+  padding:8px 22px; border-radius:99px; transition:background .2s, color .2s;
+}
+.exam-toggle-btn.active{ background:var(--terra); color:#fff; }
+.exam-toggle-btn:hover:not(.active){ color:var(--ink); }
+
+
+/* ============================================================
+   9. КУРСЫ (карточки на главной + сетки на странице курса)
+   ============================================================ */
+.courses-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
+.course{
+  background:var(--white); border-radius:var(--radius); padding:30px 28px;
+  box-shadow:var(--shadow); position:relative; display:flex; flex-direction:column;
+  transition:transform .2s, box-shadow .2s;
+}
+.course:hover{ transform:translateY(-5px); box-shadow:var(--shadow-hover); }
+.course .tag{
+  position:absolute; top:-13px; left:26px; font-weight:600;
+  font-size:13.5px; padding:6px 16px; border-radius:99px;
+  background:var(--lime); color:var(--ink); box-shadow:0 4px 10px rgba(43,35,32,.1);
+}
+.course h3{ font-size:22px; margin:8px 0 10px; }
+.course>p{ color:var(--ink-soft); font-size:15px; margin-bottom:16px; }
+.course-meta{ display:flex; flex-direction:column; gap:6px; font-size:14px; margin-bottom:22px; }
+.course-meta span::before{ content:"✓ "; color:var(--terra); font-weight:700; }
+.course .btn{ margin-top:auto; align-self:flex-start; }
+
+/* Сетки на странице конкретного курса: "Что будет"/"Кому подойдёт"/"Как проходит" */
+.course-2col-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+.course-how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+
+
+/* ============================================================
+   10. ПРЕПОДАВАТЕЛИ — ГЛАВНАЯ СТРАНИЦА
+   ============================================================ */
+.teachers-panel{
+  background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:36px;
+}
+.teachers-panel-body{ display:flex; gap:36px; align-items:flex-start; }
+
+.teachers-sidebar{ width:220px; flex:none; }
+.teachers-sidebar .course-filters{ flex-direction:column; align-items:flex-start; margin-bottom:28px; }
+
+/* Переключатель между несколькими преподавателями (аватар + имя) */
+.teacher-tabs{ display:flex; flex-direction:column; gap:8px; }
+.teacher-tab{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:var(--cream); border:none; border-radius:14px;
+  padding:8px 14px 8px 8px; font-size:14px; font-weight:600; color:var(--ink-soft);
+  cursor:pointer; font-family:inherit; transition:background .2s, color .2s;
+}
+.teacher-tab.active{ background:var(--terra); color:#fff; }
+.teacher-tab:hover:not(.active){ background:var(--cream-2); }
+.teacher-tab-avatar{
+  width:36px; height:36px; border-radius:50%; object-fit:cover; object-position:top; flex:none;
+}
+.teacher-tab-avatar-placeholder{
+  display:flex; align-items:center; justify-content:center;
+  background:var(--peach); color:var(--terra); font-weight:700; font-size:15px;
+}
+.teacher-tab.active .teacher-tab-avatar-placeholder{
+  background:rgba(255,255,255,.25); color:#fff;
+}
+.teacher-tab-name{ line-height:1.2; }
+
+/* Фото + текст выбранного преподавателя */
+.teachers-list{ flex:1; }
+.teacher-item{ display:flex; justify-content:center; }
+.teacher-photo-wrap{
+  display:flex; align-items:flex-start; gap:24px; width:100%; max-width:900px;
+}
+.teacher-photo-half{
+  width:70%; aspect-ratio:1/1; border-radius:16px; flex:none;
+  object-fit:cover; object-position:top; display:block;
+}
+.teacher-photo-wrap .teacher-text{ flex:1; padding-top:8px; min-width:0; }
+.teacher-photo-wrap h3{ font-size:19px; margin-bottom:8px; }
+.teacher-photo-wrap p{ font-size:14px; color:var(--ink-soft); }
+
+
+/* ============================================================
+   11. ПРЕПОДАВАТЕЛИ — СТРАНИЦА КУРСА
+   ============================================================ */
+.course-teachers-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:20px; }
+.course-teacher-photo{
+  width:160px; height:200px; border-radius:16px;
+  object-fit:cover; object-position:top; flex:none;
+}
+
+/* Если преподавателей ровно двое — крупные фото в ряд */
+.course-teachers-pair{ display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+.course-teacher-block{ text-align:center; }
+.course-teacher-photo-large{
+  width:100%; max-width:280px; aspect-ratio:3/4;
+  border-radius:20px; object-fit:cover; object-position:top;
+}
+
+
+/* ============================================================
+   12. РЕЗУЛЬТАТЫ УЧЕНИКОВ (карусель отзывов)
+   ============================================================ */
+#results{ background:var(--cream); }
+
 .results-carousel-wrap{ position:relative; }
 .results-carousel{
   display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory;
@@ -212,23 +380,6 @@ header{
 .results-carousel .result-card{
   flex:0 0 calc((100% - 40px) / 3);
   scroll-snap-align:center;
-  background:var(--white); border-radius:var(--radius); padding:26px;
-  box-shadow:var(--shadow);
-}
-@media (max-width: 900px){
-  .results-carousel .result-card{ flex:0 0 calc((100% - 20px) / 2); }
-}
-@media (max-width: 767px){
-  .results-carousel{ padding:6px 8% 10px; }
-  .results-carousel .result-card{
-    flex:0 0 84%;
-    padding-left:20px; padding-right:20px;
-    transform:scale(.92); opacity:.55;
-    transition:transform .25s ease, opacity .25s ease;
-  }
-  .results-carousel .result-card.is-active{
-    transform:scale(1); opacity:1;
-  }
 }
 
 .carousel-btn{
@@ -253,16 +404,32 @@ header{
 }
 .result-head b{ display:block; font-size:15px; }
 .result-head span{ font-size:13px; color:var(--ink-soft); }
-.result-scores{
-  display:flex; align-items:center; gap:16px; margin-bottom:14px;
-}
+.result-scores{ display:flex; align-items:center; gap:16px; margin-bottom:14px; }
 .result-scores .score-num{ font-size:30px; font-weight:800; }
 .result-scores .score-num.after{ color:var(--terra); }
 .result-scores .score-label{ font-size:12px; color:var(--ink-soft); display:block; }
 .result-scores .arrow{ font-size:22px; color:var(--ink-soft); }
 .result-card>p{ font-size:14.5px; color:var(--ink-soft); }
 
-/* ---------- Программа курса (аккордеон FAQ переиспользуем) ---------- */
+/* Фото в отзывах (1-4 шт., адаптивная раскладка) */
+.result-photos{
+  display:grid; gap:6px; margin-bottom:16px; border-radius:var(--radius-sm); overflow:hidden;
+}
+.result-photos img{ width:100%; height:100%; object-fit:cover; display:block; }
+.result-photos-1{ grid-template-columns:1fr; }
+.result-photos-1 img{ aspect-ratio:16/10; }
+.result-photos-2{ grid-template-columns:1fr 1fr; }
+.result-photos-2 img{ aspect-ratio:1/1; }
+.result-photos-3{ grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
+.result-photos-3 img:nth-child(1){ grid-row:1 / 3; aspect-ratio:auto; height:100%; }
+.result-photos-3 img:nth-child(2), .result-photos-3 img:nth-child(3){ aspect-ratio:2/1; }
+.result-photos-4{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.result-photos-4 img{ aspect-ratio:1/1; }
+
+
+/* ============================================================
+   13. FAQ
+   ============================================================ */
 .faq{ max-width:760px; margin:0 auto; }
 .faq-item{
   background:var(--white); border-radius:var(--radius-sm); margin-bottom:12px; overflow:hidden;
@@ -281,77 +448,10 @@ header{
 .faq-a{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
 .faq-a p{ padding:0 22px 20px; color:var(--ink-soft); font-size:15px; }
 
-/* ---------- Преподаватели ---------- */
-/* ---------- Единый блок преподавателей на главной ---------- */
-.teachers-panel{
-  background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-  padding:36px;
-}
-.teachers-panel-body{ display:flex; gap:36px; align-items:flex-start; }
-.teachers-sidebar{ width:220px; flex:none; }
-.teachers-sidebar .course-filters{ flex-direction:column; align-items:flex-start; margin-bottom:28px; }
-.teacher-tabs{ display:flex; flex-direction:column; gap:8px; margin-bottom:0; }
 
-.teachers-list{ flex:1; }
-.teacher-item{ display:flex; justify-content:center; }
-.teacher-photo-wrap{
-  display:flex; align-items:flex-start; gap:24px; width:100%; max-width:900px;
-}
-.teacher-photo-half{
-  width:70%; aspect-ratio:1/1; border-radius:16px; flex:none;
-  object-fit:cover; object-position:top; display:block;
-}
-.teacher-photo-wrap .teacher-text{ flex:1; padding-top:8px; }
-.teacher-photo-wrap h3{ font-size:19px; margin-bottom:8px; }
-.teacher-photo-wrap p{ font-size:14px; color:var(--ink-soft); }
-
-@media (max-width: 700px){
-  .teacher-photo-wrap{ flex-direction:column; max-width:100%; }
-  .teacher-photo-half{ width:100%; }
-}
-
-@media (max-width: 700px){
-  .teachers-panel{ padding:24px; }
-  .teachers-panel-body{ flex-direction:column; gap:20px; }
-  .teachers-sidebar{ width:100%; }
-  .teachers-sidebar .course-filters{ flex-direction:row; }
-  .teacher-tabs{ flex-direction:row; flex-wrap:wrap; }
-  .teacher-photo-wrap{ width:100%; }
-}
-
-
-/* ---------- Фильтры ---------- */
-.course-filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; justify-content:center; }
-.filter-pill{
-  display:inline-block; text-decoration:none; font-weight:600; font-size:14.5px;
-  padding:9px 22px; border-radius:99px; color:var(--ink);
-  background:var(--white); box-shadow:0 4px 12px rgba(43,35,32,.07);
-  transition:transform .15s, background .2s, color .2s;
-}
-.filter-pill:hover{ transform:translateY(-2px); color:var(--terra); }
-.filter-pill.active{ background:var(--terra); color:#fff; }
-.filter-pill-sm{ font-size:13px; padding:7px 16px; }
-
-/* ---------- Карточки курсов ---------- */
-.courses-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
-.course{
-  background:var(--white); border-radius:var(--radius); padding:30px 28px;
-  box-shadow:var(--shadow); position:relative; display:flex; flex-direction:column;
-  transition:transform .2s, box-shadow .2s;
-}
-.course:hover{ transform:translateY(-5px); box-shadow:var(--shadow-hover); }
-.course .tag{
-  position:absolute; top:-13px; left:26px; font-weight:600;
-  font-size:13.5px; padding:6px 16px; border-radius:99px;
-  background:var(--lime); color:var(--ink); box-shadow:0 4px 10px rgba(43,35,32,.1);
-}
-.course h3{ font-size:22px; margin:8px 0 10px; }
-.course>p{ color:var(--ink-soft); font-size:15px; margin-bottom:16px; }
-.course-meta{ display:flex; flex-direction:column; gap:6px; font-size:14px; margin-bottom:22px; }
-.course-meta span::before{ content:"✓ "; color:var(--terra); font-weight:700; }
-.course .btn{ margin-top:auto; align-self:flex-start; }
-
-/* ---------- Финальный CTA ---------- */
+/* ============================================================
+   14. ФИНАЛЬНЫЙ CTA + ФУТЕР
+   ============================================================ */
 .cta-final{
   background:var(--terra-deep); border-radius:var(--radius); padding:48px;
   display:flex; align-items:center; justify-content:space-between; gap:28px; flex-wrap:wrap;
@@ -359,7 +459,6 @@ header{
 .cta-final h2{ color:#fff; margin-bottom:8px; }
 .cta-final p{ color:rgba(255,255,255,.75); font-size:15px; margin:0; }
 
-/* ---------- Футер ---------- */
 footer{ padding:34px 0 42px; margin-top:auto; }
 .footer-inner{
   display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
@@ -367,7 +466,10 @@ footer{ padding:34px 0 42px; margin-top:auto; }
 }
 .footer-inner a{ color:var(--terra); }
 
-/* ---------- Анимации ---------- */
+
+/* ============================================================
+   15. АНИМАЦИИ REVEAL
+   ============================================================ */
 .reveal{ opacity:0; transform:translateY(22px); transition:opacity .6s ease, transform .6s ease; }
 .reveal.visible{ opacity:1; transform:none; }
 
@@ -377,8 +479,9 @@ footer{ padding:34px 0 42px; margin-top:auto; }
   .reveal{ opacity:1; transform:none; }
 }
 
+
 /* ============================================================
-   ВНУТРЕННИЕ СТРАНИЦЫ (Bootstrap)
+   16. ВНУТРЕННИЕ СТРАНИЦЫ (Bootstrap-переопределения)
    ============================================================ */
 .card{
   background:var(--white); border:none; border-radius:var(--radius-sm);
@@ -437,76 +540,12 @@ a > .card:hover{ background-color:var(--cream); }
 .dropdown-menu .dropdown-item{ white-space:normal; word-wrap:break-word; }
 
 .text-muted{ color:var(--ink-soft) !important; }
-
 .container h2, .container h3, .container h4, .container h5, .container h6{ text-transform:none; }
 
-/* ---------- Адаптив ---------- */
-@media (max-width: 1100px){
-  .nav-links{ display:none; }
-}
 
-@media (max-width: 900px){
-  .hero-grid, .about-grid{ grid-template-columns:1fr; gap:40px; }
-  .hero{ padding:56px 0 76px; }
-  .hero-photo{ order:-1; }
-  .cta-final{ text-align:center; justify-content:center; }
-}
-
-@media (max-width: 520px){
-  section{ padding:52px 0; }
-  .hero-cta .btn{ width:100%; }
-  .cta-final{ padding:36px 24px; }
-  .hero-sticker{ right:0; padding:12px 16px; }
-  .hero-sticker .price{ font-size:21px; }
-}
-
-@media (max-width: 767px){
-  .nav{ flex-direction:column; height:auto; padding:10px 0; gap:8px; }
-  .nav-actions{ width:100%; justify-content:center; flex-wrap:wrap; }
-  .nav-actions .btn{ font-size:13px; padding:8px 14px; }
-
-  header .dropdown-menu{
-    position:fixed !important; top:auto !important;
-    left:8px !important; right:8px !important;
-    width:calc(100% - 16px); max-width:none;
-  }
-}
-@media (max-width: 767px){
-  .carousel-btn.prev,
-  .carousel-btn.next{ display:none !important; }
-}
-@media (max-width: 767px){
-  .results-carousel .result-card{ padding-left:20px; padding-right:20px; }
-}
-
-.path-card.path-inactive{ opacity:.45; }
-.path-card.path-inactive:hover{ opacity:.85; }
-
-#results{ background:var(--cream); }
-#results .container{ background:var(--cream); }
-
-/* ---------- Фото в отзывах ---------- */
-.result-photos{
-  display:grid; gap:6px; margin-bottom:16px; border-radius:var(--radius-sm); overflow:hidden;
-}
-.result-photos img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-.result-photos-1{ grid-template-columns:1fr; }
-.result-photos-1 img{ aspect-ratio:16/10; }
-
-.result-photos-2{ grid-template-columns:1fr 1fr; }
-.result-photos-2 img{ aspect-ratio:1/1; }
-
-.result-photos-3{ grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
-.result-photos-3 img:nth-child(1){ grid-row:1 / 3; aspect-ratio:auto; height:100%; }
-.result-photos-3 img:nth-child(2), .result-photos-3 img:nth-child(3){ aspect-ratio:2/1; }
-
-.result-photos-4{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
-.result-photos-4 img{ aspect-ratio:1/1; }
-
-.nav-links a.active-link{ color:var(--terra); font-weight:600; }
-
-/* ---------- Платформа: карточки кабинета ---------- */
+/* ============================================================
+   17. ПЛАТФОРМА (личный кабинет ученика)
+   ============================================================ */
 .platform-header{
   height:72px; display:flex; align-items:center; justify-content:space-between; gap:18px;
 }
@@ -533,7 +572,7 @@ a > .card:hover{ background-color:var(--cream); }
 }
 .pf-tile-icon{
   width:52px; height:52px; border-radius:16px; background:var(--peach);
-  display:grid; place-items:center; margin:0 auto 14px; font-size:22px;
+  display:grid; place-items:center; margin:0 auto 14px;
 }
 .pf-tile b{ display:block; font-size:15px; color:var(--ink); }
 .pf-tile span{ color:var(--ink-soft); font-size:13px; }
@@ -562,6 +601,10 @@ a > .card:hover{ background-color:var(--cream); }
   padding:18px 20px; margin-bottom:12px;
 }
 
+
+/* ============================================================
+   18. ТАЙМКОДЫ ВИДЕО
+   ============================================================ */
 .timecode-btn{
   display:flex; align-items:center; gap:12px; width:100%; text-align:left;
   background:var(--white); border:none; border-radius:12px; padding:10px 14px;
@@ -569,62 +612,75 @@ a > .card:hover{ background-color:var(--cream); }
   transition:background .15s;
 }
 .timecode-btn:hover{ background:var(--cream-2); }
-.timecode-time{
-  font-weight:700; color:var(--terra); font-size:13.5px; min-width:44px;
-}
+.timecode-time{ font-weight:700; color:var(--terra); font-size:13.5px; min-width:44px; }
 .timecode-label{ font-size:14px; color:var(--ink); }
 
-.course-how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-@media (max-width: 767px){
-  .course-how-grid{ grid-template-columns:1fr; }
+
+/* ============================================================
+   19. АДАПТИВ
+   ============================================================ */
+
+/* Меню в шапке скрывается пораньше, чтобы кнопки не переносились */
+@media (max-width: 1100px){
+  .nav-links{ display:none; }
 }
 
-.course-2col-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+/* Планшет: hero, about в колонку */
+@media (max-width: 900px){
+  .hero-grid, .about-grid{ grid-template-columns:1fr; gap:40px; }
+  .hero{ padding:56px 0 76px; }
+  .hero-photo{ order:-1; }
+  .cta-final{ text-align:center; justify-content:center; }
+  .results-carousel .result-card{ flex:0 0 calc((100% - 20px) / 2); }
+}
+
+/* Мобильный (общий): шапка, карусель, панель преподавателей */
+@media (max-width: 767px){
+  .nav{ flex-direction:column; height:auto; padding:10px 0; gap:8px; }
+  .nav-actions{ width:100%; justify-content:center; flex-wrap:wrap; }
+  .nav-actions .btn{ font-size:13px; padding:8px 14px; }
+
+  header .dropdown-menu{
+    position:fixed !important; top:auto !important;
+    left:8px !important; right:8px !important;
+    width:calc(100% - 16px); max-width:none;
+  }
+
+  .carousel-btn.prev, .carousel-btn.next{ display:none !important; }
+
+  .results-carousel{ padding:6px 8% 10px; }
+  .results-carousel .result-card{
+    flex:0 0 84%; padding-left:20px; padding-right:20px;
+    transform:scale(.92); opacity:.55;
+    transition:transform .25s ease, opacity .25s ease;
+  }
+  .results-carousel .result-card.is-active{ transform:scale(1); opacity:1; }
+
+  .course-how-grid{ grid-template-columns:1fr; }
+
+  .teachers-panel{ padding:24px; }
+  .teachers-panel-body{ flex-direction:column; gap:20px; }
+  .teachers-sidebar{ width:100%; }
+  .teachers-sidebar .course-filters{ flex-direction:row; }
+  .teacher-tabs{ flex-direction:row; flex-wrap:wrap; }
+  .teacher-photo-wrap{ flex-direction:column; max-width:100%; width:100%; }
+  .teacher-photo-half{ width:100%; }
+
+  .course-teacher-photo{ width:100%; height:260px; }
+  .course-teachers-pair{ grid-template-columns:1fr; }
+  .course-teacher-photo-large{ max-width:220px; margin:0 auto; }
+}
+
+/* Узкие экраны (600px) */
 @media (max-width: 600px){
   .course-2col-grid{ grid-template-columns:1fr; }
 }
 
-/* ---------- Крупные фото преподавателей ---------- */
-.course-teachers-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:20px; }
-
-.course-teacher-photo{
-  width:160px; height:200px; border-radius:16px;
-  object-fit:cover; object-position:top; flex:none;
+/* Совсем маленькие экраны */
+@media (max-width: 520px){
+  section{ padding:52px 0; }
+  .hero-cta .btn{ width:100%; }
+  .cta-final{ padding:36px 24px; }
+  .hero-sticker{ right:0; padding:12px 16px; }
+  .hero-sticker .price{ font-size:21px; }
 }
-
-@media (max-width: 480px){
-  .course-teacher-photo{ width:100%; height:260px; }
-}
-
-/* ---------- Пара преподавателей рядом ---------- */
-.course-teachers-pair{ display:grid; grid-template-columns:1fr 1fr; gap:32px; }
-.course-teacher-block{ text-align:center; }
-.course-teacher-photo-large{
-  width:100%; max-width:280px; aspect-ratio:3/4;
-  border-radius:20px; object-fit:cover; object-position:top;
-}
-
-@media (max-width: 700px){
-  .course-teachers-pair{ grid-template-columns:1fr; }
-  .course-teacher-photo-large{ max-width:220px; margin:0 auto; }
-}
-/* ---------- Переключатель преподавателей ---------- */
-.teacher-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
-.teacher-tab{
-  background:var(--cream); border:none; border-radius:99px;
-  padding:9px 20px; font-size:14px; font-weight:600; color:var(--ink-soft);
-  cursor:pointer; font-family:inherit; transition:background .2s, color .2s;
-}
-.teacher-tab.active{ background:var(--terra); color:#fff; }
-.teacher-tab:hover:not(.active){ background:var(--cream-2); }
-
-/* ---------- Переключатель ЕГЭ/ОГЭ (сегмент-контрол) ---------- */
-.exam-toggle{
-  display:inline-flex; background:var(--cream); border-radius:99px; padding:4px;
-}
-.exam-toggle-btn{
-  text-decoration:none; font-size:13.5px; font-weight:700; color:var(--ink-soft);
-  padding:8px 22px; border-radius:99px; transition:background .2s, color .2s;
-}
-.exam-toggle-btn.active{ background:var(--terra); color:#fff; }
-.exam-toggle-btn:hover:not(.active){ color:var(--ink); }
