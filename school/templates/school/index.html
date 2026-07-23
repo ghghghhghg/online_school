@@ -272,8 +272,10 @@
                             {% if teacher.photo %}
                             <img class="teacher-photo-half" src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
                             {% endif %}
-                            <h3>{{ teacher.name }}</h3>
-                            <p style="white-space: pre-line;">{{ teacher.bio|truncatewords:40 }}</p>
+                            <div class="teacher-text">
+                                <h3>{{ teacher.name }}</h3>
+                                <p style="white-space: pre-line;">{{ teacher.bio|truncatewords:40 }}</p>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}

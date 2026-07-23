@@ -293,13 +293,22 @@ header{
 .teacher-tabs{ display:flex; flex-direction:column; gap:8px; margin-bottom:0; }
 
 .teachers-list{ flex:1; }
-.teacher-photo-wrap{ width:50%; }
-.teacher-photo-half{
-  width:100%; aspect-ratio:1/1; border-radius:16px;
-  object-fit:cover; object-position:top; display:block; margin-bottom:16px;
+.teacher-item{ display:flex; justify-content:center; }
+.teacher-photo-wrap{
+  display:flex; align-items:flex-start; gap:24px; width:100%; max-width:640px;
 }
+.teacher-photo-half{
+  width:50%; aspect-ratio:1/1; border-radius:16px; flex:none;
+  object-fit:cover; object-position:top; display:block;
+}
+.teacher-photo-wrap .teacher-text{ flex:1; padding-top:8px; }
 .teacher-photo-wrap h3{ font-size:19px; margin-bottom:8px; }
 .teacher-photo-wrap p{ font-size:14px; color:var(--ink-soft); }
+
+@media (max-width: 700px){
+  .teacher-photo-wrap{ flex-direction:column; max-width:100%; }
+  .teacher-photo-half{ width:100%; }
+}
 
 @media (max-width: 700px){
   .teachers-panel{ padding:24px; }
