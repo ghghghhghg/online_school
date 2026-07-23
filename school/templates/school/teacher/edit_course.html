@@ -5,7 +5,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-check mb-3">
                 <input type="checkbox" name="is_published" class="form-check-input"
@@ -21,6 +21,19 @@
                 <label class="form-label">Краткое описание</label>
                 <textarea name="description" class="form-control"
                           rows="2">{{ course.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Фото преподавателя для этого курса (необязательно)</label>
+                {% if course.teacher_photo_override %}
+                    <p class="mb-2"><img src="{{ course.teacher_photo_override.url }}" style="width: 80px; height: 100px; object-fit: cover; border-radius: 8px;"></p>
+                {% endif %}
+                <input type="file" name="teacher_photo_override" class="form-control">
+                <div class="form-text">Если не загрузить — используется фото из основного профиля преподавателя</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Подпись/био преподавателя для этого курса (необязательно)</label>
+                <textarea name="teacher_bio_override" class="form-control" rows="3">{{ course.teacher_bio_override }}</textarea>
+                <div class="form-text">Если оставить пустым — используется био из основного профиля</div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Что будет в курсе</label>

@@ -37,6 +37,13 @@ class Course(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='courses', verbose_name='Преподаватель')
+    teacher_photo_override = models.ImageField(upload_to='course_teacher/', blank=True,
+                                               verbose_name='Фото преподавателя для этого курса (если отличается)')
+    teacher_bio_override = models.TextField(blank=True,
+                                            verbose_name='Подпись/био преподавателя для этого курса (если отличается)')
+
     class Meta:
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'

@@ -202,6 +202,9 @@ def course_view(request, slug):
     if course.teacher:
         course_teacher = TeacherProfile.objects.filter(user=course.teacher).first()
 
+    teacher_display_photo = course.teacher_photo_override.url if course.teacher_photo_override else (course_teacher.photo.url if course_teacher and course_teacher.photo else None)
+    teacher_display_bio = course.teacher_bio_override if course.teacher_bio_override else (course_teacher.bio if course_teacher else '')
+
     completed_ids = []
     enrollment = None
     if request.user.is_authenticated and not request.user.is_staff:
@@ -218,6 +221,8 @@ def course_view(request, slug):
         'completed_ids': completed_ids,
         'enrollment': enrollment,
         'course_teacher': course_teacher,
+        'teacher_display_photo': teacher_display_photo,
+        'teacher_display_bio': teacher_display_bio,
     })
 
 def is_checkpoint_passed(checkpoint, user):
@@ -843,9 +848,6 @@ def edit_student_profile(request):
 @staff_member_required
 def teacher_edit_course(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    if not request.user.is_superuser and course.teacher != request.user:
-        messages.error(request, 'У вас нет доступа к этому курсу')
-        return redirect('teacher_dashboard')
     if request.method == 'POST':
         course.title = request.POST.get('title')
         course.description = request.POST.get('description')
@@ -855,11 +857,13 @@ def teacher_edit_course(request, pk):
         course.is_published = request.POST.get('is_published') == 'on'
         course.card_tag = request.POST.get('card_tag', '')
         course.card_features = request.POST.get('card_features', '')
+        course.teacher_bio_override = request.POST.get('teacher_bio_override', '')
+        if request.FILES.get('teacher_photo_override'):
+            course.teacher_photo_override = request.FILES.get('teacher_photo_override')
         course.save()
         messages.success(request, 'Курс обновлён!')
         return redirect('teacher_course_dashboard', pk=course.pk)
     return render(request, 'school/teacher/edit_course.html', {'course': course})
-
 
 @login_required
 def homework_view(request, pk):

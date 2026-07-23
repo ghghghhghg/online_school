@@ -76,8 +76,8 @@
 <section style="padding-bottom:48px;">
     <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Преподаватель курса</h3>
     <div style="background:#fff; border-radius:16px; padding:26px; box-shadow:0 4px 14px rgba(43,35,32,.05); display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap;">
-        {% if course_teacher.photo %}
-        <img src="{{ course_teacher.photo.url }}" alt="{{ course_teacher.name }}"
+        {% if teacher_display_photo %}
+        <img src="{{ teacher_display_photo }}" alt="{{ course_teacher.name }}"
              style="width:100px; height:130px; border-radius:14px; object-fit:cover; object-position:top; flex:none;">
         {% endif %}
         <div style="flex:1; min-width:200px;">
@@ -85,7 +85,7 @@
             <span style="color:#C8442A; font-size:13px; font-weight:600; display:block; margin-bottom:4px;">{{ course_teacher.subject }}</span>
             {% endif %}
             <h4 style="font-size:19px; margin:0 0 8px; font-weight:700;">{{ course_teacher.name }}</h4>
-            <p style="color:#7A6F68; font-size:14.5px; margin:0; white-space: pre-line;">{{ course_teacher.bio|truncatewords:40 }}</p>
+            <p style="color:#7A6F68; font-size:14.5px; margin:0; white-space: pre-line;">{{ teacher_display_bio|truncatewords:40 }}</p>
         </div>
     </div>
 </section>
