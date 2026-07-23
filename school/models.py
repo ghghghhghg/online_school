@@ -39,10 +39,6 @@ class Course(models.Model):
 
     teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='courses', verbose_name='Преподаватель')
-    teacher_photo_override = models.ImageField(upload_to='course_teacher/', blank=True,
-                                               verbose_name='Фото преподавателя для этого курса (если отличается)')
-    teacher_bio_override = models.TextField(blank=True,
-                                            verbose_name='Подпись/био преподавателя для этого курса (если отличается)')
 
     class Meta:
         verbose_name = 'Курс'
@@ -223,7 +219,7 @@ class TestAnswerLog(models.Model):
 class TeacherProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 related_name='teacher_profile', verbose_name='Аккаунт')
-    name = models.CharField(max_length=200, verbose_name='Имя')
+    name = models.CharField(max_length=200, verbose_name='Короткая фраза или имя')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
     bio = models.TextField(verbose_name='О себе')
     photo = models.ImageField(upload_to='teacher/', blank=True, verbose_name='Фото')
@@ -708,3 +704,31 @@ class Timecode(models.Model):
         minutes = self.time_seconds // 60
         seconds = self.time_seconds % 60
         return f'{minutes}:{seconds:02d}'
+
+class CourseTeacherDisplay(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='teacher_displays', verbose_name='Курс')
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE,
+                                related_name='course_displays', verbose_name='Преподаватель')
+    name_override = models.CharField(max_length=200, blank=True,
+                                     verbose_name='Другая короткая фраза/имя для этого курса')
+    photo_override = models.ImageField(upload_to='course_teacher/', blank=True,
+                                       verbose_name='Другое фото для этого курса')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Преподаватель на странице курса'
+        verbose_name_plural = 'Преподаватели на странице курса'
+        ordering = ['order']
+        unique_together = ('course', 'teacher')
+
+    def __str__(self):
+        return f'{self.course.title} — {self.teacher.name}'
+
+    @property
+    def display_name(self):
+        return self.name_override or self.teacher.name
+
+    @property
+    def display_photo(self):
+        return self.photo_override if self.photo_override else self.teacher.photo

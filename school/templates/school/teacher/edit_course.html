@@ -22,19 +22,7 @@
                 <textarea name="description" class="form-control"
                           rows="2">{{ course.description }}</textarea>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Фото преподавателя для этого курса (необязательно)</label>
-                {% if course.teacher_photo_override %}
-                    <p class="mb-2"><img src="{{ course.teacher_photo_override.url }}" style="width: 80px; height: 100px; object-fit: cover; border-radius: 8px;"></p>
-                {% endif %}
-                <input type="file" name="teacher_photo_override" class="form-control">
-                <div class="form-text">Если не загрузить — используется фото из основного профиля преподавателя</div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Подпись/био преподавателя для этого курса (необязательно)</label>
-                <textarea name="teacher_bio_override" class="form-control" rows="3">{{ course.teacher_bio_override }}</textarea>
-                <div class="form-text">Если оставить пустым — используется био из основного профиля</div>
-            </div>
+
             <div class="mb-3">
                 <label class="form-label">Что будет в курсе</label>
                 <textarea name="what_you_learn" class="form-control"
@@ -61,6 +49,43 @@
                 <label class="form-label">Пункты на карточке главной (по одному на строку)</label>
                 <textarea name="card_features" class="form-control" rows="3">{{ course.card_features }}</textarea>
             </div>
+            <div class="card mt-4 p-4">
+    <h5 class="mb-3">Преподаватели на странице курса</h5>
+
+    {% for td in teacher_displays %}
+    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--line);">
+        <span>{{ td.display_name }} <small class="text-muted">({{ td.teacher.name }})</small></span>
+        <form method="post" action="{% url 'teacher_delete_course_teacher' td.pk %}"
+              onsubmit="return confirm('Убрать преподавателя со страницы курса?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+        </form>
+    </div>
+    {% empty %}
+    <p class="text-muted small">Преподаватели пока не добавлены на эту страницу</p>
+    {% endfor %}
+
+    <form method="post" action="{% url 'teacher_add_course_teacher' course.pk %}" enctype="multipart/form-data" class="mt-3">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Преподаватель</label>
+            <select name="teacher_id" class="form-select" required>
+                {% for t in all_teachers %}
+                <option value="{{ t.id }}">{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Другая короткая фраза/имя для этого курса (необязательно)</label>
+            <input type="text" name="name_override" class="form-control" placeholder="Оставь пустым чтобы использовать имя из профиля">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Другое фото для этого курса (необязательно)</label>
+            <input type="file" name="photo_override" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">+ Добавить на страницу курса</button>
+    </form>
+</div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Сохранить</button>
                 <a href="{% url 'teacher_dashboard' %}"

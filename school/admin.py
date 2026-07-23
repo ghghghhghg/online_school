@@ -1,13 +1,16 @@
 from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
-    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode
+    CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay
 
 
 class CheckpointTaskInline(admin.TabularInline):
     model = CheckpointTask
     extra = 1
 
+class CourseTeacherDisplayInline(admin.TabularInline):
+    model = CourseTeacherDisplay
+    extra = 1
 
 class TimecodeInline(admin.TabularInline):
     model = Timecode
@@ -141,3 +144,11 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # Разрешаем создать только одну запись
         return not SiteSettings.objects.exists()
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ['title', 'exam_type', 'subject', 'slug', 'is_published', 'created_at']
+    list_editable = ['is_published', 'exam_type', 'subject']
+    prepopulated_fields = {'slug': ('title',)}
+    inlines = [LessonInline, CourseTeacherDisplayInline]

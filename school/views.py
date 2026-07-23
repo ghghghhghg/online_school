@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, Answer, TestResult, TeacherProfile, \
     Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, HomeworkSubmission, Module, Checkpoint, CheckpointTask, \
     CheckpointAttempt, CheckpointAnswer, Notification, ExamMock, ExamAttempt, ExamTask, ExamAnswer, FearBlock, \
-    ParentBlock, SiteSettings, TestAnswerLog, Timecode
+    ParentBlock, SiteSettings, TestAnswerLog, Timecode, CourseTeacherDisplay
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
@@ -198,12 +198,7 @@ def course_view(request, slug):
     course = get_object_or_404(Course, slug=slug)
     lessons = course.lessons.all()
 
-    course_teacher = None
-    if course.teacher:
-        course_teacher = TeacherProfile.objects.filter(user=course.teacher).first()
-
-    teacher_display_photo = course.teacher_photo_override.url if course.teacher_photo_override else (course_teacher.photo.url if course_teacher and course_teacher.photo else None)
-    teacher_display_bio = course.teacher_bio_override if course.teacher_bio_override else (course_teacher.bio if course_teacher else '')
+    teacher_displays = course.teacher_displays.select_related('teacher').all()
 
     completed_ids = []
     enrollment = None
@@ -220,9 +215,7 @@ def course_view(request, slug):
         'lessons': lessons,
         'completed_ids': completed_ids,
         'enrollment': enrollment,
-        'course_teacher': course_teacher,
-        'teacher_display_photo': teacher_display_photo,
-        'teacher_display_bio': teacher_display_bio,
+        'teacher_displays': teacher_displays,
     })
 
 def is_checkpoint_passed(checkpoint, user):
@@ -857,13 +850,15 @@ def teacher_edit_course(request, pk):
         course.is_published = request.POST.get('is_published') == 'on'
         course.card_tag = request.POST.get('card_tag', '')
         course.card_features = request.POST.get('card_features', '')
-        course.teacher_bio_override = request.POST.get('teacher_bio_override', '')
-        if request.FILES.get('teacher_photo_override'):
-            course.teacher_photo_override = request.FILES.get('teacher_photo_override')
         course.save()
         messages.success(request, 'Курс обновлён!')
         return redirect('teacher_course_dashboard', pk=course.pk)
-    return render(request, 'school/teacher/edit_course.html', {'course': course})
+
+    return render(request, 'school/teacher/edit_course.html', {
+        'course': course,
+        'teacher_displays': course.teacher_displays.select_related('teacher'),
+        'all_teachers': TeacherProfile.objects.all(),
+    })
 
 @login_required
 def homework_view(request, pk):
@@ -1964,3 +1959,30 @@ def teacher_delete_timecode(request, pk):
         timecode.delete()
         messages.success(request, 'Таймкод удалён')
     return redirect('teacher_edit_lesson', pk=lesson_pk)
+
+@staff_member_required
+def teacher_add_course_teacher(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        teacher_id = request.POST.get('teacher_id')
+        teacher_profile = get_object_or_404(TeacherProfile, pk=teacher_id)
+        display, created = CourseTeacherDisplay.objects.get_or_create(
+            course=course, teacher=teacher_profile,
+            defaults={'order': course.teacher_displays.count() + 1}
+        )
+        display.name_override = request.POST.get('name_override', '')
+        if request.FILES.get('photo_override'):
+            display.photo_override = request.FILES.get('photo_override')
+        display.save()
+        messages.success(request, 'Преподаватель добавлен на страницу курса!')
+    return redirect('teacher_edit_course', pk=pk)
+
+
+@staff_member_required
+def teacher_delete_course_teacher(request, pk):
+    display = get_object_or_404(CourseTeacherDisplay, pk=pk)
+    course_pk = display.course.pk
+    if request.method == 'POST':
+        display.delete()
+        messages.success(request, 'Преподаватель удалён со страницы курса')
+    return redirect('teacher_edit_course', pk=course_pk)

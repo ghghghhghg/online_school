@@ -124,5 +124,8 @@ urlpatterns = [
     path('teacher/lesson/<int:pk>/timecode/add/', views.teacher_add_timecode, name='teacher_add_timecode'),
     path('teacher/timecode/<int:pk>/delete/', views.teacher_delete_timecode, name='teacher_delete_timecode'),
 
+    path('teacher/course/<int:pk>/teacher/add/', views.teacher_add_course_teacher, name='teacher_add_course_teacher'),
+    path('teacher/course-teacher/<int:pk>/delete/', views.teacher_delete_course_teacher, name='teacher_delete_course_teacher'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]
