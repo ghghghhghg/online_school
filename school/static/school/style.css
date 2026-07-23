@@ -295,7 +295,7 @@ header{
 .teachers-list{ flex:1; }
 .teacher-item{ display:flex; justify-content:center; }
 .teacher-photo-wrap{
-  display:flex; align-items:flex-start; gap:24px; width:100%; max-width:640px;
+  display:flex; align-items:flex-start; gap:24px; width:100%; max-width:900px;
 }
 .teacher-photo-half{
   width:70%; aspect-ratio:1/1; border-radius:16px; flex:none;
@@ -617,3 +617,14 @@ a > .card:hover{ background-color:var(--cream); }
 }
 .teacher-tab.active{ background:var(--terra); color:#fff; }
 .teacher-tab:hover:not(.active){ background:var(--cream-2); }
+
+/* ---------- Переключатель ЕГЭ/ОГЭ (сегмент-контрол) ---------- */
+.exam-toggle{
+  display:inline-flex; background:var(--cream); border-radius:99px; padding:4px;
+}
+.exam-toggle-btn{
+  text-decoration:none; font-size:13.5px; font-weight:700; color:var(--ink-soft);
+  padding:8px 22px; border-radius:99px; transition:background .2s, color .2s;
+}
+.exam-toggle-btn.active{ background:var(--terra); color:#fff; }
+.exam-toggle-btn:hover:not(.active){ color:var(--ink); }

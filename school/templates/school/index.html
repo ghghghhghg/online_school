@@ -240,9 +240,9 @@
 
             <div class="teachers-panel-body">
                 <div class="teachers-sidebar">
-                    <div class="course-filters" style="margin-bottom: 16px;">
-                        <a href="?teacher_exam=ege#about" class="filter-pill {% if teacher_exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
-                        <a href="?teacher_exam=oge#about" class="filter-pill {% if teacher_exam_filter == 'oge' %}active{% endif %}">ОГЭ</a>
+                    <div class="exam-toggle" style="margin-bottom: 16px;">
+                        <a href="?teacher_exam=ege#about" class="exam-toggle-btn {% if teacher_exam_filter == 'ege' %}active{% endif %}">ЕГЭ</a>
+                        <a href="?teacher_exam=oge#about" class="exam-toggle-btn {% if teacher_exam_filter == 'oge' %}active{% endif %}">ОГЭ</a>
                     </div>
 
                     {% if teacher_subjects|length > 1 %}
