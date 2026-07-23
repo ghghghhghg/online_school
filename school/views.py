@@ -1971,6 +1971,7 @@ def teacher_add_course_teacher(request, pk):
             defaults={'order': course.teacher_displays.count() + 1}
         )
         display.name_override = request.POST.get('name_override', '')
+        display.bio_override = request.POST.get('bio_override', '')
         if request.FILES.get('photo_override'):
             display.photo_override = request.FILES.get('photo_override')
         display.save()

@@ -75,9 +75,13 @@
                 {% endfor %}
             </select>
         </div>
+       <div class="mb-3">
+    <label class="form-label">Другая короткая фраза/имя для этого курса (необязательно)</label>
+    <input type="text" name="name_override" class="form-control" placeholder="Оставь пустым чтобы использовать имя из профиля">
+        </div>
         <div class="mb-3">
-            <label class="form-label">Другая короткая фраза/имя для этого курса (необязательно)</label>
-            <input type="text" name="name_override" class="form-control" placeholder="Оставь пустым чтобы использовать имя из профиля">
+            <label class="form-label">Другой текст/описание для этого курса (необязательно)</label>
+            <textarea name="bio_override" class="form-control" rows="3" placeholder="Оставь пустым чтобы использовать описание из профиля"></textarea>
         </div>
         <div class="mb-3">
             <label class="form-label">Другое фото для этого курса (необязательно)</label>

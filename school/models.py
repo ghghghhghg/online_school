@@ -712,6 +712,8 @@ class CourseTeacherDisplay(models.Model):
                                 related_name='course_displays', verbose_name='Преподаватель')
     name_override = models.CharField(max_length=200, blank=True,
                                      verbose_name='Другая короткая фраза/имя для этого курса')
+    bio_override = models.TextField(blank=True,
+                                    verbose_name='Другой текст/описание для этого курса')
     photo_override = models.ImageField(upload_to='course_teacher/', blank=True,
                                        verbose_name='Другое фото для этого курса')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -728,6 +730,10 @@ class CourseTeacherDisplay(models.Model):
     @property
     def display_name(self):
         return self.name_override or self.teacher.name
+
+    @property
+    def display_bio(self):
+        return self.bio_override or self.teacher.bio
 
     @property
     def display_photo(self):

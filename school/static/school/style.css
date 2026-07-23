@@ -572,3 +572,16 @@ a > .card:hover{ background-color:var(--cream); }
 @media (max-width: 480px){
   .course-teacher-photo{ width:100%; height:260px; }
 }
+
+/* ---------- Пара преподавателей рядом ---------- */
+.course-teachers-pair{ display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+.course-teacher-block{ text-align:center; }
+.course-teacher-photo-large{
+  width:100%; max-width:280px; aspect-ratio:3/4;
+  border-radius:20px; object-fit:cover; object-position:top;
+}
+
+@media (max-width: 700px){
+  .course-teachers-pair{ grid-template-columns:1fr; }
+  .course-teacher-photo-large{ max-width:220px; margin:0 auto; }
+}
