@@ -289,7 +289,7 @@ header{
 }
 .teachers-panel-body{ display:flex; gap:36px; align-items:flex-start; }
 .teachers-sidebar{ width:220px; flex:none; }
-.teachers-sidebar .course-filters{ flex-direction:column; align-items:flex-start; }
+.teachers-sidebar .course-filters{ flex-direction:column; align-items:flex-start; margin-bottom:28px; }
 .teacher-tabs{ display:flex; flex-direction:column; gap:8px; margin-bottom:0; }
 
 .teachers-list{ flex:1; }
