@@ -67,9 +67,39 @@
                         Автор курса — {{ first_teacher.display_name }}
                     </p>
                     {% endif %}
-                    <div style="text-align:center; padding:14px 0; border-top:1px solid #F0E2D6; border-bottom:1px solid #F0E2D6;">
-                        <p style="font-size:16px; color:#7A6F68; margin:0;">{{ lessons.count }} уроков в курсе</p>
+
+                    {% if stats %}
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        {% for stat in stats|slice:":3" %}
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; flex:1;">
+                            <div style="width:40px; height:40px; border-radius:50%; background:#FBE4DA; display:flex; align-items:center; justify-content:center;">
+                                {% icon stat.icon size=18 %}
+                            </div>
+                            <span style="font-size:12.5px; color:#4a423b; font-weight:600; line-height:1.3;">{{ stat.number }} {{ stat.label }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
+                    {% endif %}
+
+                    <div style="text-align:center; padding:16px 0; border-top:1px solid #F0E2D6; border-bottom:1px solid #F0E2D6; margin-bottom:18px;">
+                        <p style="font-size:19px; font-weight:800; color:#C8442A; margin:0 0 4px;">Первый урок — 0 ₽</p>
+                        <p style="font-size:14px; color:#6b5c4c; margin:0;">Полный курс — от 9 900 ₽</p>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        {% if enrollment.status == 'approved' %}
+                            <a href="{% url 'course_lessons' course.slug %}" class="btn btn-terra" style="width:100%;">Перейти к урокам</a>
+                        {% elif enrollment.status == 'pending' %}
+                            <div style="text-align:center; padding:12px; background:#F1E3D5; border-radius:12px; font-size:13.5px; font-weight:600;">Заявка на рассмотрении</div>
+                        {% elif not user.is_staff %}
+                            <form method="post" action="{% url 'apply_to_course' course.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-terra" style="width:100%;">Записаться</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'register' %}" class="btn btn-terra" style="width:100%;">Записаться</a>
+                    {% endif %}
                 </div>
                 {% endwith %}
             </div>

@@ -243,6 +243,7 @@ def course_view(request, slug):
         'why_cards': why_cards,
         'course_reviews': course_reviews,
         'faqs': faqs,
+        'stats': StatBlock.objects.all(),
     })
 
 def is_checkpoint_passed(checkpoint, user):
