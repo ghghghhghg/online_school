@@ -83,7 +83,7 @@
         <div class="course-icon-grid-4">
             {% for item in benefits %}
             <div class="course-icon-card">
-                <div class="course-icon-card-icon">{% icon 'check-circle' size=20 %}</div>
+                <div class="course-icon-card-icon">{% icon item.icon size=20 %}</div>
                 <div>
                     {% if item.title %}<strong style="display:block; margin-bottom:4px; font-size:14px;">{{ item.title }}</strong>{% endif %}
                     <p>{{ item.text }}</p>
@@ -100,9 +100,12 @@
         <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Кому подойдёт курс</h2>
         <div class="course-icon-grid-3">
             {% for item in audience %}
-            <div>
-                {% if item.title %}<strong style="display:block; margin-bottom:4px; font-size:14px;">{{ item.title }}</strong>{% endif %}
-                <p>{{ item.text }}</p>
+            <div class="course-icon-card">
+                <div class="course-icon-card-icon">{% icon item.icon size=20 %}</div>
+                <div>
+                    {% if item.title %}<strong style="display:block; margin-bottom:4px; font-size:14px;">{{ item.title }}</strong>{% endif %}
+                    <p>{{ item.text }}</p>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -142,7 +145,7 @@
         <div class="course-steps-row">
             {% for item in steps %}
             <div class="course-step-card">
-                <div class="course-icon-card-icon">{% icon 'play-circle' size=20 %}</div>
+                <div class="course-icon-card-icon">{% icon item.icon size=20 %}</div>
                 <div>
                     {% if item.title %}<strong style="display:block; margin-bottom:4px; font-size:14px;">{{ item.title }}</strong>{% endif %}
                     <p>{{ item.text }}</p>

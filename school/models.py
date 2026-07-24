@@ -60,6 +60,7 @@ class Course(models.Model):
 class CourseBenefit(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='benefits', verbose_name='Курс')
+    icon = models.CharField(max_length=30, default='check-circle', verbose_name='Иконка')
     title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
     text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -76,6 +77,7 @@ class CourseBenefit(models.Model):
 class CourseAudience(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='audience_items', verbose_name='Курс')
+    icon = models.CharField(max_length=30, default='target', verbose_name='Иконка')
     title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
     text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
@@ -92,6 +94,7 @@ class CourseAudience(models.Model):
 class CourseStep(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='steps', verbose_name='Курс')
+    icon = models.CharField(max_length=30, default='play-circle', verbose_name='Иконка')
     title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
     text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
