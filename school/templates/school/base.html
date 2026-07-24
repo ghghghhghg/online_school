@@ -23,11 +23,38 @@
             <img src="{% static 'school/favicon_not_background.png' %}" alt="" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 4px;"> ABS <span class="thin">SCHOOL</span>
         </a>
         <ul class="nav-links">
-            <li><a href="{% url 'index' %}#how">О школе</a></li>
-            <li><a href="{% url 'index' %}#courses">Курсы</a></li>
-            <li><a href="{% url 'index' %}#about">Преподаватели</a></li>
-            <li><a href="{% url 'index' %}#results">Результаты</a></li>
-            <li><a href="{% url 'index' %}#faq">FAQ</a></li>
+            {% if nav_ege_courses %}
+            <li class="nav-dropdown">
+                <button class="nav-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">ЕГЭ</button>
+                <ul class="dropdown-menu">
+                    {% for course in nav_ege_courses %}
+                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">{{ course.subject|default:course.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endif %}
+
+            {% if nav_oge_courses %}
+            <li class="nav-dropdown">
+                <button class="nav-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">ОГЭ</button>
+                <ul class="dropdown-menu">
+                    {% for course in nav_oge_courses %}
+                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">{{ course.subject|default:course.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endif %}
+
+            <li class="nav-dropdown">
+                <button class="nav-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">О нас</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'index' %}#how">О школе</a></li>
+                    <li><a class="dropdown-item" href="{% url 'index' %}#courses">Курсы</a></li>
+                    <li><a class="dropdown-item" href="{% url 'index' %}#about">Преподаватели</a></li>
+                    <li><a class="dropdown-item" href="{% url 'index' %}#results">Результаты</a></li>
+                    <li><a class="dropdown-item" href="{% url 'index' %}#faq">FAQ</a></li>
+                </ul>
+            </li>
         </ul>
         <div class="nav-actions">
             {% if user.is_authenticated %}

@@ -75,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'school.context_processors.pending_homework_count',
+                'school.context_processors.nav_courses',
             ],
         },
     },

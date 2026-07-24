@@ -1,4 +1,4 @@
-from .models import HomeworkSubmission, Enrollment, CheckpointAttempt, Notification
+from .models import HomeworkSubmission, Enrollment, CheckpointAttempt, Notification, Course
 
 
 def pending_homework_count(request):
@@ -23,3 +23,9 @@ def pending_homework_count(request):
         context['recent_notifications'] = unread[:10]
 
     return context
+
+def nav_courses(request):
+    return {
+        'nav_ege_courses': Course.objects.filter(is_published=True, exam_type='ege'),
+        'nav_oge_courses': Course.objects.filter(is_published=True, exam_type='oge'),
+    }
