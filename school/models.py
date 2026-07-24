@@ -27,10 +27,6 @@ class Course(models.Model):
     card_tag = models.CharField(max_length=50, blank=True, verbose_name='Тег на карточке (например «9 класс»)')
     card_features = models.TextField(blank=True, verbose_name='Пункты на карточке (по одному на строку)')
 
-    for_whom = models.TextField(blank=True, verbose_name='Кому подойдёт')
-    what_you_learn = models.TextField(blank=True, verbose_name='Чему научитесь')
-    how_it_works = models.TextField(blank=True, verbose_name='Как проходит обучение')
-
     exam_type = models.CharField(max_length=10, choices=EXAM_CHOICES,
                                  blank=True, verbose_name='Тип экзамена')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
@@ -64,7 +60,8 @@ class Course(models.Model):
 class CourseBenefit(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='benefits', verbose_name='Курс')
-    text = models.CharField(max_length=300, verbose_name='Пункт')
+    title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
+    text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
     class Meta:
@@ -73,13 +70,14 @@ class CourseBenefit(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return self.text
+        return self.title or self.text
 
 
 class CourseAudience(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='audience_items', verbose_name='Курс')
-    text = models.CharField(max_length=300, verbose_name='Пункт')
+    title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
+    text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
     class Meta:
@@ -88,13 +86,14 @@ class CourseAudience(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return self.text
+        return self.title or self.text
 
 
 class CourseStep(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='steps', verbose_name='Курс')
-    text = models.CharField(max_length=300, verbose_name='Пункт')
+    title = models.CharField(max_length=200, blank=True, verbose_name='Заголовок')
+    text = models.CharField(max_length=300, verbose_name='Описание')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
     class Meta:
@@ -103,7 +102,7 @@ class CourseStep(models.Model):
         ordering = ['order']
 
     def __str__(self):
-        return self.text
+        return self.title or self.text
 
 class Module(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,

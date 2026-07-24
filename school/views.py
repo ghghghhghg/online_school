@@ -871,9 +871,6 @@ def teacher_edit_course(request, pk):
     if request.method == 'POST':
         course.title = request.POST.get('title')
         course.description = request.POST.get('description')
-        course.what_you_learn = request.POST.get('what_you_learn')
-        course.for_whom = request.POST.get('for_whom')
-        course.how_it_works = request.POST.get('how_it_works')
         course.is_published = request.POST.get('is_published') == 'on'
         course.card_tag = request.POST.get('card_tag', '')
         course.card_features = request.POST.get('card_features', '')
