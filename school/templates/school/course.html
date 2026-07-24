@@ -1,5 +1,6 @@
 {% extends 'school/base.html' %}
 {% load icons %}
+{% load dict_filters %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -7,152 +8,259 @@
 <div class="container" style="max-width: 1180px; padding-top: 36px;">
 
     <a href="{% url 'index' %}#courses" style="display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:#7A6F68; font-size:15px; font-weight:600; margin-bottom:26px; padding:8px 4px;">
-        {% icon 'arrow-left' size=20 %}
+        {% icon 'arrow-left' size=18 %}
         Все курсы
     </a>
 
-    <section style="padding-bottom:20px;">
-        {% if course.card_tag %}
-        <span style="display:inline-block; background:#FBE3D6; color:#C8442A; font-size:12px; font-weight:700; border-radius:99px; padding:5px 14px; margin-bottom:16px;">
-            {{ course.card_tag }}
-        </span>
-        {% endif %}
-        <h1 style="font-size:36px; font-weight:800; margin:0 0 14px;">{{ course.title }}</h1>
-        <p style="color:#7A6F68; font-size:16.5px; max-width:640px; margin:0;">{{ course.description }}</p>
-    </section>
+    <!-- HERO -->
+    <section style="padding-bottom:40px;">
+        <div class="course-hero-grid">
+            <div>
+                {% if course.card_tag %}
+                <span style="display:inline-block; background:#F1E3D5; color:#6b5c4c; font-size:13px; font-weight:600; border-radius:20px; padding:6px 14px; margin-bottom:18px;">
+                    {{ course.card_tag }}
+                </span>
+                {% endif %}
+                <h1 style="font-size:44px; line-height:1.1; font-weight:800; margin:0 0 18px; letter-spacing:-1px;">{{ course.title }}</h1>
+                <p style="font-size:16px; color:#7A6F68; max-width:520px; margin:0 0 26px; line-height:1.6;">{{ course.description }}</p>
 
-    {% if course.what_you_learn %}
-    <section style="padding-bottom:48px;">
-        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Что будет в курсе</h3>
-        <div class="course-2col-grid">
-            {% for item in course.what_you_learn.splitlines %}
-            {% if item %}
-            <div style="display:flex; align-items:flex-start; gap:12px; background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
-                <div style="width:26px; height:26px; border-radius:8px; background:#FBE3D6; display:grid; place-items:center; flex:none; margin-top:1px;">
-                    {% icon 'check' size=14 color='#C8442A' %}
+                <div class="course-cta-row">
+                    {% if lessons %}
+                        {% if user.is_authenticated %}
+                            {% if user.is_staff %}
+                                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-terra">Просмотреть уроки</a>
+                            {% elif enrollment.status == 'approved' %}
+                                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-terra">
+                                    {% if completed_ids %}Продолжить обучение{% else %}Начать учиться{% endif %}
+                                </a>
+                            {% elif enrollment.status == 'pending' %}
+                                <div style="display:inline-flex; align-items:center; gap:10px; background:#F1E3D5; border-radius:12px; padding:13px 24px;">
+                                    {% icon 'stopwatch' size=18 %}
+                                    <span style="font-size:14px; font-weight:600;">Заявка на рассмотрении</span>
+                                </div>
+                            {% elif enrollment.status == 'rejected' %}
+                                <p style="color:#7A6F68;">Заявка была отклонена. Свяжитесь с преподавателем.</p>
+                            {% else %}
+                                <form method="post" action="{% url 'apply_to_course' course.slug %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-terra">Подать заявку</button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'register' %}" class="btn btn-terra">Зарегистрироваться</a>
+                            <a href="{% url 'login' %}" class="btn btn-outline">Войти</a>
+                        {% endif %}
+                    {% else %}
+                        <p style="color:#7A6F68;">Уроки скоро появятся</p>
+                    {% endif %}
                 </div>
-                <span style="font-size:14.5px;">{{ item }}</span>
             </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
 
-    {% if course.for_whom %}
-    <section style="padding-bottom:48px;">
-        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Кому подойдёт курс</h3>
-        <div class="course-2col-grid">
-            {% for item in course.for_whom.splitlines %}
-            {% if item %}
-            <div style="display:flex; align-items:flex-start; gap:12px; background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
-                <div style="width:26px; height:26px; border-radius:8px; background:#FBE3D6; display:grid; place-items:center; flex:none; margin-top:1px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-                </div>
-                <span style="font-size:14.5px;">{{ item }}</span>
-            </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    {% if course.how_it_works %}
-    <section style="padding-bottom:48px;">
-        <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">Как проходит обучение</h3>
-        <div class="course-how-grid">
-            {% for item in course.how_it_works.splitlines %}
-            {% if item %}
-            <div style="background:#fff; border-radius:14px; padding:22px; box-shadow:0 4px 14px rgba(43,35,32,.05);">
-                <div style="font-weight:800; color:#C8442A; font-size:15px; margin-bottom:10px;">0{{ forloop.counter }}</div>
-                <div style="font-size:14.5px;">{{ item }}</div>
-            </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-{% if teacher_displays %}
-<section style="padding-bottom:48px;">
-    <h3 style="font-size:20px; font-weight:700; margin:0 0 18px;">
-        {% if teacher_displays|length > 1 %}Преподаватели курса{% else %}Преподаватель курса{% endif %}
-    </h3>
-
-    {% if teacher_displays|length == 2 %}
-    <div class="course-teachers-pair">
-        {% for td in teacher_displays %}
-        <div class="course-teacher-block">
-            {% if td.display_photo %}
-            <img src="{{ td.display_photo.url }}" alt="{{ td.display_name }}" class="course-teacher-photo-large">
-            {% endif %}
-            <h4 style="font-size:19px; margin:16px 0 8px; font-weight:700;">{{ td.display_name }}</h4>
-            <p style="color:#7A6F68; font-size:14.5px; margin:0; white-space: pre-line;">{{ td.display_bio|truncatewords:40 }}</p>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="course-teachers-grid">
-        {% for td in teacher_displays %}
-        <div style="background:#fff; border-radius:16px; padding:26px; box-shadow:0 4px 14px rgba(43,35,32,.05); display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap;">
-            {% if td.display_photo %}
-            <img src="{{ td.display_photo.url }}" alt="{{ td.display_name }}" class="course-teacher-photo">
-            {% endif %}
-            <div style="flex:1; min-width:200px;">
-                <h4 style="font-size:19px; margin:0 0 8px; font-weight:700;">{{ td.display_name }}</h4>
-                <p style="color:#7A6F68; font-size:14.5px; margin:0; white-space: pre-line;">{{ td.display_bio|truncatewords:40 }}</p>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-</section>
-{% endif %}
-    <section style="background:#7E2413; border-radius:22px; padding:48px; text-align:center; margin-bottom:60px;">
-        <h2 style="color:#fff; margin:0 0 10px; font-size:27px; font-weight:800;">Готов начать?</h2>
-        <p style="color:rgba(255,255,255,.65); margin:0 0 28px; font-size:15px;">
-            {{ lessons.count }} уроков
-        </p>
-
-        {% if lessons %}
-            {% if user.is_authenticated %}
-                {% if user.is_staff %}
-                    <a href="{% url 'course_lessons' course.slug %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px;">
-                        Просмотреть уроки
-                        {% icon 'sparkle' size=16 color='#2B2320' %}
-                    </a>
-                {% elif enrollment.status == 'approved' %}
-                    <a href="{% url 'course_lessons' course.slug %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px;">
-                        {% if completed_ids %}Продолжить обучение{% else %}Начать учиться{% endif %}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B2320" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-                    </a>
-                {% elif enrollment.status == 'pending' %}
-                    <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,.12); border-radius:14px; padding:12px 24px;">
-                        {% icon 'stopwatch' size=18 color='#fff' %}
-                        <span style="color:#fff; font-size:14px;">Заявка на рассмотрении</span>
+            <div class="course-hero-card">
+                {% with first_teacher=teacher_displays.first %}
+                {% if first_teacher.display_photo %}
+                <img src="{{ first_teacher.display_photo.url }}" alt="{{ first_teacher.display_name }}" style="width:100%; height:240px; object-fit:cover; object-position:top; display:block;">
+                {% endif %}
+                <div style="padding:22px 24px 24px;">
+                    {% if first_teacher %}
+                    <p style="text-align:center; font-size:14px; color:#7A6F68; font-weight:600; margin:0 0 18px;">
+                        Автор курса — {{ first_teacher.display_name }}
+                    </p>
+                    {% endif %}
+                    <div style="text-align:center; padding:14px 0; border-top:1px solid #F0E2D6; border-bottom:1px solid #F0E2D6;">
+                        <p style="font-size:16px; color:#7A6F68; margin:0;">{{ lessons.count }} уроков в курсе</p>
                     </div>
-                {% elif enrollment.status == 'rejected' %}
-                    <p style="color: rgba(255,255,255,.65);">Заявка была отклонена. Свяжитесь с преподавателем.</p>
-                {% else %}
-                    <form method="post" action="{% url 'apply_to_course' course.slug %}">
-                        {% csrf_token %}
-                        <button type="submit" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border:none; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px; cursor:pointer; font-family:inherit;">
-                            Подать заявку
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B2320" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-                        </button>
-                    </form>
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ЧТО ПОЛУЧИТ УЧЕНИК -->
+    {% if benefits %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Что получит ученик</h2>
+        <div class="course-icon-grid-4">
+            {% for item in benefits %}
+            <div class="course-icon-card">
+                <div class="course-icon-card-icon">{% icon 'check-circle' size=20 %}</div>
+                <p>{{ item }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- КОМУ ПОДОЙДЁТ -->
+    {% if audience %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Кому подойдёт курс</h2>
+        <div class="course-icon-grid-3">
+            {% for item in audience %}
+            <div class="course-icon-card">
+                <div class="course-icon-card-icon">{% icon 'target' size=20 %}</div>
+                <p>{{ item }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ПРОГРАММА КУРСА -->
+    {% if modules or lessons_without_module %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Программа курса</h2>
+        <div class="course-program">
+            {% for module in modules %}
+            <div class="course-program-item">
+                <button type="button" class="course-program-header" data-target="module-{{ module.id }}">
+                    <span class="course-program-num">{{ forloop.counter }}</span>
+                    <span class="course-program-name">{{ module.title }}</span>
+                    <span class="course-program-summary">{{ module.lessons.count }} урок{{ module.lessons.count|pluralize:"ов" }}</span>
+                    {% icon 'chevron-down' size=16 color='#8a7a6a' %}
+                </button>
+                <div class="course-program-body" id="module-{{ module.id }}" style="display:none;">
+                    {% for lesson in module.lessons.all %}
+                    <div class="course-program-lesson">
+                        <span style="color:#C8442A;">▸</span> {{ lesson.title }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- КАК ПРОХОДИТ ОБУЧЕНИЕ -->
+    {% if steps %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Как проходит обучение</h2>
+        <div class="course-steps-row">
+            {% for item in steps %}
+            <div class="course-step-card">
+                <div class="course-icon-card-icon">{% icon 'play-circle' size=20 %}</div>
+                <p>{{ item }}</p>
+            </div>
+            {% if not forloop.last %}<div class="course-step-arrow">→</div>{% endif %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ПОЧЕМУ ВЫБИРАЮТ КУРС -->
+    {% if why_cards %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Почему ученики выбирают нас</h2>
+        <div class="course-icon-grid-4">
+            {% for w in why_cards %}
+            <div class="course-icon-card">
+                <div class="course-icon-card-icon">{% icon w.icon size=20 %}</div>
+                <p><strong style="display:block; margin-bottom:4px;">{{ w.title }}</strong>{{ w.text }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ПРЕПОДАВАТЕЛЬ -->
+    {% if teacher_displays %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px; text-align:center;">
+            {% if teacher_displays|length > 1 %}Преподаватели{% else %}Преподаватель{% endif %}
+        </h2>
+        {% for td in teacher_displays %}
+        <div class="course-teacher-banner">
+            {% if td.display_photo %}
+            <img src="{{ td.display_photo.url }}" alt="{{ td.display_name }}" class="course-teacher-banner-photo">
+            {% endif %}
+            <div class="course-teacher-banner-text">
+                <p style="font-weight:800; font-size:20px; margin:0 0 4px;">{{ td.display_name }}</p>
+                <p style="font-size:13.5px; color:#8a7a6a; margin:0 0 14px;">Преподаватель ABS SCHOOL</p>
+                <p style="font-size:14px; color:#4a423b; line-height:1.55; margin:0; border-left:3px solid #C8442A; padding-left:14px; white-space: pre-line;">{{ td.display_bio }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- РЕЗУЛЬТАТЫ УЧЕНИКОВ -->
+    {% if course_reviews %}
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Результаты учеников</h2>
+        <div class="course-icon-grid-3">
+            {% for review in course_reviews %}
+            <div style="border:1px solid #F0E2D6; border-radius:20px; padding:22px; background:#fff; box-shadow:0 8px 24px rgba(60,40,20,.05);">
+                {% with first_photo=review.photos.first %}
+                {% if first_photo %}
+                <img src="{{ first_photo.image.url }}" style="width:100%; height:150px; object-fit:cover; border-radius:14px; margin-bottom:16px;">
+                {% endif %}
+                {% endwith %}
+                <p style="font-weight:700; font-size:15px; margin:0 0 2px;">{{ review.student_name }}</p>
+                {% if review.city %}<span style="font-size:12.5px; color:#8a7a6a;">{{ review.city }}</span>{% endif %}
+                {% if review.score_before and review.score_after %}
+                <div style="display:flex; align-items:center; gap:16px; margin:14px 0;">
+                    <div>
+                        <span style="font-size:24px; font-weight:800; display:block;">{{ review.score_before }}</span>
+                        <span style="font-size:11.5px; color:#8a7a6a;">Было</span>
+                    </div>
+                    <span style="color:#8a7a6a;">→</span>
+                    <div>
+                        <span style="font-size:24px; font-weight:800; display:block; color:#C8442A;">{{ review.score_after }}</span>
+                        <span style="font-size:11.5px; color:#8a7a6a;">Стало</span>
+                    </div>
+                </div>
+                {% endif %}
+                <p style="font-size:13px; color:#6b5c4c; line-height:1.5; margin:0;">«{{ review.text }}»</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- FAQ -->
+    {% if faqs %}
+    <section style="max-width:760px; margin:0 auto 44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px; text-align:center;">Частые вопросы</h2>
+        <div class="faq">
+            {% for faq in faqs %}
+            <div class="faq-item">
+                <button class="faq-q" aria-expanded="false">{{ faq.question }}</button>
+                <div class="faq-a"><p>{{ faq.answer }}</p></div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ФИНАЛЬНЫЙ CTA -->
+    <section style="padding-bottom:60px;">
+        <div style="background:#F1E3D5; border-radius:20px; padding:36px 44px; display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;">
+            <div>
+                <p style="font-size:22px; font-weight:800; margin:0 0 8px;">Начни с бесплатного урока</p>
+                <p style="font-size:14.5px; color:#6b5c4c; margin:0;">Посмотри урок, оцени формат и сделай первый шаг к высокому баллу.</p>
+            </div>
+            {% if user.is_authenticated %}
+                {% if enrollment.status == 'approved' %}
+                <a href="{% url 'course_lessons' course.slug %}" class="btn btn-terra">Перейти к урокам</a>
                 {% endif %}
             {% else %}
-                <a href="{% url 'register' %}" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px; background:#CDE04A; color:#2B2320; border-radius:14px; padding:16px 34px; font-weight:700; font-size:16px; margin-right: 10px;">
-                    Зарегистрироваться
-                </a>
-                <a href="{% url 'login' %}" style="text-decoration:none; display:inline-block; border:2px solid rgba(255,255,255,.4); color:#fff; border-radius:14px; padding:14px 30px; font-weight:600; font-size:15px;">
-                    Войти
-                </a>
+                <a href="{% url 'register' %}" class="btn btn-terra">Попробовать бесплатно</a>
             {% endif %}
-        {% else %}
-            <p style="color: rgba(255,255,255,.65);">Уроки скоро появятся</p>
-        {% endif %}
+        </div>
     </section>
 
 </div>
+
+<script>
+document.querySelectorAll('.course-program-header').forEach(function(btn){
+    btn.addEventListener('click', function(){
+        var body = document.getElementById(btn.dataset.target);
+        var chevron = btn.querySelector('svg');
+        var isOpen = body.style.display === 'block';
+        body.style.display = isOpen ? 'none' : 'block';
+        if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    });
+});
+</script>
 {% endblock %}

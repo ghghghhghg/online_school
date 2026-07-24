@@ -213,12 +213,36 @@ def course_view(request, slug):
                 lesson__in=lessons
             ).values_list('lesson_id', flat=True)
 
+    benefits = [line for line in course.what_you_learn.splitlines() if line]
+    audience = [line for line in course.for_whom.splitlines() if line]
+    steps = [line for line in course.how_it_works.splitlines() if line]
+
+    modules = course.modules.prefetch_related('lessons').all()
+    lessons_without_module = lessons.filter(module__isnull=True)
+
+    why_cards = WhyUsBlock.objects.all()
+
+    course_reviews = Review.objects.filter(is_published=True).prefetch_related('photos')
+    if course.subject:
+        course_reviews = course_reviews.filter()  # общие отзывы школы, без узкой фильтрации по курсу
+    course_reviews = course_reviews[:3]
+
+    faqs = FAQ.objects.all()
+
     return render(request, 'school/course.html', {
         'course': course,
         'lessons': lessons,
         'completed_ids': completed_ids,
         'enrollment': enrollment,
         'teacher_displays': teacher_displays,
+        'benefits': benefits,
+        'audience': audience,
+        'steps': steps,
+        'modules': modules,
+        'lessons_without_module': lessons_without_module,
+        'why_cards': why_cards,
+        'course_reviews': course_reviews,
+        'faqs': faqs,
     })
 
 def is_checkpoint_passed(checkpoint, user):

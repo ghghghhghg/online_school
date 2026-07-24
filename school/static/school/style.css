@@ -298,7 +298,68 @@ header{
 .course-2col-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
 .course-how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
 
+/* ---------- Страница курса (детальная разметка) ---------- */
+.course-hero-grid{ display:grid; grid-template-columns:1.15fr .85fr; gap:40px; align-items:start; }
+.course-hero-card{
+  background:#fff; border:1px solid var(--line); border-radius:20px;
+  overflow:hidden; box-shadow:0 12px 30px rgba(60,40,20,.06);
+}
+.course-cta-row{ display:flex; gap:14px; flex-wrap:wrap; }
 
+.course-icon-grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.course-icon-grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.course-icon-card{
+  border:1px solid var(--line); border-radius:14px; padding:18px; background:#fff;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.course-icon-card-icon{
+  width:38px; height:38px; flex:none; border-radius:11px;
+  background:var(--peach); display:flex; align-items:center; justify-content:center;
+}
+.course-icon-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.45; margin:0; }
+
+.course-program{ border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff; }
+.course-program-item{ border-bottom:1px solid var(--line); }
+.course-program-item:last-child{ border-bottom:none; }
+.course-program-header{
+  width:100%; display:flex; align-items:center; gap:16px; padding:16px 22px;
+  background:none; border:none; cursor:pointer; font-family:inherit; text-align:left;
+}
+.course-program-num{
+  width:26px; height:26px; border-radius:8px; background:var(--peach); color:var(--terra);
+  font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; flex:none;
+}
+.course-program-name{ font-weight:700; font-size:14.5px; flex:none; min-width:160px; }
+.course-program-summary{ font-size:13.5px; color:var(--ink-soft); flex:1; }
+.course-program-body{ padding:2px 22px 20px 64px; display:flex; flex-direction:column; gap:8px; }
+.course-program-lesson{ display:flex; gap:8px; font-size:13px; color:var(--ink-soft); }
+
+.course-steps-row{ display:flex; align-items:stretch; gap:14px; flex-wrap:wrap; }
+.course-step-card{
+  flex:1; min-width:180px; border:1px solid var(--line); border-radius:14px; padding:18px;
+  background:#fff; display:flex; flex-direction:column; gap:10px;
+}
+.course-step-card p{ font-size:13px; color:var(--ink-soft); margin:0; }
+.course-step-arrow{ flex:none; align-self:center; color:#c9b8a8; font-size:20px; }
+
+.course-teacher-banner{
+  border:1px solid var(--line); border-radius:20px; background:#fff;
+  display:flex; overflow:hidden; margin-bottom:16px;
+}
+.course-teacher-banner-photo{ width:280px; flex:none; object-fit:cover; object-position:top; }
+.course-teacher-banner-text{ padding:26px 28px; display:flex; flex-direction:column; justify-content:center; }
+
+@media (max-width: 900px){
+  .course-hero-grid{ grid-template-columns:1fr; }
+  .course-icon-grid-4, .course-icon-grid-3{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width: 600px){
+  .course-icon-grid-4, .course-icon-grid-3{ grid-template-columns:1fr; }
+  .course-steps-row{ flex-direction:column; }
+  .course-step-arrow{ display:none; }
+  .course-teacher-banner{ flex-direction:column; }
+  .course-teacher-banner-photo{ width:100%; height:220px; }
+}
 /* ============================================================
    10. ПРЕПОДАВАТЕЛИ — ГЛАВНАЯ СТРАНИЦА
    ============================================================ */

@@ -36,6 +36,9 @@ ICONS = {
     'exam-sheet': ('none', '#C8442A', '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v3M16 4v3"></path><path d="m9 14 2 2 4-4"></path>'),
     'arrow-left': ('none', '#7A6F68', '<path d="M19 12H5M12 19l-7-7 7-7"></path>'),
     'heart': ('none', '#C8442A', '<path d="M12 21s-7-4.5-9.5-9C1 8.5 2 5 5.5 5c2 0 3.3 1.2 4 2.3.7-1.1 2-2.3 4-2.3 3.5 0 4.5 3.5 3 7-2.5 4.5-9.5 9-9.5 9Z"></path>'),
+    'chevron-down': ('none', '#8a7a6a', '<path d="M4 6l4 4 4-4"></path>', '1.6'),
+    'sprout': ('none', '#C8442A', '<path d="M12 22v-8"></path><path d="M12 14C7 14 4 11 4 6c5 0 8 3 8 8z"></path><path d="M12 14c5 0 8-4 8-9-5 0-8 4-8 9z"></path>'),
+    'grid': ('none', '#C8442A', '<rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect>'),
 }
 
 
