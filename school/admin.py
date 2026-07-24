@@ -2,8 +2,22 @@ from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
     CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay, \
-    TeacherProfile
+    TeacherProfile, CourseBenefit, CourseAudience, CourseStep
 
+
+class CourseBenefitInline(admin.TabularInline):
+    model = CourseBenefit
+    extra = 1
+
+
+class CourseAudienceInline(admin.TabularInline):
+    model = CourseAudience
+    extra = 1
+
+
+class CourseStepInline(admin.TabularInline):
+    model = CourseStep
+    extra = 1
 
 class CheckpointTaskInline(admin.TabularInline):
     model = CheckpointTask
@@ -144,7 +158,7 @@ class CourseAdmin(admin.ModelAdmin):
     list_display = ['title', 'exam_type', 'subject', 'slug', 'is_published', 'created_at']
     list_editable = ['is_published', 'exam_type', 'subject']
     prepopulated_fields = {'slug': ('title',)}
-    inlines = [LessonInline, CourseTeacherDisplayInline]
+    inlines = [LessonInline, CourseTeacherDisplayInline, CourseBenefitInline, CourseAudienceInline, CourseStepInline]
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):

@@ -213,9 +213,9 @@ def course_view(request, slug):
                 lesson__in=lessons
             ).values_list('lesson_id', flat=True)
 
-    benefits = [line for line in course.what_you_learn.splitlines() if line]
-    audience = [line for line in course.for_whom.splitlines() if line]
-    steps = [line for line in course.how_it_works.splitlines() if line]
+    benefits = course.benefits.all()
+    audience = course.audience_items.all()
+    steps = course.steps.all()
 
     modules = course.modules.prefetch_related('lessons').all()
     lessons_without_module = lessons.filter(module__isnull=True)

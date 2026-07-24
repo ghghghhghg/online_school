@@ -84,7 +84,7 @@
             {% for item in benefits %}
             <div class="course-icon-card">
                 <div class="course-icon-card-icon">{% icon 'check-circle' size=20 %}</div>
-                <p>{{ item }}</p>
+                <p>{{ item.text }}</p>
             </div>
             {% endfor %}
         </div>
@@ -99,7 +99,7 @@
             {% for item in audience %}
             <div class="course-icon-card">
                 <div class="course-icon-card-icon">{% icon 'target' size=20 %}</div>
-                <p>{{ item }}</p>
+                <p>{{ item.text }}</p>
             </div>
             {% endfor %}
         </div>
@@ -140,7 +140,7 @@
             {% for item in steps %}
             <div class="course-step-card">
                 <div class="course-icon-card-icon">{% icon 'play-circle' size=20 %}</div>
-                <p>{{ item }}</p>
+                <p>{{ item.text }}</p>
             </div>
             {% if not forloop.last %}<div class="course-step-arrow">→</div>{% endif %}
             {% endfor %}

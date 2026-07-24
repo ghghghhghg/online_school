@@ -61,6 +61,50 @@ class Course(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
+class CourseBenefit(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='benefits', verbose_name='Курс')
+    text = models.CharField(max_length=300, verbose_name='Пункт')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Пункт «Что получит ученик»'
+        verbose_name_plural = 'Пункты «Что получит ученик»'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.text
+
+
+class CourseAudience(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='audience_items', verbose_name='Курс')
+    text = models.CharField(max_length=300, verbose_name='Пункт')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Пункт «Кому подойдёт»'
+        verbose_name_plural = 'Пункты «Кому подойдёт»'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.text
+
+
+class CourseStep(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,
+                               related_name='steps', verbose_name='Курс')
+    text = models.CharField(max_length=300, verbose_name='Пункт')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Шаг «Как проходит обучение»'
+        verbose_name_plural = 'Шаги «Как проходит обучение»'
+        ordering = ['order']
+
+    def __str__(self):
+        return self.text
+
 class Module(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE,
                                related_name='modules', verbose_name='Курс')
