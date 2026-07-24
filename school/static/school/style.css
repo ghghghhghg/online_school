@@ -360,6 +360,28 @@ header{
   .course-teacher-banner{ flex-direction:column; }
   .course-teacher-banner-photo{ width:100%; height:220px; }
 }
+/* ---------- Тарифы на странице курса ---------- */
+.course-pricing-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:760px; }
+.course-pricing-card{
+  border:1px solid var(--line); border-radius:16px; padding:26px; background:#fff; position:relative;
+}
+.course-pricing-card-featured{ border:2px solid var(--terra); }
+.course-pricing-badge{
+  position:absolute; top:-13px; left:24px; background:var(--terra); color:#fff;
+  font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:8px;
+}
+.course-pricing-name{ font-weight:800; font-size:17px; margin:0 0 16px; }
+.course-pricing-features{ margin-bottom:16px; }
+.course-pricing-feature{
+  display:flex; gap:9px; align-items:flex-start; margin-bottom:10px;
+  font-size:13.5px; color:var(--ink-soft);
+}
+.course-pricing-feature svg{ flex:none; margin-top:2px; }
+.course-pricing-price{ font-size:26px; font-weight:800; margin:0 0 14px; color:var(--ink); }
+
+@media (max-width: 600px){
+  .course-pricing-grid{ grid-template-columns:1fr; }
+}
 /* ============================================================
    10. ПРЕПОДАВАТЕЛИ — ГЛАВНАЯ СТРАНИЦА
    ============================================================ */

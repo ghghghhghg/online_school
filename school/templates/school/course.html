@@ -148,6 +148,45 @@
     </section>
     {% endif %}
 
+    <!-- ТАРИФЫ -->
+    <section style="padding-bottom:44px;">
+        <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Тарифы</h2>
+        <div class="course-pricing-grid">
+            <div class="course-pricing-card">
+                <p class="course-pricing-name">Самостоятельный</p>
+                <div class="course-pricing-features">
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Доступ ко всем урокам и материалам</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Тесты и практические задания</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Пробные варианты и разборы</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Доступ на 12 месяцев</span></div>
+                </div>
+                <p class="course-pricing-price">9 900 ₽</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'index' %}#courses" class="btn btn-outline" style="width:100%;">Выбрать тариф</a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-outline" style="width:100%;">Выбрать тариф</a>
+                {% endif %}
+            </div>
+
+            <div class="course-pricing-card course-pricing-card-featured">
+                <span class="course-pricing-badge">Рекомендуем</span>
+                <p class="course-pricing-name">С проверкой</p>
+                <div class="course-pricing-features">
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Всё из тарифа «Самостоятельный»</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Личная проверка сочинений</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Подробные комментарии</span></div>
+                    <div class="course-pricing-feature">{% icon 'check' size=14 %}<span>Доступ на 12 месяцев</span></div>
+                </div>
+                <p class="course-pricing-price">14 900 ₽</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'index' %}#courses" class="btn btn-terra" style="width:100%;">Выбрать тариф</a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-terra" style="width:100%;">Выбрать тариф</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
     <!-- ПОЧЕМУ ВЫБИРАЮТ КУРС -->
     {% if why_cards %}
     <section style="padding-bottom:44px;">
