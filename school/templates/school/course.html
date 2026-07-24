@@ -283,32 +283,42 @@
     {% if course_reviews %}
     <section style="padding-bottom:44px;">
         <h2 style="font-size:22px; font-weight:800; margin:0 0 20px;">Результаты учеников</h2>
-        <div class="course-icon-grid-3">
-            {% for review in course_reviews %}
-            <div style="border:1px solid #F0E2D6; border-radius:20px; padding:22px; background:#fff; box-shadow:0 8px 24px rgba(60,40,20,.05);">
-                {% with first_photo=review.photos.first %}
-                {% if first_photo %}
-                <img src="{{ first_photo.image.url }}" style="width:100%; height:150px; object-fit:cover; border-radius:14px; margin-bottom:16px;">
-                {% endif %}
-                {% endwith %}
-                <p style="font-weight:700; font-size:15px; margin:0 0 2px;">{{ review.student_name }}</p>
-                {% if review.city %}<span style="font-size:12.5px; color:#8a7a6a;">{{ review.city }}</span>{% endif %}
-                {% if review.score_before and review.score_after %}
-                <div style="display:flex; align-items:center; gap:16px; margin:14px 0;">
-                    <div>
-                        <span style="font-size:24px; font-weight:800; display:block;">{{ review.score_before }}</span>
-                        <span style="font-size:11.5px; color:#8a7a6a;">Было</span>
+        <div class="results-carousel-wrap">
+            <button class="carousel-btn prev" type="button" aria-label="Назад">‹</button>
+            <div class="results-carousel" id="course-results-carousel">
+                {% for review in course_reviews %}
+                <div class="result-card">
+                    {% if review.photos.all %}
+                    <div class="result-photos result-photos-{{ review.photos.all|length }}">
+                        {% for photo in review.photos.all %}
+                        <img src="{{ photo.image.url }}" alt="{{ review.student_name }}">
+                        {% endfor %}
                     </div>
-                    <span style="color:#8a7a6a;">→</span>
-                    <div>
-                        <span style="font-size:24px; font-weight:800; display:block; color:#C8442A;">{{ review.score_after }}</span>
-                        <span style="font-size:11.5px; color:#8a7a6a;">Стало</span>
+                    {% endif %}
+                    <div class="result-head">
+                        <div>
+                            <b>{{ review.student_name }}</b>
+                            {% if review.city %}<span>{{ review.city }}</span>{% endif %}
+                        </div>
                     </div>
+                    {% if review.score_before and review.score_after %}
+                    <div class="result-scores">
+                        <div>
+                            <span class="score-num">{{ review.score_before }}</span>
+                            <span class="score-label">Было</span>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div>
+                            <span class="score-num after">{{ review.score_after }}</span>
+                            <span class="score-label">Стало</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <p>«{{ review.text }}»</p>
                 </div>
-                {% endif %}
-                <p style="font-size:13px; color:#6b5c4c; line-height:1.5; margin:0;">«{{ review.text }}»</p>
+                {% endfor %}
             </div>
-            {% endfor %}
+            <button class="carousel-btn next" type="button" aria-label="Вперёд">›</button>
         </div>
     </section>
     {% endif %}

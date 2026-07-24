@@ -119,18 +119,18 @@
   items.forEach(function(el){ io.observe(el); });
 })();
 
-/* Карусель результатов — бесконечная лента */
-(function(){
-  var carousel = document.getElementById('results-carousel');
+/* Карусель результатов — бесконечная лента (работает на любой странице) */
+function initResultsCarousel(carouselId) {
+  var carousel = document.getElementById(carouselId);
   if (!carousel) return;
+  var wrap = carousel.closest('.results-carousel-wrap');
   var originals = Array.from(carousel.querySelectorAll('.result-card'));
   var count = originals.length;
   if (count === 0) return;
-  var prev = document.querySelector('.carousel-btn.prev');
-  var next = document.querySelector('.carousel-btn.next');
+  var prev = wrap.querySelector('.carousel-btn.prev');
+  var next = wrap.querySelector('.carousel-btn.next');
   var skipLoopCheck = false;
 
-  // Клоны слева (в обратном порядке) и клоны справа
   for (var i = count - 1; i >= 0; i--) {
     carousel.insertBefore(originals[i].cloneNode(true), carousel.firstChild);
   }
@@ -145,7 +145,6 @@
     return cardWidth() * count;
   }
 
-  // Стартуем с середины — сразу на оригиналах
   carousel.style.scrollBehavior = 'auto';
   carousel.scrollLeft = originalsWidth();
   carousel.style.scrollBehavior = '';
@@ -163,7 +162,7 @@
     }
   }
 
-function updateActiveCard(){
+  function updateActiveCard(){
     var allCards = carousel.querySelectorAll('.result-card');
     var center = carousel.scrollLeft + carousel.clientWidth / 2;
     var closest = null, closestDist = Infinity;
@@ -183,13 +182,24 @@ function updateActiveCard(){
     });
   });
 
-updateActiveCard();
+  updateActiveCard();
   setTimeout(updateActiveCard, 50);
   window.addEventListener('resize', updateActiveCard);
 
   if (prev) {
     prev.addEventListener('click', function(){
-      carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+      if (carousel.scrollLeft <= 5) {
+        carousel.style.scrollBehavior = 'auto';
+        carousel.scrollLeft = originalsWidth();
+        requestAnimationFrame(function(){
+          carousel.style.scrollBehavior = '';
+          carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+          setTimeout(function(){ skipLoopCheck = false; }, 600);
+        });
+        skipLoopCheck = true;
+      } else {
+        carousel.scrollBy({ left: -cardWidth(), behavior: 'smooth' });
+      }
     });
   }
   if (next) {
@@ -197,7 +207,10 @@ updateActiveCard();
       carousel.scrollBy({ left: cardWidth(), behavior: 'smooth' });
     });
   }
-})();
+}
+
+initResultsCarousel('results-carousel');
+initResultsCarousel('course-results-carousel');
 
 /* Переключатель преподавателей */
 (function(){

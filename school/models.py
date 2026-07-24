@@ -282,6 +282,9 @@ class TeacherProfile(models.Model):
 class Review(models.Model):
     student_name = models.CharField(max_length=100, verbose_name='Имя ученика')
     city = models.CharField(max_length=100, blank=True, verbose_name='Город')
+    subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
+    exam_type = models.CharField(max_length=10, choices=Course.EXAM_CHOICES,
+                                 blank=True, verbose_name='Тип экзамена')
     text = models.TextField(verbose_name='Текст отзыва')
     score_before = models.CharField(max_length=10, blank=True, verbose_name='Балл «было»')
     score_after = models.CharField(max_length=10, blank=True, verbose_name='Балл «стало»')

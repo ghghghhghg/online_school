@@ -223,9 +223,10 @@ def course_view(request, slug):
     why_cards = WhyUsBlock.objects.all()
 
     course_reviews = Review.objects.filter(is_published=True).prefetch_related('photos')
+    if course.exam_type:
+        course_reviews = course_reviews.filter(exam_type=course.exam_type)
     if course.subject:
-        course_reviews = course_reviews.filter()  # общие отзывы школы, без узкой фильтрации по курсу
-    course_reviews = course_reviews[:3]
+        course_reviews = course_reviews.filter(subject=course.subject)
 
     faqs = FAQ.objects.all()
 

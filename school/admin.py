@@ -63,8 +63,8 @@ class ReviewPhotoInline(admin.TabularInline):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['student_name', 'city', 'score_before', 'score_after', 'is_published']
-    list_editable = ['is_published']
+    list_display = ['student_name', 'city', 'subject', 'exam_type', 'score_before', 'score_after', 'is_published']
+    list_editable = ['is_published', 'subject', 'exam_type']
     inlines = [ReviewPhotoInline]
 
 
