@@ -129,6 +129,13 @@ header{
   border-top:5px solid currentColor; margin-left:2px; opacity:.7;
 }
 .nav-dropdown .dropdown-menu{ border-radius:14px; }
+.nav-dropdown .dropdown-menu .dropdown-item{
+  color: var(--ink) !important;
+}
+.nav-dropdown .dropdown-menu .dropdown-item:hover{
+  background-color: var(--cream);
+  color: var(--terra) !important;
+}
 /* ============================================================
    4. HERO
    ============================================================ */
