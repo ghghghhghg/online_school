@@ -28,7 +28,9 @@
                 <button class="nav-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">ЕГЭ</button>
                 <ul class="dropdown-menu">
                     {% for course in nav_ege_courses %}
-                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">{{ course.subject|default:course.title }}</a></li>
+                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">
+                        {{ course.subject }}{% if course.nav_short_name %} — {{ course.nav_short_name }}{% endif %}
+                    </a></li>
                     {% endfor %}
                 </ul>
             </li>
@@ -39,7 +41,9 @@
                 <button class="nav-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">ОГЭ</button>
                 <ul class="dropdown-menu">
                     {% for course in nav_oge_courses %}
-                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">{{ course.subject|default:course.title }}</a></li>
+                    <li><a class="dropdown-item" href="{% url 'course' course.slug %}">
+                        {{ course.subject }}{% if course.nav_short_name %} — {{ course.nav_short_name }}{% endif %}
+                    </a></li>
                     {% endfor %}
                 </ul>
             </li>

@@ -155,8 +155,8 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['title', 'exam_type', 'subject', 'slug', 'is_published', 'created_at']
-    list_editable = ['is_published', 'exam_type', 'subject']
+    list_display = ['title', 'exam_type', 'subject', 'nav_short_name', 'slug', 'is_published', 'created_at']
+    list_editable = ['is_published', 'exam_type', 'subject', 'nav_short_name']
     prepopulated_fields = {'slug': ('title',)}
     inlines = [LessonInline, CourseTeacherDisplayInline, CourseBenefitInline, CourseAudienceInline, CourseStepInline]
 

@@ -35,6 +35,8 @@ class Course(models.Model):
 
     teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='courses', verbose_name='Преподаватель')
+    nav_short_name = models.CharField(max_length=50, blank=True,
+                                      verbose_name='Короткое название для меню (например «Профильная», «Базовая»)')
 
     class Meta:
         verbose_name = 'Курс'
