@@ -1,66 +1,164 @@
 {% extends 'school/base_platform.html' %}
+{% load icons %}
 
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-<h2 style="font-size: 26px; margin: 0 0 4px; font-weight: 700;">Привет, {{ user.first_name }}!</h2>
-<p style="color: var(--ink-soft); margin: 0 0 24px; font-size: 15px;">Продолжай в том же темпе — у тебя всё получится</p>
+
+<!-- Приветствие -->
+<div class="dash-header">
+    <div>
+        <h2 class="dash-greeting">Привет, {{ user.first_name }}!</h2>
+        <p class="dash-subtitle">Продолжай в том же темпе — у тебя всё получится</p>
+    </div>
+    {% if dashboard.best_score %}
+    <div class="dash-stat-tile">
+        <span class="dash-stat-label">Лучший результат</span>
+        <span class="dash-stat-value">{{ dashboard.best_score }}%</span>
+    </div>
+    {% endif %}
+</div>
 
 {% if pending_enrollments %}
 <div class="pf-alert">
-    <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E5A0A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></span>
+    {% icon 'stopwatch' size=20 %}
     <span><b>Заявка на рассмотрении:</b>
     {% for pe in pending_enrollments %}{{ pe.course.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
 </div>
 {% endif %}
 
-{% if next_course %}
-<div class="pf-continue-card">
-    <div>
-        <span style="color: var(--ink-soft); font-size: 13px; font-weight: 500;">Продолжить обучение</span>
-        <h4 style="margin: 4px 0 12px; font-size: 20px; font-weight: 700;">{{ next_course.course.title }}</h4>
-        <div style="display: flex; align-items: center; gap: 10px; max-width: 280px;">
-            <div class="pf-progress-track">
-                <div class="pf-progress-fill" style="width: {{ next_course.percent }}%;"></div>
-            </div>
-            <small style="color: var(--ink-soft); font-size: 12.5px; white-space: nowrap;">{{ next_course.completed }}/{{ next_course.total }} уроков</small>
-        </div>
-    </div>
-    <a href="{% url 'continue_learning' next_course.course.pk %}" class="btn btn-terra">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" style="margin-right: 6px;"><path d="M8 5v14l11-7Z"></path></svg>
-Продолжить урок
-    </a>
-</div>
-{% endif %}
+{% if not dashboard.has_courses %}
 
-<div class="pf-tile-grid">
-    <a href="{% url 'student_courses' %}" class="pf-tile">
-        <div class="pf-tile-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
-        </div>
-        <b>Мои курсы</b>
-        <span>{{ courses_progress|length }} курсов</span>
-    </a>
-    <a href="{% url 'error_notebook' %}" class="pf-tile">
-        <div class="pf-tile-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 15h6M9 11h2"></path></svg>
-        </div>
-        <b>Практика</b>
-        <span>Повторить ошибки</span>
-    </a>
-    <a href="{% url 'student_analytics' %}" class="pf-tile">
-        <div class="pf-tile-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15v3M12 10v8M17 6v12"></path></svg>
-        </div>
-        <b>Результаты</b>
-        <span>Полная статистика</span>
-    </a>
-</div>
-
-{% if not courses_progress %}
-<div class="card p-4 text-center mt-3">
-    <p class="text-muted mb-3">Вы пока не записаны ни на один курс</p>
+<div class="dash-empty">
+    {% icon 'book-open' size=40 %}
+    <h3>Вы пока не записаны ни на один курс</h3>
+    <p>Выберите курс на главной странице — преподаватель откроет доступ к урокам.</p>
     <a href="{% url 'index' %}#courses" class="btn btn-terra">Выбрать курс</a>
 </div>
+
+{% else %}
+
+<div class="dash-main-grid">
+
+    <!-- Главное действие -->
+    <div class="dash-next-card">
+        {% if day_state.is_completed %}
+            <div class="dash-done-state">
+                {% icon 'check-circle' size=40 color='#4A8B5C' %}
+                <h3>План на сегодня выполнен</h3>
+                <p>Можно повторить слабую тему или посмотреть свои результаты.</p>
+                <a href="{% url 'student_analytics' %}" class="btn btn-outline">Смотреть результаты</a>
+            </div>
+        {% elif day_state.next_action %}
+            {% with action=day_state.next_action %}
+            <span class="dash-card-label">Следующий шаг</span>
+            {% if action.course_title %}
+            <p class="dash-course-name">{{ action.course_title }}</p>
+            {% endif %}
+            <h3 class="dash-action-title">{{ action.title }}</h3>
+            <p class="dash-reason">{{ action.reason }}</p>
+            <div class="dash-action-footer">
+                <a href="{{ action.url }}" class="btn btn-terra">{{ action.button_label }}</a>
+                <span class="dash-duration">{% icon 'stopwatch' size=14 %} {{ action.estimated_minutes }} мин</span>
+            </div>
+            {% endwith %}
+        {% else %}
+            <div class="dash-done-state">
+                {% icon 'sparkle' size=36 %}
+                <h3>Все уроки пройдены</h3>
+                <p>Отличная работа. Загляните в результаты, чтобы увидеть прогресс.</p>
+                <a href="{% url 'student_analytics' %}" class="btn btn-outline">Смотреть результаты</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Что ещё можно сделать -->
+    <div class="dash-side-card">
+        <h4 class="dash-side-title">Что ещё можно сделать</h4>
+        {% if day_state.secondary %}
+            <ol class="dash-task-list">
+                {% for task in day_state.secondary %}
+                <li>
+                    <a href="{{ task.url }}">
+                        <span class="dash-task-num">{{ forloop.counter }}</span>
+                        <span class="dash-task-body">
+                            <b>{{ task.title }}</b>
+                            <span>{{ task.reason }}</span>
+                        </span>
+                        <span class="dash-task-time">{{ task.estimated_minutes }} мин</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="dash-muted">Других задач сейчас нет</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Мои курсы -->
+<div class="dash-section-head">
+    <h4>Мои курсы</h4>
+    <a href="{% url 'student_courses' %}">Все курсы</a>
+</div>
+<div class="dash-course-grid">
+    {% for cp in courses_progress %}
+    <a href="{% url 'course_lessons' cp.course.slug %}" class="dash-course-card">
+        <span class="dash-course-subject">{{ cp.subject_name }}</span>
+        <b>{{ cp.course.title }}</b>
+        <div class="dash-progress-row">
+            <div class="pf-progress-track">
+                <div class="pf-progress-fill {% if cp.percent == 100 %}done{% endif %}"
+                     style="width: {{ cp.percent }}%;"></div>
+            </div>
+            <span>{{ cp.percent }}%</span>
+        </div>
+        <span class="dash-course-meta">{{ cp.completed }} из {{ cp.total }} выполнено</span>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Прогноз и слабые темы -->
+<div class="dash-bottom-grid">
+    <div class="dash-side-card">
+        <h4 class="dash-side-title">Прогноз балла</h4>
+        {% if dashboard.prediction_available %}
+            {# заполнится после внесения шкал и накопления данных #}
+        {% else %}
+            <div class="dash-empty-small">
+                {% icon 'bar-chart' size=28 %}
+                <p>Недостаточно данных для прогноза</p>
+                <span>Пройдите несколько тестов и пробников — прогноз появится автоматически.</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="dash-side-card">
+        <h4 class="dash-side-title">Стоит повторить</h4>
+        {% if weak_topics %}
+            <ul class="dash-weak-list">
+                {% for topic in weak_topics %}
+                <li>
+                    <a href="{% url 'lesson' topic.lesson.pk %}">
+                        <span class="dash-weak-name">{{ topic.lesson.title }}</span>
+                        <span class="dash-weak-score">
+                            {% if topic.is_reliable %}{{ topic.mastery }}%{% else %}—{% endif %}
+                        </span>
+                    </a>
+                    <span class="dash-weak-label">{{ topic.label }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'error_notebook' %}" class="dash-side-link">Работа над ошибками</a>
+        {% else %}
+            <div class="dash-empty-small">
+                {% icon 'check-circle' size=28 color='#4A8B5C' %}
+                <p>Слабых тем пока нет</p>
+                <span>Продолжайте заниматься — здесь появятся темы, требующие внимания.</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endif %}
 {% endblock %}

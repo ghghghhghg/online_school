@@ -385,3 +385,32 @@ def build_recommendation_candidates(student, now=None) -> list:
         ))
 
     return candidates
+
+def get_best_test_score(student) -> int | None:
+    """Лучший результат теста в процентах — для шапки Главной."""
+    from django.db.models import Max
+    result = TestResult.objects.filter(student=student).aggregate(m=Max('score'))
+    return result['m']
+
+
+def get_today_task_counts(student, now=None) -> tuple[int, int]:
+    """
+    (выполнено сегодня, запланировано на сегодня).
+    До появления раздела «План» второе значение — 0,
+    поэтому состояние «план выполнен» пока не наступает.
+    """
+    now = now or timezone.now()
+    today = now.date()
+
+    completed = TestResult.objects.filter(
+        student=student, created_at__date=today, passed=True
+    ).count()
+    completed += LessonProgress.objects.filter(
+        student=student, completed_at__date=today
+    ).count()
+
+    planned = PlanItem.objects.filter(
+        plan__student=student, required=True, due_at__date=today,
+    ).exclude(status__in=PlanStatus.cancelled()).count()
+
+    return completed, planned

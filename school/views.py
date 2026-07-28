@@ -641,40 +641,20 @@ def student_profile(request):
     if request.user.is_staff:
         return redirect('teacher_dashboard')
 
-    enrollments = Enrollment.objects.filter(
-        student=request.user, status=Enrollment.STATUS_APPROVED
-    ).select_related('course')
+    from .services.dashboard import build_dashboard
 
-    courses_progress = []
-    for enrollment in enrollments:
-        course = enrollment.course
-        total = course.lessons.count()
-        completed = LessonProgress.objects.filter(
-            student=request.user, lesson__course=course
-        ).count()
-        percent = int((completed / total) * 100) if total > 0 else 0
-        courses_progress.append({
-            'course': course,
-            'total': total,
-            'completed': completed,
-            'percent': percent,
-        })
+    dashboard = build_dashboard(request.user)
 
     pending_enrollments = Enrollment.objects.filter(
         student=request.user, status=Enrollment.STATUS_PENDING
     ).select_related('course')
 
-    # Ближайший непройденный курс — для быстрой кнопки "Продолжить"
-    next_course = None
-    for cp in courses_progress:
-        if cp['percent'] < 100:
-            next_course = cp
-            break
-
     return render(request, 'school/home.html', {
-        'courses_progress': courses_progress,
+        'dashboard': dashboard,
+        'day_state': dashboard.day_state,
+        'courses_progress': dashboard.courses,
+        'weak_topics': dashboard.weak_topics,
         'pending_enrollments': pending_enrollments,
-        'next_course': next_course,
     })
 
 
