@@ -2,6 +2,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone as dj_timezone
+
 from django.utils import timezone
 
 from cloudinary.models import CloudinaryField
@@ -1076,3 +1080,321 @@ class ScoreConversionTable(models.Model):
             subject=subject, exam_type=exam_type,
             exam_year=exam_year, is_active=True,
         ).first()
+
+
+class ErrorStatus(models.TextChoices):
+    NOT_ANALYZED = 'not_analyzed', 'Не разобрано'
+    IN_PROGRESS = 'in_progress', 'В работе'
+    CORRECTED_ONCE = 'corrected_once', 'Исправлено один раз'
+    REINFORCED = 'reinforced', 'Закреплено'
+    REGRESSED = 'regressed', 'Вернулось в ошибки'
+
+
+class ErrorType(models.TextChoices):
+    THEORY = 'theory', 'Не знаю теорию'
+    MISREAD = 'misread', 'Неверно понял условие'
+    CALCULATION = 'calculation', 'Ошибка в вычислениях'
+    CARELESS = 'careless', 'Невнимательность'
+    STRATEGY = 'strategy', 'Неправильная стратегия'
+    FORMATTING = 'formatting', 'Ошибка оформления'
+    RANDOM = 'random', 'Случайный ответ'
+    UNCLASSIFIED = 'unclassified', 'Не классифицирована'
+
+
+class ErrorRecord(models.Model):
+    """
+    Одна ошибка ученика по конкретному заданию.
+    Живёт дольше одной попытки: накапливает историю исправлений (ТЗ-уточнение 9).
+    """
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='error_records', verbose_name='Ученик',
+    )
+    subject = models.ForeignKey(
+        Subject, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='error_records', verbose_name='Предмет',
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='error_records', verbose_name='Урок',
+    )
+
+    # Откуда пришла ошибка: тест, пробник, контрольная точка
+    source_content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='+', verbose_name='Тип источника',
+    )
+    source_object_id = models.PositiveIntegerField(null=True, blank=True)
+    source_object = GenericForeignKey('source_content_type', 'source_object_id')
+
+    # Само задание
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='error_records', verbose_name='Вопрос теста',
+    )
+
+    error_type = models.CharField(
+        max_length=20, choices=ErrorType.choices,
+        default=ErrorType.UNCLASSIFIED, verbose_name='Тип ошибки',
+    )
+    status = models.CharField(
+        max_length=20, choices=ErrorStatus.choices,
+        default=ErrorStatus.NOT_ANALYZED, db_index=True, verbose_name='Статус',
+    )
+    repeated_count = models.PositiveSmallIntegerField(
+        default=1, verbose_name='Сколько раз повторилась',
+    )
+    explanation_viewed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name='Объяснение изучено',
+    )
+    first_detected_at = models.DateTimeField(auto_now_add=True)
+    last_detected_at = models.DateTimeField(auto_now=True)
+    reinforced_at = models.DateTimeField(
+        null=True, blank=True, verbose_name='Закреплено',
+    )
+
+    class Meta:
+        verbose_name = 'Ошибка ученика'
+        verbose_name_plural = 'Ошибки учеников'
+        ordering = ['-last_detected_at']
+        indexes = [
+            models.Index(fields=['student', 'status']),
+            models.Index(fields=['student', 'question']),
+            models.Index(fields=['student', 'subject']),
+        ]
+
+    def __str__(self):
+        return f'{self.student.username} — {self.get_status_display()}'
+
+    def can_be_reinforced(self) -> bool:
+        """
+        Три условия закрепления (ТЗ 11):
+          1) объяснение изучено;
+          2) верно решено похожее задание;
+          3) верно решено ещё одно — в другой учебной сессии.
+        """
+        if not self.explanation_viewed_at:
+            return False
+        correct = list(
+            self.correction_attempts.filter(is_correct=True).order_by('attempted_at')
+        )
+        if len(correct) < 2:
+            return False
+        if not any(a.is_similar_task for a in correct):
+            return False
+        sessions = {a.session_key for a in correct if a.session_key}
+        return len(sessions) >= 2
+
+    def try_reinforce(self) -> bool:
+        """Переводит в «Закреплено», только если выполнены все условия."""
+        if not self.can_be_reinforced():
+            return False
+        self.status = ErrorStatus.REINFORCED
+        self.reinforced_at = dj_timezone.now()
+        self.save(update_fields=['status', 'reinforced_at'])
+        return True
+
+    def register_repeat(self):
+        """Ошибка повторилась после закрепления."""
+        self.repeated_count += 1
+        if self.status == ErrorStatus.REINFORCED:
+            self.status = ErrorStatus.REGRESSED
+            self.reinforced_at = None
+        self.save(update_fields=['repeated_count', 'status', 'reinforced_at'])
+
+
+class ErrorCorrectionAttempt(models.Model):
+    """Одна попытка исправления ошибки."""
+    error_record = models.ForeignKey(
+        ErrorRecord, on_delete=models.CASCADE,
+        related_name='correction_attempts', verbose_name='Ошибка',
+    )
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    is_correct = models.BooleanField(default=False, verbose_name='Решено верно')
+    is_similar_task = models.BooleanField(
+        default=True, verbose_name='Аналогичное задание',
+    )
+    session_key = models.CharField(
+        max_length=64, blank=True, db_index=True,
+        verbose_name='Ключ учебной сессии',
+    )
+
+    class Meta:
+        verbose_name = 'Попытка исправления ошибки'
+        verbose_name_plural = 'Попытки исправления ошибок'
+        ordering = ['attempted_at']
+
+    def __str__(self):
+        return f'{self.error_record_id}: {"верно" if self.is_correct else "неверно"}'
+
+
+class StudySession(models.Model):
+    """
+    Активное учебное время. Одна строка на сессию вкладки, не на секунду.
+    Агрегация — через heartbeat, идемпотентно (ТЗ-уточнение 10).
+    """
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='study_sessions', verbose_name='Ученик',
+    )
+    course = models.ForeignKey(
+        Course, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='study_sessions', verbose_name='Курс',
+    )
+    activity_type = models.CharField(
+        max_length=30, blank=True, verbose_name='Тип активности',
+    )
+    object_id = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name='ID объекта',
+    )
+    client_session_id = models.CharField(
+        max_length=64, verbose_name='ID сессии клиента',
+    )
+    start_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    active_seconds = models.PositiveIntegerField(
+        default=0, verbose_name='Активных секунд',
+    )
+
+    class Meta:
+        verbose_name = 'Учебная сессия'
+        verbose_name_plural = 'Учебные сессии'
+        ordering = ['-start_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'client_session_id'],
+                name='unique_client_session_per_student',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['student', 'start_at']),
+            models.Index(fields=['student', 'ended_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.student.username}: {self.active_seconds // 60} мин'
+
+    @property
+    def is_stale(self) -> bool:
+        """Простой дольше таймаута — время больше не капает."""
+        from school.services.constants import SESSION_IDLE_TIMEOUT_SECONDS
+        idle = (dj_timezone.now() - self.last_activity_at).total_seconds()
+        return idle > SESSION_IDLE_TIMEOUT_SECONDS
+
+class PlanStatus(models.TextChoices):
+    PLANNED = 'planned', 'Запланировано'
+    IN_PROGRESS = 'in_progress', 'В процессе'
+    DONE_ON_TIME = 'done_on_time', 'Выполнено вовремя'
+    DONE_LATE = 'done_late', 'Выполнено с опозданием'
+    OVERDUE = 'overdue', 'Просрочено'
+    CANCELLED_BY_TEACHER = 'cancelled_by_teacher', 'Отменено преподавателем'
+    CANCELLED_BY_SYSTEM = 'cancelled_by_system', 'Отменено системой'
+    SKIPPED = 'skipped', 'Пропущено учеником'
+
+    @classmethod
+    def cancelled(cls):
+        """Не ухудшают plan_adherence (ТЗ 15.10)."""
+        return [cls.CANCELLED_BY_TEACHER, cls.CANCELLED_BY_SYSTEM]
+
+    @classmethod
+    def completed(cls):
+        return [cls.DONE_ON_TIME, cls.DONE_LATE]
+
+
+class StudyPlan(models.Model):
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='study_plans', verbose_name='Ученик',
+    )
+    subject = models.ForeignKey(
+        Subject, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='study_plans', verbose_name='Предмет',
+    )
+    start_date = models.DateField(verbose_name='Начало')
+    end_date = models.DateField(verbose_name='Окончание')
+    status = models.CharField(
+        max_length=20,
+        choices=[('active', 'Активен'), ('archived', 'В архиве')],
+        default='active', verbose_name='Статус',
+    )
+    source = models.CharField(
+        max_length=20,
+        choices=[('system', 'Система'), ('teacher', 'Преподаватель'), ('student', 'Ученик')],
+        default='system', verbose_name='Источник',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Учебный план'
+        verbose_name_plural = 'Учебные планы'
+        ordering = ['-start_date']
+        indexes = [models.Index(fields=['student', 'status'])]
+
+    def __str__(self):
+        return f'{self.student.username}: {self.start_date} — {self.end_date}'
+
+
+class PlanItem(models.Model):
+    plan = models.ForeignKey(
+        StudyPlan, on_delete=models.CASCADE,
+        related_name='items', verbose_name='План',
+    )
+    item_type = models.CharField(
+        max_length=30,
+        choices=[
+            ('lesson', 'Урок'), ('mini_check', 'Мини-проверка'),
+            ('practice', 'Практика'), ('homework', 'Домашняя работа'),
+            ('mock_exam', 'Пробник'), ('review', 'Повторение'),
+            ('error_work', 'Работа над ошибками'),
+        ],
+        verbose_name='Тип задачи',
+    )
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='+', verbose_name='Тип объекта',
+    )
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    target_object = GenericForeignKey('content_type', 'object_id')
+
+    title = models.CharField(max_length=300, verbose_name='Название')
+    due_at = models.DateTimeField(verbose_name='Срок')
+    estimated_minutes = models.PositiveSmallIntegerField(
+        default=30, verbose_name='Оценка времени, мин',
+    )
+    required = models.BooleanField(default=True, verbose_name='Обязательная')
+    status = models.CharField(
+        max_length=25, choices=PlanStatus.choices,
+        default=PlanStatus.PLANNED, db_index=True, verbose_name='Статус',
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.CharField(
+        max_length=300, blank=True, verbose_name='Причина отмены',
+    )
+    order = models.PositiveSmallIntegerField(default=0)
+    priority = models.PositiveSmallIntegerField(
+        default=5, verbose_name='Приоритет (1 — высший)',
+    )
+
+    class Meta:
+        verbose_name = 'Задача плана'
+        verbose_name_plural = 'Задачи плана'
+        ordering = ['due_at', 'priority', 'order']
+        indexes = [
+            models.Index(fields=['status', 'due_at']),
+            models.Index(fields=['plan', 'status']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def mark_completed(self, when=None):
+        """Различает выполнение вовремя и с опозданием."""
+        when = when or dj_timezone.now()
+        self.completed_at = when
+        self.status = (
+            PlanStatus.DONE_ON_TIME if when <= self.due_at else PlanStatus.DONE_LATE
+        )
+        self.save(update_fields=['completed_at', 'status'])
+

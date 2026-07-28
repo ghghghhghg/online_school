@@ -25,6 +25,12 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.urls import reverse
 
+from .services.scoring import (
+    record_answer_points, record_checkpoint_attempt, record_exam_attempt,
+    record_homework_submission, record_test_attempt, register_errors,
+    resolve_errors_on_success,
+)
+
 def index(request):
     courses = Course.objects.filter(is_published=True)
 
@@ -481,15 +487,24 @@ def test_view(request, pk):
                 student=request.user,
                 test=test,
                 score=score,
-                passed=passed
+                passed=passed,
             )
             for question, chosen, is_correct in answers_log:
-                TestAnswerLog.objects.create(
+                log = TestAnswerLog.objects.create(
                     result=result,
                     question=question,
                     chosen_answer=chosen,
                     is_correct=is_correct,
                 )
+                record_answer_points(log, question, is_correct)
+
+            record_test_attempt(result, answers_log)
+            register_errors(request.user, result, answers_log)
+            resolve_errors_on_success(
+                request.user, answers_log,
+                session_key=request.session.session_key or '',
+            )
+
             if passed:
                 LessonProgress.objects.get_or_create(
                     student=request.user, lesson=lesson
@@ -1036,6 +1051,7 @@ def teacher_check_submission(request, pk):
         submission.status = HomeworkSubmission.STATUS_CHECKED
         submission.checked_at = timezone.now()
         submission.save()
+        record_homework_submission(submission)
 
         Notification.objects.create(
             user=submission.student,
@@ -1242,6 +1258,7 @@ def checkpoint_view(request, pk):
                     answer_text=request.POST.get(f'answer_text_{task.id}', ''),
                     file=request.FILES.get(f'file_{task.id}'),
                 )
+            record_checkpoint_attempt(attempt)
 
         messages.success(request, 'Ответы отправлены!')
         return redirect('checkpoint_result', pk=attempt.pk)
@@ -1369,12 +1386,14 @@ def teacher_check_checkpoint_attempt(request, pk):
                     answer.status = CheckpointAnswer.STATUS_CHECKED
                     answer.checked_at = timezone.now()
                     answer.save()
+                    record_checkpoint_attempt(attempt)
 
         Notification.objects.create(
             user=attempt.student,
             text=f'Проверена контрольная точка «{attempt.checkpoint.title}»',
             link=f'/checkpoint-result/{attempt.pk}/',
         )
+
 
         messages.success(request, 'Проверено!')
         return redirect(request.META.get('HTTP_REFERER', 'teacher_all_checkpoints'))
@@ -1528,6 +1547,7 @@ def exam_attempt_view(request, pk):
         _save_exam_answers(attempt, tasks, request)
         attempt.submitted_at = timezone.now()
         attempt.save()
+        record_exam_attempt(attempt)
         messages.success(request, 'Пробник завершён!')
         return redirect('exam_result', pk=attempt.pk)
 
@@ -1581,6 +1601,7 @@ def _finalize_exam_attempt(attempt, auto=False):
     attempt.submitted_at = timezone.now()
     attempt.auto_submitted = auto
     attempt.save()
+    record_exam_attempt(attempt)
 
 
 @login_required
@@ -1769,6 +1790,7 @@ def teacher_check_exam_attempt(request, pk):
                     answer.status = ExamAnswer.STATUS_CHECKED
                     answer.checked_at = timezone.now()
                     answer.save()
+                    record_exam_attempt(attempt)
 
         Notification.objects.create(
             user=attempt.student,
