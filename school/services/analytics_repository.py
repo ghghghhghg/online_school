@@ -13,7 +13,7 @@ from django.utils import timezone
 from school.models import (
     Course, ErrorRecord, ErrorStatus, Enrollment, ExamAttempt, Homework,
     HomeworkSubmission, Lesson, LessonProgress, PlanItem, PlanStatus,
-    StudySession, TestResult,
+    StudySession, TestResult, ExamMock,
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
@@ -246,3 +246,142 @@ def get_enrolled_courses(student):
         .prefetch_related('modules', 'lessons')
         .distinct()
     )
+
+
+def build_recommendation_candidates(student, now=None) -> list:
+    """
+    Собирает кандидатов для движка рекомендаций из реальных данных.
+    Здесь — только выборки и построение DTO, ранжирование в recommendations.py.
+    """
+    from django.urls import reverse
+
+    from school.models import Enrollment, ExamAttempt, HomeworkSubmission
+    from .recommendations import (
+        ActionType, PRIORITY_CRITICAL_ERROR, PRIORITY_EXTRA_PRACTICE,
+        PRIORITY_NEXT_TOPIC, PRIORITY_OVERDUE_REQUIRED, PRIORITY_STARTED_REQUIRED,
+        Recommendation,
+    )
+
+    now = now or timezone.now()
+    candidates = []
+
+    courses = list(get_enrolled_courses(student))
+    if not courses:
+        return []
+
+    course_ids = [c.id for c in courses]
+    course_by_id = {c.id: c for c in courses}
+
+    # 1. Незавершённый пробник — начатая обязательная работа
+    unfinished = (
+        ExamAttempt.objects
+        .filter(student=student, submitted_at__isnull=True, exam__course_id__in=course_ids)
+        .select_related('exam', 'exam__course')
+    )
+    for attempt in unfinished:
+        candidates.append(Recommendation(
+            action_type=ActionType.CONTINUE_MOCK,
+            priority=PRIORITY_STARTED_REQUIRED,
+            title=attempt.exam.title,
+            reason='Вы начали пробник и не завершили его',
+            url=reverse('exam_attempt', kwargs={'pk': attempt.pk}),
+            course_title=attempt.exam.course.title,
+            estimated_minutes=attempt.exam.duration_minutes,
+        ))
+
+    # 2. Несданные домашние работы
+    submitted_ids = set(
+        HomeworkSubmission.objects
+        .filter(student=student, homework__lesson__course_id__in=course_ids)
+        .values_list('homework_id', flat=True)
+    )
+    pending_homework = (
+        Homework.objects
+        .filter(lesson__course_id__in=course_ids)
+        .exclude(id__in=submitted_ids)
+        .select_related('lesson', 'lesson__course')[:5]
+    )
+    for hw in pending_homework:
+        candidates.append(Recommendation(
+            action_type=ActionType.SUBMIT_HOMEWORK,
+            priority=PRIORITY_OVERDUE_REQUIRED,
+            title=hw.title,
+            reason=f'Домашняя работа к уроку «{hw.lesson.title}» ещё не сдана',
+            url=reverse('homework', kwargs={'pk': hw.lesson.pk}),
+            course_title=hw.lesson.course.title,
+            estimated_minutes=30,
+        ))
+
+    # 3. Неразобранные ошибки
+    unresolved = (
+        ErrorRecord.objects
+        .filter(student=student, status__in=[
+            ErrorStatus.NOT_ANALYZED, ErrorStatus.REGRESSED,
+        ])
+        .select_related('lesson', 'lesson__course')
+    )
+    error_count = unresolved.count()
+    if error_count:
+        first = unresolved.first()
+        repeated = unresolved.filter(repeated_count__gte=2).count()
+        reason = (
+            f'Одна и та же ошибка повторилась несколько раз'
+            if repeated else
+            f'Накопилось ошибок для разбора: {error_count}'
+        )
+        candidates.append(Recommendation(
+            action_type=ActionType.REVIEW_ERRORS,
+            priority=PRIORITY_CRITICAL_ERROR,
+            title='Работа над ошибками',
+            reason=reason,
+            url=reverse('error_notebook'),
+            course_title=first.lesson.course.title if first and first.lesson else '',
+            estimated_minutes=min(60, error_count * 5),
+            task_count=error_count,
+        ))
+
+    # 4. Следующий непройденный урок в каждом курсе
+    completed_lesson_ids = set(
+        LessonProgress.objects
+        .filter(student=student, lesson__course_id__in=course_ids)
+        .values_list('lesson_id', flat=True)
+    )
+    for course in courses:
+        next_lesson = (
+            course.lessons
+            .exclude(id__in=completed_lesson_ids)
+            .order_by('module__order', 'order')
+            .first()
+        )
+        if not next_lesson:
+            continue
+        candidates.append(Recommendation(
+            action_type=ActionType.WATCH_LESSON,
+            priority=PRIORITY_NEXT_TOPIC,
+            title=next_lesson.title,
+            reason='Следующая тема программы',
+            url=reverse('lesson', kwargs={'pk': next_lesson.pk}),
+            subject_name=course.subject_ref.name if course.subject_ref else course.subject,
+            course_title=course.title,
+            estimated_minutes=20,
+        ))
+
+    # 5. Доступные пробники — дополнительная практика
+    available_exams = (
+        ExamMock.objects
+        .filter(course_id__in=course_ids)
+        .exclude(attempts__student=student)
+        .select_related('course')[:2]
+    )
+    for exam in available_exams:
+        candidates.append(Recommendation(
+            action_type=ActionType.START_MOCK,
+            priority=PRIORITY_EXTRA_PRACTICE,
+            title=exam.title,
+            reason='Проверьте себя в формате реального экзамена',
+            url=reverse('exam_start', kwargs={'pk': exam.pk}),
+            course_title=exam.course.title,
+            estimated_minutes=exam.duration_minutes,
+        ))
+
+    return candidates
