@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -6,6 +7,79 @@ from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
 from django.utils.text import slugify
+
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+class AnalyticsDataQuality(models.TextChoices):
+    """
+    Точность первичных баллов попытки.
+
+    EXACT         — записаны в момент прохождения (с шага 3.2.5);
+    RECONSTRUCTED — восстановлены из логов ответов и Question.points — достоверны;
+    ESTIMATED     — пересчитаны из процента, приблизительны;
+    LEGACY        — восстановить невозможно, в расчётах не участвуют.
+    """
+    EXACT = 'exact', 'Точные данные'
+    RECONSTRUCTED = 'reconstructed', 'Восстановленные данные'
+    ESTIMATED = 'estimated', 'Приблизительные данные'
+    LEGACY = 'legacy', 'Недостаточно данных'
+
+
+class PrimaryScoreMixin(models.Model):
+    """
+    Первичные баллы попытки/ответа.
+
+    Оба поля nullable: старые записи до backfill остаются пустыми,
+    аналитика такие записи пропускает (ТЗ-уточнение 5в).
+    """
+    earned_points = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Полученные первичные баллы',
+    )
+    max_points = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Максимальные первичные баллы',
+    )
+
+    class Meta:
+        abstract = True
+
+
+class AnalyticsQualityMixin(models.Model):
+    """Качество данных. Только для моделей попыток, не для отдельных ответов."""
+    analytics_data_quality = models.CharField(
+        max_length=15,
+        choices=AnalyticsDataQuality.choices,
+        default=AnalyticsDataQuality.LEGACY,
+        db_index=True,
+        verbose_name='Качество аналитических данных',
+    )
+
+    class Meta:
+        abstract = True
+
+class Subject(models.Model):
+    """
+    Нормализованный предмет.
+
+    Вводится параллельно строковому Course.subject: legacy-поле продолжает
+    работать, переключение чтения — на этапе 4 (ТЗ-уточнение 8).
+    """
+    code = models.SlugField(max_length=50, unique=True, verbose_name='Код')
+    name = models.CharField(max_length=100, unique=True, verbose_name='Название')
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+    order = models.PositiveSmallIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        verbose_name = 'Предмет'
+        verbose_name_plural = 'Предметы'
+        ordering = ['order', 'name']
+
+    def __str__(self):
+        return self.name
 
 
 class Course(models.Model):
@@ -30,6 +104,11 @@ class Course(models.Model):
     exam_type = models.CharField(max_length=10, choices=EXAM_CHOICES,
                                  blank=True, verbose_name='Тип экзамена')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
+    subject_ref = models.ForeignKey(
+        'Subject', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='courses',
+        verbose_name='Предмет (нормализованный)',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -211,6 +290,11 @@ class Question(models.Model):
     text = models.TextField(verbose_name='Вопрос')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     explanation = models.TextField(blank=True, verbose_name='Объяснение (показывается при ошибке)')
+    points = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        verbose_name='Максимальный первичный балл',
+    )
 
     class Meta:
         verbose_name = 'Вопрос'
@@ -235,7 +319,7 @@ class Answer(models.Model):
         return f'{"✓" if self.is_correct else "✗"} {self.text}'
 
 
-class TestResult(models.Model):
+class TestResult(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE,
                                 related_name='test_results', verbose_name='Ученик')
     test = models.ForeignKey(Test, on_delete=models.CASCADE,
@@ -252,7 +336,7 @@ class TestResult(models.Model):
     def __str__(self):
         return f'{self.student.username} — {self.test} — {self.score}%'
 
-class TestAnswerLog(models.Model):
+class TestAnswerLog(PrimaryScoreMixin, models.Model):
     result = models.ForeignKey(TestResult, on_delete=models.CASCADE,
                                related_name='answer_logs', verbose_name='Результат')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='Вопрос')
@@ -269,6 +353,11 @@ class TeacherProfile(models.Model):
                                 related_name='teacher_profile', verbose_name='Аккаунт')
     name = models.CharField(max_length=200, verbose_name='Короткая фраза или имя')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
+    subject_ref = models.ForeignKey(
+        'Subject', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='teachers',
+        verbose_name='Предмет (нормализованный)',
+    )
     exam_type = models.CharField(max_length=10, choices=Course.EXAM_CHOICES,
                                  blank=True, verbose_name='Тип экзамена')
     bio = models.TextField(verbose_name='О себе')
@@ -285,6 +374,11 @@ class Review(models.Model):
     student_name = models.CharField(max_length=100, verbose_name='Имя ученика')
     city = models.CharField(max_length=100, blank=True, verbose_name='Город')
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')
+    subject_ref = models.ForeignKey(
+        'Subject', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reviews',
+        verbose_name='Предмет (нормализованный)',
+    )
     exam_type = models.CharField(max_length=10, choices=Course.EXAM_CHOICES,
                                  blank=True, verbose_name='Тип экзамена')
     text = models.TextField(verbose_name='Текст отзыва')
@@ -412,7 +506,7 @@ class Homework(models.Model):
         return f'ДЗ: {self.lesson.title}'
 
 
-class HomeworkSubmission(models.Model):
+class HomeworkSubmission(PrimaryScoreMixin, AnalyticsQualityMixin,  models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CHECKED = 'checked'
     STATUS_CHOICES = [
@@ -480,6 +574,11 @@ class CheckpointTask(models.Model):
     submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
                                        default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    points = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        verbose_name='Максимальный первичный балл',
+    )
 
     class Meta:
         verbose_name = 'Задание контрольной точки'
@@ -489,7 +588,7 @@ class CheckpointTask(models.Model):
     def __str__(self):
         return f'{self.checkpoint.title} — {self.title}'
 
-class CheckpointAttempt(models.Model):
+class CheckpointAttempt(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
     checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE,
                                    related_name='attempts', verbose_name='Точка')
     student = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -521,7 +620,7 @@ class CheckpointAttempt(models.Model):
         return self.answers.filter(task__task_type=CheckpointTask.TYPE_MANUAL, status='pending').exists()
 
 
-class CheckpointAnswer(models.Model):
+class CheckpointAnswer(PrimaryScoreMixin, models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CHECKED = 'checked'
     STATUS_CHOICES = [
@@ -600,6 +699,11 @@ class ExamTask(models.Model):
     submission_type = models.CharField(max_length=10, choices=Homework.SUBMISSION_CHOICES,
                                        default=Homework.SUBMISSION_TEXT, verbose_name='Формат сдачи')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    points = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        verbose_name='Максимальный первичный балл',
+    )
 
     class Meta:
         verbose_name = 'Задание пробника'
@@ -610,7 +714,7 @@ class ExamTask(models.Model):
         return f'{self.exam.title} — {self.title}'
 
 
-class ExamAttempt(models.Model):
+class ExamAttempt(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
     exam = models.ForeignKey(ExamMock, on_delete=models.CASCADE,
                              related_name='attempts', verbose_name='Пробник')
     student = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -661,7 +765,7 @@ class ExamAttempt(models.Model):
         return int((correct / total) * 100)
 
 
-class ExamAnswer(models.Model):
+class ExamAnswer(PrimaryScoreMixin, models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CHECKED = 'checked'
     STATUS_CHOICES = [
@@ -791,3 +895,184 @@ class CourseTeacherDisplay(models.Model):
     @property
     def display_photo(self):
         return self.photo_override if self.photo_override else self.teacher.photo
+
+
+class StudentProfile(models.Model):
+    """
+    Общие настройки ученика. Роль по-прежнему определяется через is_staff —
+    новое поле роли не вводится (ТЗ-уточнение 7).
+    Целевые баллы живут в StudentSubjectGoal: предметов может быть несколько.
+    """
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE,
+        related_name='student_profile', verbose_name='Пользователь',
+    )
+    exam_year = models.PositiveSmallIntegerField(
+        null=True, blank=True, verbose_name='Год экзамена',
+    )
+    timezone = models.CharField(
+        max_length=50, default='Europe/Moscow', verbose_name='Часовой пояс',
+    )
+    available_days_per_week = models.PositiveSmallIntegerField(
+        default=5, validators=[MinValueValidator(1), MaxValueValidator(7)],
+        verbose_name='Доступных дней в неделю',
+    )
+    daily_minutes = models.PositiveSmallIntegerField(
+        default=60, validators=[MinValueValidator(5)],
+        verbose_name='Минут в день',
+    )
+    onboarding_completed = models.BooleanField(default=False, verbose_name='Онбординг пройден')
+    diagnostic_completed = models.BooleanField(default=False, verbose_name='Диагностика пройдена')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Профиль ученика'
+        verbose_name_plural = 'Профили учеников'
+
+    def __str__(self):
+        return f'{self.user.first_name} {self.user.last_name}'.strip() or self.user.username
+
+
+class StudentSubjectGoal(models.Model):
+    """Цель ученика по одному предмету. У ученика может быть несколько."""
+    student = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE,
+        related_name='goals', verbose_name='Ученик',
+    )
+    subject = models.ForeignKey(
+        Subject, on_delete=models.PROTECT,
+        related_name='student_goals', verbose_name='Предмет',
+    )
+    target_test_score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        verbose_name='Целевой тестовый балл',
+    )
+    exam_year = models.PositiveSmallIntegerField(verbose_name='Год экзамена')
+    exam_date = models.DateField(null=True, blank=True, verbose_name='Дата экзамена')
+    weekly_minutes = models.PositiveSmallIntegerField(
+        default=300, verbose_name='Минут в неделю на предмет',
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Активна')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Цель по предмету'
+        verbose_name_plural = 'Цели по предметам'
+        ordering = ['subject__order', 'subject__name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'subject', 'exam_year'],
+                name='unique_goal_per_subject_year',
+            ),
+        ]
+        indexes = [models.Index(fields=['student', 'is_active'])]
+
+    def __str__(self):
+        return f'{self.student} — {self.subject}: {self.target_test_score}'
+
+
+class ScoreConversionTable(models.Model):
+    """
+    Шкала перевода первичных баллов в тестовые.
+    Хранится в конфигурации, не в сервисах и не в UI (ТЗ 13, 24.18).
+    """
+    subject = models.ForeignKey(
+        Subject, on_delete=models.PROTECT,
+        related_name='conversion_tables', verbose_name='Предмет',
+    )
+    exam_type = models.CharField(
+        max_length=10, choices=Course.EXAM_CHOICES, verbose_name='Тип экзамена',
+    )
+    exam_year = models.PositiveSmallIntegerField(verbose_name='Год экзамена')
+    version = models.PositiveSmallIntegerField(default=1, verbose_name='Версия')
+    is_active = models.BooleanField(default=False, verbose_name='Активна')
+    valid_from = models.DateField(verbose_name='Действует с')
+    source = models.CharField(
+        max_length=300, blank=True, verbose_name='Источник / комментарий',
+    )
+    table = models.JSONField(
+        default=dict, blank=True, verbose_name='Таблица перевода',
+        help_text='Ключ — первичный балл, значение — тестовый: {"0": 0, "1": 3, ...}',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Шкала перевода баллов'
+        verbose_name_plural = 'Шкалы перевода баллов'
+        ordering = ['-exam_year', 'subject__name', '-version']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subject', 'exam_type', 'exam_year', 'version'],
+                name='unique_conversion_version',
+            ),
+            models.UniqueConstraint(
+                fields=['subject', 'exam_type', 'exam_year'],
+                condition=models.Q(is_active=True),
+                name='single_active_conversion_table',
+            ),
+        ]
+        indexes = [models.Index(fields=['subject', 'exam_year', 'is_active'])]
+
+    def __str__(self):
+        state = 'активна' if self.is_active else 'неактивна'
+        return f'{self.subject} {self.get_exam_type_display()} {self.exam_year} v{self.version} ({state})'
+
+    def clean(self):
+        """Валидация структуры таблицы (ТЗ-уточнение 6)."""
+        errors = {}
+
+        if not isinstance(self.table, dict):
+            raise ValidationError({'table': 'Таблица должна быть объектом «балл: балл».'})
+
+        if self.is_active and not self.table:
+            errors['is_active'] = 'Пустая таблица не может быть активной.'
+
+        parsed = {}
+        for raw_key, raw_value in self.table.items():
+            try:
+                key = int(raw_key)
+            except (TypeError, ValueError):
+                errors['table'] = f'Первичный балл «{raw_key}» не является целым числом.'
+                break
+            if key < 0:
+                errors['table'] = f'Первичный балл не может быть отрицательным: {key}.'
+                break
+            if key in parsed:
+                errors['table'] = f'Дублирующийся первичный балл: {key}.'
+                break
+            try:
+                value = int(raw_value)
+            except (TypeError, ValueError):
+                errors['table'] = f'Тестовый балл для {key} не является целым числом.'
+                break
+            if not 0 <= value <= 100:
+                errors['table'] = f'Тестовый балл для {key} вне диапазона 0–100: {value}.'
+                break
+            parsed[key] = value
+
+        if 'table' not in errors and parsed:
+            previous = None
+            for key in sorted(parsed):
+                if previous is not None and parsed[key] < previous:
+                    errors['table'] = (
+                        f'Шкала убывает: при первичном балле {key} '
+                        f'тестовый балл {parsed[key]} меньше предыдущего {previous}.'
+                    )
+                    break
+                previous = parsed[key]
+
+        if errors:
+            raise ValidationError(errors)
+
+    def as_mapping(self) -> dict:
+        """Нормализованная таблица для передачи в convert_to_test_score()."""
+        return {int(k): int(v) for k, v in self.table.items()}
+
+    @classmethod
+    def get_active(cls, subject, exam_type: str, exam_year: int):
+        """Выбор шкалы по предмету, типу и году. Без хардкода в сервисах."""
+        return cls.objects.filter(
+            subject=subject, exam_type=exam_type,
+            exam_year=exam_year, is_active=True,
+        ).first()
