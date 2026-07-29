@@ -127,5 +127,8 @@ urlpatterns = [
     path('teacher/course/<int:pk>/teacher/add/', views.teacher_add_course_teacher, name='teacher_add_course_teacher'),
     path('teacher/course-teacher/<int:pk>/delete/', views.teacher_delete_course_teacher, name='teacher_delete_course_teacher'),
 
+    path('my-errors/<int:pk>/', views.error_detail, name='error_detail'),
+    path('my-errors/<int:pk>/explained/', views.error_mark_explained, name='error_mark_explained'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

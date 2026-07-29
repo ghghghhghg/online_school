@@ -427,3 +427,45 @@ def get_today_task_counts(student, now=None) -> tuple[int, int]:
     ).exclude(status__in=PlanStatus.cancelled()).count()
 
     return completed, planned
+
+def get_error_records(student, course=None, status=None, group_by='lesson'):
+    """
+    Ошибки ученика для экрана разбора. Группировка по теме или по типу (ТЗ 11).
+    Один запрос со связями, N+1 исключён.
+    """
+    qs = (
+        ErrorRecord.objects
+        .filter(student=student)
+        .select_related('lesson', 'lesson__course', 'question', 'question__test', 'subject')
+        .prefetch_related('question__answers', 'correction_attempts')
+    )
+    if course:
+        qs = qs.filter(lesson__course=course)
+    if status:
+        qs = qs.filter(status=status)
+
+    records = list(qs)
+
+    groups = defaultdict(list)
+    for record in records:
+        if group_by == 'error_type':
+            key = record.get_error_type_display()
+        else:
+            key = record.lesson.title if record.lesson else 'Без темы'
+        groups[key].append(record)
+
+    return [
+        {'title': title, 'records': items, 'count': len(items)}
+        for title, items in sorted(groups.items(), key=lambda kv: -len(kv[1]))
+    ]
+
+
+def get_error_record_for_student(student, pk):
+    """Одна ошибка с полным контекстом."""
+    return (
+        ErrorRecord.objects
+        .filter(student=student, pk=pk)
+        .select_related('lesson', 'lesson__course', 'question', 'question__test')
+        .prefetch_related('question__answers', 'correction_attempts')
+        .first()
+    )

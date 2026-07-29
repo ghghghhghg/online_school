@@ -1,0 +1,88 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Разбор ошибки{% endblock %}
+
+{% block content %}
+<a href="{% url 'error_notebook' %}" class="btn btn-outline-secondary btn-sm mb-3">
+    {% icon 'arrow-left' size=14 %} Все ошибки
+</a>
+
+{% if messages %}{% for m in messages %}
+<div class="alert alert-success">{{ m }}</div>
+{% endfor %}{% endif %}
+
+<div class="err-detail-head">
+    {% if record.lesson %}
+    <span class="dash-course-name">{{ record.lesson.course.title }} — {{ record.lesson.title }}</span>
+    {% endif %}
+    <span class="err-status err-status-{{ record.status }}">{{ record.get_status_display }}</span>
+</div>
+
+<div class="dash-side-card mb-3">
+    <h4 class="dash-side-title">Задание</h4>
+    <p class="err-detail-question">{{ record.question.text|default:'Задание было удалено' }}</p>
+
+    {% if correct_answer %}
+    <div class="err-answer-box err-answer-correct">
+        {% icon 'check-circle' size=18 color='#4A8B5C' %}
+        <div><span>Правильный ответ</span><b>{{ correct_answer.text }}</b></div>
+    </div>
+    {% endif %}
+
+    {% if record.question.explanation %}
+    <div class="err-explanation">
+        {% icon 'lightbulb' size=18 %}
+        <div>
+            <span>Объяснение</span>
+            <p>{{ record.question.explanation }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Три шага до закрепления -->
+<div class="dash-side-card mb-3">
+    <h4 class="dash-side-title">Что нужно, чтобы закрепить</h4>
+    <ol class="err-steps">
+        <li class="{% if progress.explanation_viewed %}done{% endif %}">
+            {% if progress.explanation_viewed %}{% icon 'check' size=16 color='#4A8B5C' %}{% else %}<span class="err-step-num">1</span>{% endif %}
+            Изучить объяснение
+        </li>
+        <li class="{% if progress.correct_count >= 1 %}done{% endif %}">
+            {% if progress.correct_count >= 1 %}{% icon 'check' size=16 color='#4A8B5C' %}{% else %}<span class="err-step-num">2</span>{% endif %}
+            Верно решить похожее задание
+        </li>
+        <li class="{% if progress.session_count >= 2 %}done{% endif %}">
+            {% if progress.session_count >= 2 %}{% icon 'check' size=16 color='#4A8B5C' %}{% else %}<span class="err-step-num">3</span>{% endif %}
+            Решить ещё одно — в другой день
+        </li>
+    </ol>
+
+    {% if not progress.explanation_viewed %}
+    <form method="post" action="{% url 'error_mark_explained' record.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-terra">Я разобрался</button>
+    </form>
+    {% elif record.status == 'reinforced' %}
+    <p class="err-reinforced">{% icon 'celebrate' size=18 %} Ошибка закреплена {{ record.reinforced_at|date:"d.m.Y" }}</p>
+    {% elif record.question %}
+    <a href="{% url 'test' record.question.test.lesson.pk %}" class="btn btn-terra">Пройти тест ещё раз</a>
+    {% endif %}
+</div>
+
+{% if attempts %}
+<div class="dash-side-card">
+    <h4 class="dash-side-title">История исправлений</h4>
+    <ul class="err-history">
+        {% for a in attempts %}
+        <li>
+            {% if a.is_correct %}{% icon 'check' size=14 color='#4A8B5C' %}{% else %}{% icon 'x' size=14 %}{% endif %}
+            <span>{{ a.attempted_at|date:"d.m.Y H:i" }}</span>
+            <b>{% if a.is_correct %}Решено верно{% else %}Снова ошибка{% endif %}</b>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

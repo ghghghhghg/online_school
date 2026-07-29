@@ -1,44 +1,67 @@
 {% extends 'school/base_platform.html' %}
+{% load icons %}
 
-{% block title %}Тетрадь ошибок{% endblock %}
+{% block title %}Работа над ошибками{% endblock %}
 
 {% block content %}
-<h2 class="mb-2">📕 Тетрадь ошибок</h2>
-<p class="text-muted mb-4">Здесь собраны вопросы из последних попыток тестов, где были ошибки — повтори тему и пройди тест заново.</p>
+<h2 class="dash-greeting">Работа над ошибками</h2>
+<p class="dash-subtitle">Разберите ошибку, решите похожее задание — и закрепите результат</p>
 
-{% for data in courses_data %}
-<h5 class="mt-4 mb-3">{{ data.course.title }}</h5>
-{% for item in data.lessons %}
-<div class="card mb-3 p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <strong>{{ item.lesson.title }}</strong>
-        <div>
-            <a href="{% url 'lesson' item.lesson.pk %}" class="btn btn-outline-secondary btn-sm me-1">К уроку</a>
-            <a href="{% url 'test' item.lesson.pk %}" class="btn btn-primary btn-sm">Пройти тест ещё раз</a>
-        </div>
-    </div>
-    {% for log in item.wrong_logs %}
-    <div class="py-2" style="border-top: 1px solid var(--line);">
-        <p class="mb-1"><strong>{{ log.question.text }}</strong></p>
-        <p class="mb-1 small">
-            Ваш ответ: <span style="color: var(--pen);">{{ log.chosen_answer.text|default:'— не отвечено —' }}</span>
-        </p>
-        {% for answer in log.question.answers.all %}
-            {% if answer.is_correct %}
-            <p class="mb-1 small">Правильный: <strong>{{ answer.text }}</strong></p>
-            {% endif %}
+<div class="err-stats">
+    <div class="err-stat"><b>{{ stats.total }}</b><span>всего</span></div>
+    <div class="err-stat"><b>{{ stats.not_analyzed }}</b><span>не разобрано</span></div>
+    <div class="err-stat"><b>{{ stats.corrected_once }}</b><span>исправлено раз</span></div>
+    <div class="err-stat err-stat-good"><b>{{ stats.reinforced }}</b><span>закреплено</span></div>
+    {% if stats.regressed %}
+    <div class="err-stat err-stat-warn"><b>{{ stats.regressed }}</b><span>вернулось</span></div>
+    {% endif %}
+</div>
+
+{% if stats.total %}
+<div class="err-filters">
+    <div class="course-filters" style="justify-content:flex-start; margin-bottom:0;">
+        <a href="?group={{ group_by }}" class="filter-pill filter-pill-sm {% if not status_filter %}active{% endif %}">Все</a>
+        {% for value, label in status_choices %}
+        <a href="?status={{ value }}&group={{ group_by }}"
+           class="filter-pill filter-pill-sm {% if status_filter == value %}active{% endif %}">{{ label }}</a>
         {% endfor %}
-        {% if log.question.explanation %}
-        <p class="mb-0 small text-muted">💡 {{ log.question.explanation }}</p>
-        {% endif %}
     </div>
+    <div class="err-group-switch">
+        <a href="?status={{ status_filter }}&group=lesson"
+           class="{% if group_by == 'lesson' %}active{% endif %}">по темам</a>
+        <a href="?status={{ status_filter }}&group=error_type"
+           class="{% if group_by == 'error_type' %}active{% endif %}">по типу ошибки</a>
+    </div>
+</div>
+{% endif %}
+
+{% for group in groups %}
+<div class="err-group">
+    <div class="err-group-head">
+        <h4>{{ group.title }}</h4>
+        <span>{{ group.count }}</span>
+    </div>
+    {% for record in group.records %}
+    <a href="{% url 'error_detail' record.pk %}" class="err-card">
+        <div class="err-card-main">
+            <p class="err-question">{{ record.question.text|default:'Задание удалено'|truncatewords:14 }}</p>
+            <div class="err-card-meta">
+                <span class="err-status err-status-{{ record.status }}">{{ record.get_status_display }}</span>
+                {% if record.repeated_count > 1 %}
+                <span class="err-repeat">Повторилась {{ record.repeated_count }} раза</span>
+                {% endif %}
+            </div>
+        </div>
+        {% icon 'arrow-left' size=16 %}
+    </a>
     {% endfor %}
 </div>
-{% endfor %}
 {% empty %}
-<div class="card p-4 text-center">
-    <div style="font-size: 3rem;">🎉</div>
-    <p class="text-muted mb-0">Ошибок нет — либо все тесты сданы чисто, либо ещё не проходили тесты</p>
+<div class="dash-empty">
+    {% icon 'check-circle' size=40 color='#4A8B5C' %}
+    <h3>Ошибок нет</h3>
+    <p>Либо все тесты сданы без ошибок, либо вы их ещё не проходили.</p>
+    <a href="{% url 'student_profile' %}" class="btn btn-terra">На главную</a>
 </div>
 {% endfor %}
 {% endblock %}

@@ -1916,46 +1916,81 @@ def continue_learning(request, course_pk):
     messages.success(request, '🎉 Все уроки курса пройдены!')
     return redirect('course_lessons', slug=course.slug)
 
+
 @login_required
 def error_notebook(request):
     if request.user.is_staff:
         return redirect('teacher_dashboard')
 
-    # Берём последний результат по каждому тесту и его ошибки
-    results = TestResult.objects.filter(student=request.user).select_related(
-        'test', 'test__lesson', 'test__lesson__course'
+    from .services import analytics_repository as repo
+    from .models import ErrorStatus
+
+    status_filter = request.GET.get('status', '')
+    group_by = request.GET.get('group', 'lesson')
+
+    groups = repo.get_error_records(
+        request.user,
+        status=status_filter or None,
+        group_by=group_by,
     )
-
-    # Оставляем только самый свежий результат по каждому тесту
-    latest_by_test = {}
-    for r in results:
-        if r.test_id not in latest_by_test or r.created_at > latest_by_test[r.test_id].created_at:
-            latest_by_test[r.test_id] = r
-
-    # Собираем ошибки, группируем по курсам
-    courses_map = {}
-    for result in latest_by_test.values():
-        wrong_logs = result.answer_logs.filter(is_correct=False).select_related(
-            'question', 'chosen_answer'
-        )
-        if not wrong_logs:
-            continue
-        lesson = result.test.lesson
-        course = lesson.course
-        courses_map.setdefault(course, []).append({
-            'lesson': lesson,
-            'result': result,
-            'wrong_logs': wrong_logs,
-        })
-
-    courses_data = [
-        {'course': course, 'lessons': lessons}
-        for course, lessons in courses_map.items()
-    ]
+    stats = repo.get_error_stats(request.user)
 
     return render(request, 'school/error_notebook.html', {
-        'courses_data': courses_data,
+        'groups': groups,
+        'stats': stats,
+        'status_filter': status_filter,
+        'group_by': group_by,
+        'status_choices': ErrorStatus.choices,
     })
+
+
+@login_required
+def error_detail(request, pk):
+    """Разбор одной ошибки: объяснение, верный ответ, похожее задание."""
+    from .services import analytics_repository as repo
+
+    record = repo.get_error_record_for_student(request.user, pk)
+    if not record:
+        return redirect('error_notebook')
+
+    correct_answer = None
+    if record.question:
+        correct_answer = next(
+            (a for a in record.question.answers.all() if a.is_correct), None
+        )
+
+    attempts = list(record.correction_attempts.all())
+    correct_attempts = [a for a in attempts if a.is_correct]
+    sessions = {a.session_key for a in correct_attempts if a.session_key}
+
+    return render(request, 'school/error_detail.html', {
+        'record': record,
+        'correct_answer': correct_answer,
+        'attempts': attempts,
+        'progress': {
+            'explanation_viewed': bool(record.explanation_viewed_at),
+            'correct_count': len(correct_attempts),
+            'session_count': len(sessions),
+            'can_reinforce': record.can_be_reinforced(),
+        },
+    })
+
+
+@login_required
+def error_mark_explained(request, pk):
+    """Отметка «объяснение изучено» — первое из трёх условий закрепления."""
+    from django.utils import timezone as tz
+    from .models import ErrorRecord, ErrorStatus
+
+    record = get_object_or_404(ErrorRecord, pk=pk, student=request.user)
+    if request.method == 'POST' and not record.explanation_viewed_at:
+        record.explanation_viewed_at = tz.now()
+        if record.status == ErrorStatus.NOT_ANALYZED:
+            record.status = ErrorStatus.IN_PROGRESS
+        record.save(update_fields=['explanation_viewed_at', 'status'])
+        record.try_reinforce()
+        messages.success(request, 'Отмечено. Теперь решите похожее задание.')
+    return redirect('error_detail', pk=pk)
 
 def all_reviews_view(request):
     reviews = Review.objects.filter(is_published=True).prefetch_related('photos')
