@@ -17,6 +17,7 @@ from school.models import (
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
+from .recommendations import PRIORITY_NEAREST_DEADLINE
 
 # Качество данных, пригодное для расчётов
 USABLE_QUALITY = ('exact', 'reconstructed', 'estimated')
@@ -304,7 +305,7 @@ def build_recommendation_candidates(student, now=None) -> list:
     for hw in pending_homework:
         candidates.append(Recommendation(
             action_type=ActionType.SUBMIT_HOMEWORK,
-            priority=PRIORITY_OVERDUE_REQUIRED,
+            priority=PRIORITY_NEAREST_DEADLINE,
             title=hw.title,
             reason=f'Домашняя работа к уроку «{hw.lesson.title}» ещё не сдана',
             url=reverse('homework', kwargs={'pk': hw.lesson.pk}),
