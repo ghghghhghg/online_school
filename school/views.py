@@ -303,7 +303,23 @@ def course_lessons_view(request, slug):
 
 @login_required
 def lesson_view(request, pk):
-    lesson = get_object_or_404(Lesson, pk=pk)
+    lesson = get_object_or_404(
+        Lesson.objects.select_related('course', 'module'), pk=pk
+    )
+
+    from .models import LessonViewProgress
+    from .services.lesson_flow import choose_lesson_step
+
+    view_progress = None
+    if not request.user.is_staff:
+        view_progress, created = LessonViewProgress.objects.get_or_create(
+            student=request.user, lesson=lesson
+        )
+        if not created:
+            LessonViewProgress.objects.filter(pk=view_progress.pk).update(
+                returns_count=view_progress.returns_count + 1
+            )
+
     is_completed = LessonProgress.objects.filter(
         student=request.user, lesson=lesson
     ).exists()
@@ -312,17 +328,94 @@ def lesson_view(request, pk):
     if hasattr(lesson, 'test'):
         test_result = TestResult.objects.filter(
             student=request.user, test=lesson.test
+        ).order_by('-created_at').first()
+
+    homework = Homework.objects.filter(lesson=lesson).first()
+    homework_submission = None
+    if homework:
+        homework_submission = HomeworkSubmission.objects.filter(
+            homework=homework, student=request.user
         ).first()
 
-    comments = lesson.comments.filter(parent=None).select_related('author').prefetch_related('replies__author')
+    completed_ids = LessonProgress.objects.filter(
+        student=request.user, lesson__course=lesson.course
+    ).values_list('lesson_id', flat=True)
+    next_lesson = (
+        lesson.course.lessons
+        .exclude(id__in=completed_ids).exclude(pk=lesson.pk)
+        .order_by('module__order', 'order').first()
+    )
+
+    step = choose_lesson_step(
+        lesson, view_progress, test_result, homework, homework_submission, next_lesson
+    )
+
+    comments = (
+        lesson.comments.filter(parent=None)
+        .select_related('author').prefetch_related('replies__author')
+    )
 
     return render(request, 'school/lesson.html', {
         'lesson': lesson,
         'is_completed': is_completed,
         'test_result': test_result,
+        'homework': homework,
+        'homework_submission': homework_submission,
         'comments': comments,
         'timecodes': lesson.timecodes.all(),
+        'view_progress': view_progress,
+        'step': step,
+        'next_lesson': next_lesson,
     })
+
+
+@login_required
+def lesson_video_progress(request, pk):
+    """AJAX: сохранение позиции и процента просмотра."""
+    from django.http import JsonResponse
+    from django.utils import timezone as tz
+    from .models import LessonViewProgress
+
+    if request.method != 'POST' or request.user.is_staff:
+        return JsonResponse({'ok': False}, status=400)
+
+    lesson = get_object_or_404(Lesson, pk=pk)
+    progress, _ = LessonViewProgress.objects.get_or_create(
+        student=request.user, lesson=lesson
+    )
+
+    try:
+        position = int(float(request.POST.get('position', 0)))
+        percent = min(100, max(0, int(float(request.POST.get('percent', 0)))))
+    except (TypeError, ValueError):
+        return JsonResponse({'ok': False}, status=400)
+
+    progress.position_seconds = position
+    progress.watched_percent = max(progress.watched_percent, percent)
+    if progress.is_watched and not progress.completed_at:
+        progress.completed_at = tz.now()
+    progress.save(update_fields=[
+        'position_seconds', 'watched_percent', 'completed_at',
+    ])
+
+    return JsonResponse({'ok': True, 'watched': progress.is_watched})
+
+
+@login_required
+def lesson_mark_watched(request, pk):
+    """Ручная отметка — когда видео недоступно или уже изучено."""
+    from django.utils import timezone as tz
+    from .models import LessonViewProgress
+
+    lesson = get_object_or_404(Lesson, pk=pk)
+    if request.method == 'POST' and not request.user.is_staff:
+        progress, _ = LessonViewProgress.objects.get_or_create(
+            student=request.user, lesson=lesson
+        )
+        progress.marked_manually = True
+        progress.completed_at = progress.completed_at or tz.now()
+        progress.save(update_fields=['marked_manually', 'completed_at'])
+    return redirect('lesson', pk=pk)
 
 
 @login_required

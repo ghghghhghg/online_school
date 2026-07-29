@@ -982,6 +982,48 @@ a > .card:hover{ background-color:var(--cream); }
   .res-next .btn{ width:100%; }
 }
 
+/* ---------- Экран урока ---------- */
+.lsn-breadcrumbs{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  font-size:13px; color:var(--ink-soft); margin-bottom:16px;
+}
+.lsn-breadcrumbs a{ color:var(--ink-soft); text-decoration:none; }
+.lsn-breadcrumbs a:hover{ color:var(--terra); }
+
+.lsn-head{ margin-bottom:18px; }
+.lsn-title{ font-size:26px; font-weight:800; margin:0 0 8px; }
+.lsn-meta{ display:flex; gap:16px; flex-wrap:wrap; font-size:13.5px; color:var(--ink-soft); }
+.lsn-meta span{ display:inline-flex; align-items:center; gap:5px; }
+.lsn-watched{ color:#2E5B39; font-weight:600; }
+
+.lsn-goal{
+  display:flex; gap:14px; align-items:flex-start;
+  background:var(--peach); border-radius:16px; padding:18px 22px; margin-bottom:22px;
+}
+.lsn-goal span{ display:block; font-size:12px; color:var(--terra); font-weight:700;
+                text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.lsn-goal p{ margin:0; font-size:14.5px; }
+
+.lsn-next{
+  background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:22px 26px; display:flex; justify-content:space-between;
+  align-items:center; gap:20px; flex-wrap:wrap; margin:24px 0 12px;
+}
+.lsn-next-hint{ font-size:14.5px; margin:6px 0 0; }
+
+.lsn-mark-form{ margin-bottom:28px; }
+.lsn-mark-btn{
+  background:none; border:none; cursor:pointer; font-family:inherit;
+  display:inline-flex; align-items:center; gap:7px;
+  color:var(--ink-soft); font-size:13.5px; padding:6px 0;
+}
+.lsn-mark-btn:hover{ color:var(--terra); }
+
+@media (max-width: 600px){
+  .lsn-next{ flex-direction:column; align-items:stretch; }
+  .lsn-next .btn{ width:100%; }
+}
+
 
 /* ============================================================
    18. ТАЙМКОДЫ ВИДЕО

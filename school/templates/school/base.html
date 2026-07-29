@@ -15,7 +15,6 @@
     <link href="{% static 'school/style.css' %}" rel="stylesheet">
 </head>
 <body>
-
 {% block header %}
 <header>
     <div class="container nav">
@@ -319,5 +318,6 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

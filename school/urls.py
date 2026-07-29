@@ -130,5 +130,8 @@ urlpatterns = [
     path('my-errors/<int:pk>/', views.error_detail, name='error_detail'),
     path('my-errors/<int:pk>/explained/', views.error_mark_explained, name='error_mark_explained'),
 
+    path('lesson/<int:pk>/video-progress/', views.lesson_video_progress, name='lesson_video_progress'),
+    path('lesson/<int:pk>/mark-watched/', views.lesson_mark_watched, name='lesson_mark_watched'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

@@ -73,7 +73,7 @@ class LessonInline(admin.TabularInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ['title', 'course', 'module', 'order']
+    list_display = ['title', 'course', 'module', 'duration_minutes', 'order']
     inlines = [TimecodeInline]
 
 

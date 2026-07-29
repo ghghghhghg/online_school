@@ -219,6 +219,14 @@ class Lesson(models.Model):
     conspect = CloudinaryField(resource_type='raw', blank=True, null=True, verbose_name='Конспект (PDF)')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     created_at = models.DateTimeField(auto_now_add=True)
+    learning_goal = models.TextField(
+        blank=True, verbose_name='Учебная цель',
+        help_text='Что ученик будет уметь после урока. Одно-два предложения.',
+    )
+    duration_minutes = models.PositiveSmallIntegerField(
+        default=0, verbose_name='Длительность, мин',
+        help_text='0 — не показывать',
+    )
 
     class Meta:
         verbose_name = 'Урок'
@@ -1397,4 +1405,64 @@ class PlanItem(models.Model):
             PlanStatus.DONE_ON_TIME if when <= self.due_at else PlanStatus.DONE_LATE
         )
         self.save(update_fields=['completed_at', 'status'])
+        
+
+class LessonViewProgress(models.Model):
+    """
+    Прогресс просмотра урока (ТЗ 7).
+
+    Отдельно от LessonProgress: тот фиксирует «урок засчитан»,
+    этот — сколько реально просмотрено и где остановились.
+    """
+    WATCHED_THRESHOLD_PERCENT = 85
+
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='lesson_views', verbose_name='Ученик',
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE,
+        related_name='view_progress', verbose_name='Урок',
+    )
+    position_seconds = models.PositiveIntegerField(
+        default=0, verbose_name='Последняя позиция, сек',
+    )
+    watched_percent = models.PositiveSmallIntegerField(
+        default=0, validators=[MaxValueValidator(100)],
+        verbose_name='Просмотрено, %',
+    )
+    marked_manually = models.BooleanField(
+        default=False, verbose_name='Отмечен вручную',
+    )
+    returns_count = models.PositiveSmallIntegerField(
+        default=0, verbose_name='Возвращений к уроку',
+    )
+    first_opened_at = models.DateTimeField(auto_now_add=True)
+    last_opened_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Просмотр урока'
+        verbose_name_plural = 'Просмотры уроков'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'lesson'], name='unique_lesson_view',
+            ),
+        ]
+        indexes = [models.Index(fields=['student', 'lesson'])]
+
+    def __str__(self):
+        return f'{self.student.username} — {self.lesson.title}: {self.watched_percent}%'
+
+    @property
+    def is_watched(self) -> bool:
+        """Просмотрено по порогу или отмечено вручную (ТЗ 7)."""
+        return (
+            self.marked_manually
+            or self.watched_percent >= self.WATCHED_THRESHOLD_PERCENT
+        )
+
+    @property
+    def is_started(self) -> bool:
+        return self.watched_percent > 0 and not self.is_watched
 
