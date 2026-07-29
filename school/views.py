@@ -524,16 +524,52 @@ def test_view(request, pk):
 def test_result_view(request, pk):
     lesson = get_object_or_404(Lesson, pk=pk)
     test = get_object_or_404(Test, lesson=lesson)
-    result = TestResult.objects.filter(
+
+    from .services.test_result import build_test_result
+
+    results = TestResult.objects.filter(
         student=request.user, test=test
-    ).first()
-    answer_logs = result.answer_logs.select_related(
-        'question', 'chosen_answer'
-    ).all() if result else []
+    ).order_by('-created_at')
+
+    result = results.first()
+    if not result:
+        return redirect('test', pk=lesson.pk)
+
+    previous_result = results[1] if results.count() > 1 else None
+
+    answer_logs = (
+        result.answer_logs
+        .select_related('question', 'chosen_answer')
+        .prefetch_related('question__answers')
+    )
+
+    completed_ids = LessonProgress.objects.filter(
+        student=request.user, lesson__course=lesson.course
+    ).values_list('lesson_id', flat=True)
+
+    next_lesson = (
+        lesson.course.lessons
+        .exclude(id__in=completed_ids)
+        .exclude(pk=lesson.pk)
+        .order_by('module__order', 'order')
+        .first()
+    )
+
+    data = build_test_result(
+        student=request.user,
+        lesson=lesson,
+        result=result,
+        answer_logs=answer_logs,
+        previous_result=previous_result,
+        next_lesson=next_lesson,
+        attempt_number=results.count(),
+    )
+
     return render(request, 'school/test_result.html', {
         'lesson': lesson,
         'test': test,
-        'result': result,
+        'data': data,
+        'result': result,          # для обратной совместимости
         'answer_logs': answer_logs,
     })
 

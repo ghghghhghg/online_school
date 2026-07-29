@@ -1,58 +1,119 @@
 {% extends 'school/base_platform.html' %}
-{% load static %}
-{% block content %}
-<div class="text-center mt-4">
-    {% if result.passed %}
-        <div class="display-1">🎉</div>
-        <h2 class="text-success">Тест сдан!</h2>
-    {% else %}
-        <div class="alert alert-warning text-center">
-            <img src="{% static 'school/images/fail.mp4' %}" alt="" style="max-width: 200px; border-radius: 12px; margin-bottom: 12px;">
-            <p class="mb-0">Тест не сдан, попробуй ещё раз</p>
-        </div>
-    {% endif %}
+{% load icons %}
 
-    <h4 class="mt-3">Результат: {{ result.score }}%</h4>
-    <p class="text-muted">Проходной балл: {{ test.pass_score }}%</p>
-    {% if answer_logs %}
-    <h5 class="mt-4 mb-3">Разбор ответов</h5>
-    {% for log in answer_logs %}
-    <div class="card mb-2 p-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <strong>{{ forloop.counter }}. {{ log.question.text }}</strong>
-            {% if log.is_correct %}
-                <span class="badge bg-success">✓</span>
-            {% else %}
-                <span class="badge bg-danger">✗</span>
-            {% endif %}
-        </div>
-        {% if not log.is_correct %}
-            <p class="mb-1 mt-2 small">
-                Ваш ответ: <span style="color: var(--pen);">{{ log.chosen_answer.text|default:'— не отвечено —' }}</span>
-            </p>
-            {% for answer in log.question.answers.all %}
-                {% if answer.is_correct %}
-                <p class="mb-1 small">Правильный ответ: <strong>{{ answer.text }}</strong></p>
-                {% endif %}
-            {% endfor %}
-            {% if log.question.explanation %}
-            <div class="alert alert-secondary mt-2 mb-0 small">
-                💡 {{ log.question.explanation }}
-            </div>
-            {% endif %}
+{% block title %}Результат теста{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'lesson' lesson.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+    {% icon 'arrow-left' size=14 %} К уроку
+</a>
+
+<!-- Итог -->
+<div class="res-hero {% if data.passed %}res-hero-passed{% endif %}">
+    <div class="res-score-block">
+        <span class="res-score-value">{{ data.score }}<small>%</small></span>
+        {% if data.has_points %}
+        <span class="res-points">{{ data.earned_points|floatformat:"-2" }} из {{ data.max_points|floatformat:"-2" }} баллов</span>
         {% endif %}
     </div>
-    {% endfor %}
-    {% endif %}
-    <div class="mt-4 d-flex gap-2 justify-content-center">
-        {% if not result.passed %}
-            <a href="{% url 'test' lesson.pk %}" class="btn btn-primary">
-                Попробовать ещё раз
-            </a>
+
+    <div class="res-summary">
+        <h2>{% if data.passed %}Тест сдан{% else %}Тест не сдан{% endif %}</h2>
+        <p class="res-lesson">{{ lesson.title }}</p>
+
+        <div class="res-counters">
+            <span class="res-counter res-counter-ok">
+                {% icon 'check' size=15 color='#4A8B5C' %} Верно: {{ data.correct_count }}
+            </span>
+            {% if data.wrong_count %}
+            <span class="res-counter res-counter-bad">
+                {% icon 'x' size=15 %} Ошибок: {{ data.wrong_count }}
+            </span>
+            {% endif %}
+            {% if data.attempt_number > 1 %}
+            <span class="res-counter">Попытка {{ data.attempt_number }}</span>
+            {% endif %}
+        </div>
+
+        {% if data.previous_score is not None %}
+        <div class="res-compare {% if data.improved %}res-compare-up{% endif %}">
+            Прошлый результат: {{ data.previous_score }}%
+            {% if data.score_delta > 0 %}
+                <b>▲ +{{ data.score_delta }}</b>
+            {% elif data.score_delta < 0 %}
+                <b>▼ {{ data.score_delta }}</b>
+            {% else %}
+                <b>без изменений</b>
+            {% endif %}
+        </div>
         {% endif %}
-        <a href="{% url 'course_lessons' lesson.course.slug %}" class="btn btn-outline-secondary">
-            К списку уроков
-        </a>
     </div>
 </div>
+
+<!-- Главный следующий шаг -->
+{% if data.next_step %}
+<div class="res-next">
+    <div>
+        <span class="dash-card-label">Следующий шаг</span>
+        <p class="res-next-reason">{{ data.next_step.reason }}</p>
+    </div>
+    <a href="{{ data.next_step.url }}" class="btn btn-terra">{{ data.next_step.label }}</a>
+</div>
+{% endif %}
+
+<!-- Разбор ошибок -->
+{% if data.wrong_logs %}
+<h4 class="res-section-title">Разбор ошибок</h4>
+{% for log in data.wrong_logs %}
+<div class="res-error-card">
+    <p class="res-question">{{ forloop.counter }}. {{ log.question.text }}</p>
+
+    <div class="res-answer res-answer-wrong">
+        {% icon 'x' size=16 %}
+        <div>
+            <span>Ваш ответ</span>
+            <b>{{ log.chosen_answer.text|default:'нет ответа' }}</b>
+        </div>
+    </div>
+
+    {% for answer in log.question.answers.all %}
+        {% if answer.is_correct %}
+        <div class="res-answer res-answer-right">
+            {% icon 'check' size=16 color='#4A8B5C' %}
+            <div>
+                <span>Правильный ответ</span>
+                <b>{{ answer.text }}</b>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    {% if log.question.explanation %}
+    <div class="err-explanation">
+        {% icon 'lightbulb' size=18 %}
+        <div>
+            <span>Объяснение</span>
+            <p>{{ log.question.explanation }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="res-clean">
+    {% icon 'celebrate' size=32 %}
+    <div>
+        <b>Ошибок нет</b>
+        <span>Все ответы верные — тема усвоена</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Второстепенные действия -->
+<div class="res-secondary">
+    <a href="{% url 'test' lesson.pk %}" class="btn btn-outline">Пройти тест ещё раз</a>
+    <a href="{% url 'course_lessons' lesson.course.slug %}" class="btn btn-outline-secondary">Все уроки</a>
+</div>
+
 {% endblock %}
