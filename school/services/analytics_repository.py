@@ -17,7 +17,7 @@ from school.models import (
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
-from .recommendations import PRIORITY_NEAREST_DEADLINE
+from .recommendations import PRIORITY_NEAREST_DEADLINE, PRIORITY_REQUIRED_UNDATED
 
 # Качество данных, пригодное для расчётов
 USABLE_QUALITY = ('exact', 'reconstructed', 'estimated')
@@ -303,14 +303,26 @@ def build_recommendation_candidates(student, now=None) -> list:
         .select_related('lesson', 'lesson__course')[:5]
     )
     for hw in pending_homework:
+        due_at = getattr(hw, 'due_at', None)
+        if due_at and due_at < now:
+            priority = PRIORITY_OVERDUE_REQUIRED
+            reason = f'Срок сдачи истёк {due_at:%d.%m}'
+        elif due_at:
+            priority = PRIORITY_NEAREST_DEADLINE
+            reason = f'Сдать до {due_at:%d.%m}'
+        else:
+            priority = PRIORITY_REQUIRED_UNDATED
+            reason = f'Домашняя работа к уроку «{hw.lesson.title}» ещё не сдана'
+
         candidates.append(Recommendation(
             action_type=ActionType.SUBMIT_HOMEWORK,
-            priority=PRIORITY_NEAREST_DEADLINE,
+            priority=priority,
             title=hw.title,
-            reason=f'Домашняя работа к уроку «{hw.lesson.title}» ещё не сдана',
+            reason=reason,
             url=reverse('homework', kwargs={'pk': hw.lesson.pk}),
             course_title=hw.lesson.course.title,
             estimated_minutes=30,
+            due_at=due_at,
         ))
 
     # 3. Неразобранные ошибки

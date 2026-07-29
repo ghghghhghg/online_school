@@ -142,3 +142,38 @@ class DayStateTests(SimpleTestCase):
         state = build_day_state(items, completed_today=2, total_today=2)
         self.assertTrue(state.is_completed)
         self.assertEqual(state.next_action.title, 'Пробник')
+
+class UndatedRequiredTests(SimpleTestCase):
+    def test_errors_beat_undated_homework(self):
+        """Ошибки конкретны и мешают сейчас, домашка без срока подождёт."""
+        from school.services.recommendations import PRIORITY_REQUIRED_UNDATED
+        items = [
+            rec(action=ActionType.SUBMIT_HOMEWORK,
+                priority=PRIORITY_REQUIRED_UNDATED, title='Домашка'),
+            rec(action=ActionType.REVIEW_ERRORS,
+                priority=PRIORITY_CRITICAL_ERROR, title='Ошибки'),
+        ]
+        self.assertEqual(select_next_action(items).title, 'Ошибки')
+
+    def test_dated_homework_beats_errors(self):
+        """С реальным сроком домашка снова важнее."""
+        from school.services.recommendations import PRIORITY_NEAREST_DEADLINE
+        items = [
+            rec(action=ActionType.SUBMIT_HOMEWORK,
+                priority=PRIORITY_NEAREST_DEADLINE, title='Домашка',
+                due=NOW + timedelta(days=1)),
+            rec(action=ActionType.REVIEW_ERRORS,
+                priority=PRIORITY_CRITICAL_ERROR, title='Ошибки'),
+        ]
+        self.assertEqual(select_next_action(items).title, 'Домашка')
+
+    def test_undated_required_beats_next_topic(self):
+        """Но выданная домашка всё равно важнее новой темы."""
+        from school.services.recommendations import PRIORITY_REQUIRED_UNDATED
+        items = [
+            rec(action=ActionType.WATCH_LESSON,
+                priority=PRIORITY_NEXT_TOPIC, title='Урок'),
+            rec(action=ActionType.SUBMIT_HOMEWORK,
+                priority=PRIORITY_REQUIRED_UNDATED, title='Домашка'),
+        ]
+        self.assertEqual(select_next_action(items).title, 'Домашка')

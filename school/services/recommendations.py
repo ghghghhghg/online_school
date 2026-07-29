@@ -23,15 +23,17 @@ class ActionType:
 
 
 # Приоритеты из ТЗ 17. Меньше — важнее.
-PRIORITY_OVERDUE_REQUIRED = 1
-PRIORITY_STARTED_REQUIRED = 2
-PRIORITY_NEAREST_DEADLINE = 3
-PRIORITY_PLANNED_TODAY = 4
-PRIORITY_CRITICAL_ERROR = 5
-PRIORITY_WEAK_TOPIC = 6
-PRIORITY_DUE_REVIEW = 7
-PRIORITY_NEXT_TOPIC = 8
-PRIORITY_EXTRA_PRACTICE = 9
+# Шаг 10 оставляет место для промежуточных правил без пересборки шкалы.
+PRIORITY_OVERDUE_REQUIRED = 10      # просроченное обязательное
+PRIORITY_STARTED_REQUIRED = 20      # начатая обязательная работа
+PRIORITY_NEAREST_DEADLINE = 30      # задача с ближайшим дедлайном
+PRIORITY_PLANNED_TODAY = 40         # запланировано на сегодня
+PRIORITY_CRITICAL_ERROR = 50        # критическая ошибка
+PRIORITY_REQUIRED_UNDATED = 55      # обязательное, но без срока
+PRIORITY_WEAK_TOPIC = 60            # слабая тема
+PRIORITY_DUE_REVIEW = 70            # повторение по сроку
+PRIORITY_NEXT_TOPIC = 80            # следующая тема программы
+PRIORITY_EXTRA_PRACTICE = 90        # дополнительная практика
 
 
 BUTTON_LABELS = {
