@@ -658,7 +658,7 @@ a > .card:hover{ background-color:var(--cream); }
   border-bottom:none;
 }
 .cab-topbar-inner{
-  max-width:1440px; margin:0 auto; padding:0 28px;
+  padding:0 28px;
   height:72px; display:flex; align-items:center; justify-content:space-between; gap:20px;
 }
 .cab-logo{
@@ -705,7 +705,7 @@ a > .card:hover{ background-color:var(--cream); }
 /* ---------- Кабинет: боковое меню ---------- */
 .cab-layout{
   display:flex; align-items:flex-start;
-  max-width:1440px; margin:0 auto; width:100%;
+  width:100%;
 }
 .cab-sidebar{
   width:272px; flex:none; align-self:stretch;
@@ -735,6 +735,7 @@ a > .card:hover{ background-color:var(--cream); }
 .cab-main{
   flex:1; min-width:0;
   padding:32px 40px 80px;
+  max-width:1200px;
 }
 
 @media (max-width: 1100px){
