@@ -2344,13 +2344,17 @@ def practice_session_view(request, pk):
         finish_session(session)
         return redirect('practice_result', pk=session.pk)
 
+    total = session.total_count
+    progress_percent = int(current.order / total * 100) if total else 0
+
     return render(request, 'school/practice_task.html', {
         'session': session,
         'answer': current,
         'question': current.question,
         'answers': current.question.answers.all(),
         'position': current.order,
-        'total': session.total_count,
+        'total': total,
+        'progress_percent': progress_percent,
     })
 
 
