@@ -110,7 +110,7 @@ def build_dashboard(student, now=None) -> DashboardData:
         day_state=build_day_state(candidates, completed_today, total_today),
         courses=course_cards,
         weak_topics=weak_topics[:3],
-        best_score=repo.get_best_test_score(student),
+        best_score=repo.get_best_mock_result(student),
         has_courses=True,
         prediction_available=False,  # включится после внесения шкал и накопления данных
     )

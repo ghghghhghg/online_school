@@ -11,12 +11,12 @@
         <h2 class="dash-greeting">Привет, {{ user.first_name }}!</h2>
         <p class="dash-subtitle">Продолжай в том же темпе — у тебя всё получится</p>
     </div>
-    {% if dashboard.best_score %}
-    <div class="dash-stat-tile">
-        <span class="dash-stat-label">Лучший результат</span>
-        <span class="dash-stat-value">{{ dashboard.best_score }}%</span>
-    </div>
-    {% endif %}
+        {% if dashboard.best_score %}
+        <div class="dash-stat-tile">
+            <span class="dash-stat-label">Лучший пробник</span>
+            <span class="dash-stat-value">{{ dashboard.best_score }}<small> баллов</small></span>
+        </div>
+        {% endif %}
 </div>
 
 {% if pending_enrollments %}

@@ -70,12 +70,24 @@ class DashboardTests(TestCase):
         data = build_dashboard(self.user)
         self.assertEqual(data.courses[0].subject_name, 'Русский язык')
 
-    def test_best_score(self):
+    def test_best_mock_result(self):
+        from school.models import ExamAttempt, ExamMock
+        from django.utils import timezone
+
         self._enroll()
-        test = Test.objects.create(lesson=self.lessons[0], title='Т', pass_score=70)
-        TestResult.objects.create(student=self.user, test=test, score=64, passed=False)
-        TestResult.objects.create(student=self.user, test=test, score=88, passed=True)
-        self.assertEqual(build_dashboard(self.user).best_score, 88)
+        exam = ExamMock.objects.create(
+            course=self.course, title='Пробник', duration_minutes=210
+        )
+        ExamAttempt.objects.create(
+            student=self.user, exam=exam, submitted_at=timezone.now(),
+            earned_points=Decimal('30'), max_points=Decimal('50'),
+            analytics_data_quality='exact',
+        )
+        self.assertEqual(build_dashboard(self.user).best_score, 60)
+
+    def test_no_mock_gives_no_best_score(self):
+        self._enroll()
+        self.assertIsNone(build_dashboard(self.user).best_score)
 
     def test_weak_topic_detected(self):
         self._enroll()

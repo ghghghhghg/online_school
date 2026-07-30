@@ -416,11 +416,29 @@ def build_recommendation_candidates(student, now=None) -> list:
 
     return candidates
 
-def get_best_test_score(student) -> int | None:
-    """Лучший результат теста в процентах — для шапки Главной."""
-    from django.db.models import Max
-    result = TestResult.objects.filter(student=student).aggregate(m=Max('score'))
-    return result['m']
+def get_best_mock_result(student):
+    """
+    Лучший результат пробника в процентах первичных баллов.
+    Именно пробник, а не мини-проверка урока: он показывает
+    готовность к экзамену, а не усвоение одной темы.
+    """
+    from school.models import ExamAttempt
+
+    best = (
+        ExamAttempt.objects
+        .filter(
+            student=student,
+            submitted_at__isnull=False,
+            analytics_data_quality__in=PRECISE_QUALITY,
+            max_points__gt=0,
+        )
+        .order_by('-earned_points')
+        .values('earned_points', 'max_points')
+        .first()
+    )
+    if not best:
+        return None
+    return int(float(best['earned_points']) / float(best['max_points']) * 100)
 
 
 def get_today_task_counts(student, now=None) -> tuple[int, int]:
