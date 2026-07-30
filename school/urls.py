@@ -133,5 +133,10 @@ urlpatterns = [
     path('lesson/<int:pk>/video-progress/', views.lesson_video_progress, name='lesson_video_progress'),
     path('lesson/<int:pk>/mark-watched/', views.lesson_mark_watched, name='lesson_mark_watched'),
 
+    path('plan/', views.study_plan_view, name='study_plan'),
+    path('plan/generate/', views.plan_generate, name='plan_generate'),
+    path('plan/item/<int:pk>/complete/', views.plan_item_complete, name='plan_item_complete'),
+    path('plan/item/<int:pk>/skip/', views.plan_item_skip, name='plan_item_skip'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

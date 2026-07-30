@@ -2179,3 +2179,107 @@ def teacher_delete_course_teacher(request, pk):
         display.delete()
         messages.success(request, 'Преподаватель удалён со страницы курса')
     return redirect('teacher_edit_course', pk=course_pk)
+
+
+@login_required
+def study_plan_view(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    from datetime import timedelta
+    from django.utils import timezone as tz
+    from .models import PlanItem, PlanStatus, StudyPlan
+
+    mode = request.GET.get('mode', 'today')
+    today = tz.localdate()
+
+    plans = StudyPlan.objects.filter(student=request.user, status='active')
+    items = (
+        PlanItem.objects
+        .filter(plan__in=plans)
+        .exclude(status__in=PlanStatus.cancelled())
+        .select_related('plan', 'plan__subject')
+        .order_by('due_at', 'priority', 'order')
+    )
+
+    # Просроченные помечаем на лету
+    PlanItem.objects.filter(
+        plan__in=plans, status=PlanStatus.PLANNED, due_at__lt=tz.now()
+    ).update(status=PlanStatus.OVERDUE)
+
+    if mode == 'week':
+        end = today + timedelta(days=6)
+        visible = items.filter(due_at__date__gte=today, due_at__date__lte=end)
+    elif mode == 'all':
+        visible = items
+    else:
+        visible = items.filter(due_at__date__lte=today)
+
+    overdue = items.filter(status=PlanStatus.OVERDUE)
+    today_items = items.filter(due_at__date=today)
+    done_today = today_items.filter(status__in=PlanStatus.completed()).count()
+
+    by_day = {}
+    for item in visible:
+        by_day.setdefault(item.due_at.date(), []).append(item)
+
+    days = [
+        {
+            'date': day,
+            'items': day_items,
+            'minutes': sum(i.estimated_minutes for i in day_items),
+            'is_today': day == today,
+        }
+        for day, day_items in sorted(by_day.items())
+    ]
+
+    return render(request, 'school/plan.html', {
+        'mode': mode,
+        'days': days,
+        'today': today,
+        'overdue_count': overdue.count(),
+        'today_total': today_items.count(),
+        'today_done': done_today,
+        'has_plan': plans.exists(),
+    })
+
+
+@login_required
+def plan_generate(request):
+    """Создать или пересобрать план по всем курсам ученика."""
+    from .services.analytics_repository import get_enrolled_courses
+    from .services.planner import build_plan_for_student
+
+    if request.method == 'POST' and not request.user.is_staff:
+        created = 0
+        for course in get_enrolled_courses(request.user):
+            if build_plan_for_student(request.user, course):
+                created += 1
+        if created:
+            messages.success(request, 'План составлен')
+        else:
+            messages.info(request, 'Пока нечего планировать — все задачи выполнены')
+    return redirect('study_plan')
+
+
+@login_required
+def plan_item_complete(request, pk):
+    """Отметить задачу выполненной."""
+    from .models import PlanItem
+
+    item = get_object_or_404(PlanItem, pk=pk, plan__student=request.user)
+    if request.method == 'POST':
+        item.mark_completed()
+        messages.success(request, 'Задача выполнена')
+    return redirect('study_plan')
+
+
+@login_required
+def plan_item_skip(request, pk):
+    from .models import PlanItem, PlanStatus
+
+    item = get_object_or_404(PlanItem, pk=pk, plan__student=request.user)
+    if request.method == 'POST':
+        item.status = PlanStatus.SKIPPED
+        item.save(update_fields=['status'])
+    return redirect('study_plan')

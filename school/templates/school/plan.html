@@ -1,0 +1,107 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Учебный план{% endblock %}
+
+{% block content %}
+<div class="dash-header">
+    <div>
+        <h2 class="dash-greeting">Учебный план</h2>
+        <p class="dash-subtitle">
+            {% if today_total %}
+                Сегодня: {{ today_done }} из {{ today_total }} выполнено
+            {% else %}
+                На сегодня задач нет
+            {% endif %}
+        </p>
+    </div>
+    <form method="post" action="{% url 'plan_generate' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline">
+            {% icon 'refresh' size=15 %} {% if has_plan %}Пересобрать{% else %}Составить план{% endif %}
+        </button>
+    </form>
+</div>
+
+{% if messages %}{% for m in messages %}
+<div class="alert alert-success">{{ m }}</div>
+{% endfor %}{% endif %}
+
+{% if overdue_count %}
+<div class="pf-alert">
+    {% icon 'stopwatch' size=20 %}
+    <span>Просроченных задач: <b>{{ overdue_count }}</b></span>
+</div>
+{% endif %}
+
+{% if has_plan %}
+<div class="course-filters" style="justify-content:flex-start;">
+    <a href="?mode=today" class="filter-pill filter-pill-sm {% if mode == 'today' %}active{% endif %}">Сегодня</a>
+    <a href="?mode=week" class="filter-pill filter-pill-sm {% if mode == 'week' %}active{% endif %}">Неделя</a>
+    <a href="?mode=all" class="filter-pill filter-pill-sm {% if mode == 'all' %}active{% endif %}">Весь план</a>
+</div>
+{% endif %}
+
+{% for day in days %}
+<div class="plan-day {% if day.is_today %}plan-day-today{% endif %}">
+    <div class="plan-day-head">
+        <h4>
+            {% if day.is_today %}Сегодня{% else %}{{ day.date|date:"d MMMM, l" }}{% endif %}
+        </h4>
+        <span>{% icon 'stopwatch' size=13 %} {{ day.minutes }} мин</span>
+    </div>
+
+    {% for item in day.items %}
+    <div class="plan-item plan-item-{{ item.status }}">
+        <div class="plan-item-body">
+            <span class="plan-item-type">{{ item.get_item_type_display }}</span>
+            <b>{{ item.title }}</b>
+            <span class="plan-item-meta">
+                {{ item.estimated_minutes }} мин
+                {% if item.status != 'planned' %}
+                · <span class="plan-status-{{ item.status }}">{{ item.get_status_display }}</span>
+                {% endif %}
+            </span>
+        </div>
+
+        {% if item.status == 'planned' or item.status == 'overdue' or item.status == 'in_progress' %}
+        <div class="plan-item-actions">
+            <form method="post" action="{% url 'plan_item_complete' item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="plan-btn plan-btn-done" title="Выполнено">
+                    {% icon 'check' size=16 color='#4A8B5C' %}
+                </button>
+            </form>
+            <form method="post" action="{% url 'plan_item_skip' item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="plan-btn" title="Пропустить">
+                    {% icon 'x' size=16 %}
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <span class="plan-item-done">{% icon 'check-circle' size=20 color='#4A8B5C' %}</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% empty %}
+
+<div class="dash-empty">
+    {% if has_plan %}
+        {% icon 'check-circle' size=40 color='#4A8B5C' %}
+        <h3>На этот период задач нет</h3>
+        <p>Посмотрите весь план или пересоберите его.</p>
+        <a href="?mode=all" class="btn btn-outline">Весь план</a>
+    {% else %}
+        {% icon 'map' size=40 %}
+        <h3>План ещё не составлен</h3>
+        <p>Составим маршрут по вашим курсам с учётом доступного времени.</p>
+        <form method="post" action="{% url 'plan_generate' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-terra">Составить план</button>
+        </form>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

@@ -17,7 +17,7 @@ from school.models import (
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
-from .recommendations import PRIORITY_NEAREST_DEADLINE, PRIORITY_REQUIRED_UNDATED
+from .recommendations import PRIORITY_NEAREST_DEADLINE, PRIORITY_REQUIRED_UNDATED, PRIORITY_PLANNED_TODAY
 
 # Качество данных, пригодное для расчётов
 USABLE_QUALITY = ('exact', 'reconstructed', 'estimated')
@@ -396,6 +396,23 @@ def build_recommendation_candidates(student, now=None) -> list:
             course_title=exam.course.title,
             estimated_minutes=exam.duration_minutes,
         ))
+        # Задачи плана на сегодня
+        today_items = (
+            PlanItem.objects
+            .filter(plan__student=student, required=True, due_at__date=now.date())
+            .filter(status__in=[PlanStatus.PLANNED, PlanStatus.IN_PROGRESS])
+            .select_related('plan')[:3]
+        )
+        for item in today_items:
+            candidates.append(Recommendation(
+                action_type=ActionType.PRACTICE,
+                priority=PRIORITY_PLANNED_TODAY,
+                title=item.title,
+                reason='Задача из плана на сегодня',
+                url=reverse('study_plan'),
+                estimated_minutes=item.estimated_minutes,
+                due_at=item.due_at,
+            ))
 
     return candidates
 

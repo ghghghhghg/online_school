@@ -1024,6 +1024,47 @@ a > .card:hover{ background-color:var(--cream); }
   .lsn-next .btn{ width:100%; }
 }
 
+/* ---------- Учебный план ---------- */
+.plan-day{ margin-bottom:24px; }
+.plan-day-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin-bottom:10px; gap:12px;
+}
+.plan-day-head h4{ font-size:16px; font-weight:700; margin:0; text-transform:capitalize; }
+.plan-day-head span{
+  font-size:12.5px; color:var(--ink-soft); display:inline-flex; align-items:center; gap:5px;
+}
+.plan-day-today .plan-day-head h4{ color:var(--terra); }
+
+.plan-item{
+  background:var(--white); border-radius:14px; box-shadow:0 4px 14px rgba(43,35,32,.05);
+  padding:14px 18px; margin-bottom:8px;
+  display:flex; align-items:center; gap:14px;
+}
+.plan-item-overdue{ border-left:3px solid var(--terra); }
+.plan-item-done_on_time, .plan-item-done_late{ opacity:.6; }
+.plan-item-skipped{ opacity:.45; }
+
+.plan-item-body{ flex:1; min-width:0; }
+.plan-item-type{
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--terra);
+}
+.plan-item-body b{ display:block; font-size:14.5px; margin:2px 0; }
+.plan-item-meta{ font-size:12.5px; color:var(--ink-soft); }
+.plan-status-overdue{ color:var(--terra); font-weight:600; }
+.plan-status-done_on_time, .plan-status-done_late{ color:#2E5B39; }
+
+.plan-item-actions{ display:flex; gap:6px; flex:none; }
+.plan-btn{
+  background:var(--cream); border:none; border-radius:10px; cursor:pointer;
+  width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+.plan-btn:hover{ background:var(--cream-2); }
+.plan-btn-done:hover{ background:#E7F3D9; }
+.plan-item-done{ flex:none; }
+
 
 /* ============================================================
    18. ТАЙМКОДЫ ВИДЕО
