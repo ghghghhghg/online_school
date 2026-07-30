@@ -1,116 +1,156 @@
 {% extends 'school/base_platform.html' %}
+{% load icons %}
 
-{% block title %}Моя статистика{% endblock %}
+{% block title %}Результаты{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Моя статистика</h2>
+<h2 class="dash-greeting">Результаты</h2>
+<p class="dash-subtitle">Как идёт подготовка и что стоит подтянуть</p>
 
-{% for data in courses_data %}
-<div class="card mb-4 p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">{{ data.course.title }}</h4>
-        {% if data.avg_score %}
-            <span class="badge {% if data.avg_score >= 70 %}bg-success{% else %}bg-danger{% endif %}"
-                  style="font-size: 0.9rem;">
-                средний балл тестов: {{ data.avg_score }}%
-            </span>
-        {% endif %}
+{% if not data.has_data %}
+<div class="dash-empty">
+    {% icon 'bar-chart' size=40 %}
+    <h3>Пока нет данных</h3>
+    <p>Пройдите первый тест — здесь появятся точность, освоение тем и динамика.</p>
+    <a href="{% url 'student_profile' %}" class="btn btn-terra">На главную</a>
+</div>
+{% else %}
+
+<!-- Сводка -->
+<div class="anl-metrics">
+    <div class="anl-metric">
+        <span class="anl-metric-label">Точность ответов</span>
+        <span class="anl-metric-value">
+            {% if data.overall_accuracy is not None %}{{ data.overall_accuracy }}<small>%</small>{% else %}—{% endif %}
+        </span>
+        <span class="anl-metric-note">Доля набранных первичных баллов</span>
     </div>
 
-    <div class="d-flex justify-content-between">
-        <span class="small text-muted">Прогресс по урокам</span>
-        <span class="small text-muted">{{ data.completed }} / {{ data.total_lessons }}</span>
-    </div>
-    <div class="progress mb-4" style="height: 10px;">
-        <div class="progress-bar" style="width: {{ data.percent }}%;"></div>
-    </div>
-
-    {% if data.weak_lessons %}
-    <div class="alert alert-warning">
-        <strong>🎯 Стоит повторить:</strong>
-        {% for lesson in data.weak_lessons %}
-            <a href="{% url 'lesson' lesson.pk %}" class="d-block mt-1">→ {{ lesson.title }}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if data.test_rows %}
-    <h6 class="mt-3 mb-2">Тесты</h6>
-    {% for row in data.test_rows %}
-    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--line);">
-        <span>{{ row.lesson.title }}</span>
-        <span>
-            {% if row.best_score is not None %}
-                <span class="badge {% if row.passed %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ row.best_score }}%
-                </span>
-                {% if row.attempts > 1 %}
-                    <small class="text-muted">({{ row.attempts }} попыток)</small>
-                {% endif %}
-            {% else %}
-                <small class="text-muted">не проходил</small>
-            {% endif %}
+    <div class="anl-metric">
+        <span class="anl-metric-label">Динамика за 14 дней</span>
+        <span class="anl-metric-value">
+            {% if data.trend is not None %}
+                {% if data.trend > 0 %}<span class="anl-up">+{{ data.trend }}</span>
+                {% elif data.trend < 0 %}<span class="anl-down">{{ data.trend }}</span>
+                {% else %}0{% endif %}
+            {% else %}—{% endif %}
+        </span>
+        <span class="anl-metric-note">
+            {% if data.trend is None %}Недостаточно данных для сравнения
+            {% elif data.trend > 0 %}Результат растёт
+            {% elif data.trend < 0 %}Результат снизился
+            {% else %}Без изменений{% endif %}
         </span>
     </div>
-    {% endfor %}
-    {% endif %}
 
-    {% if data.hw_rows %}
-    <h6 class="mt-4 mb-2">Домашние задания</h6>
-    {% for row in data.hw_rows %}
-    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--line);">
-        <span>{{ row.homework.title }}</span>
-        <span>
-            {% if not row.submission %}
-                <small class="text-muted">не сдано</small>
-            {% elif row.submission.status == 'pending' %}
-                <span class="badge bg-secondary">на проверке</span>
-            {% elif row.homework.grading_type == 'score' %}
-                <span class="badge {% if row.submission.score >= 70 %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ row.submission.score }}/100
-                </span>
-            {% elif row.homework.grading_type == 'pass_fail' %}
-                {% if row.submission.passed %}
-                    <span class="badge bg-success">зачтено</span>
-                {% else %}
-                    <span class="badge bg-danger">не зачтено</span>
-                {% endif %}
-            {% else %}
-                <span class="badge bg-success">проверено</span>
-            {% endif %}
-        </span>
+    <div class="anl-metric">
+        <span class="anl-metric-label">Стабильность</span>
+        <span class="anl-metric-value anl-metric-text">{{ data.stability_label }}</span>
+        <span class="anl-metric-note">Насколько ровные результаты</span>
     </div>
-    {% endfor %}
-    {% endif %}
 
-    {% if data.exam_rows %}
-    <h6 class="mt-4 mb-2">Пробники</h6>
-    {% for row in data.exam_rows %}
-    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--line);">
-        <span>{{ row.exam.title }}</span>
-        <span>
-            {% if row.last_score is not None %}
-                <span class="badge {% if row.last_score >= 70 %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ row.last_score }}%
-                </span>
-                {% if row.trend is not None %}
-                    {% if row.trend > 0 %}
-                        <small class="text-success">▲ +{{ row.trend }}%</small>
-                    {% elif row.trend < 0 %}
-                        <small class="text-danger">▼ {{ row.trend }}%</small>
-                    {% endif %}
-                {% endif %}
-            {% elif row.attempts_count %}
-                <small class="text-muted">ожидает проверки</small>
-            {% else %}
-                <small class="text-muted">не проходил</small>
-            {% endif %}
-        </span>
+    <div class="anl-metric">
+        <span class="anl-metric-label">Ошибки закреплены</span>
+        <span class="anl-metric-value">{{ data.correction_percent }}<small>%</small></span>
+        <span class="anl-metric-note">{{ data.errors.reinforced }} из {{ data.errors.total }} разобрано полностью</span>
     </div>
-    {% endfor %}
+</div>
+
+<!-- Время и активность -->
+<div class="anl-time-row">
+    <div class="anl-time">
+        <span>Сегодня</span><b>{{ data.today_minutes }} мин</b>
+    </div>
+    <div class="anl-time">
+        <span>За неделю</span><b>{{ data.week_minutes }} мин</b>
+    </div>
+    <div class="anl-time">
+        <span>За месяц</span><b>{{ data.month_minutes }} мин</b>
+    </div>
+    {% if data.streak_days %}
+    <div class="anl-time">
+        <span>Серия занятий</span><b>{{ data.streak_days }}</b>
+    </div>
+    {% endif %}
+    {% if data.adherence is not None %}
+    <div class="anl-time">
+        <span>План выполняется</span><b>{{ data.adherence }}%</b>
+    </div>
     {% endif %}
 </div>
-{% empty %}
-<p class="text-muted">Запишитесь на курс, чтобы видеть статистику</p>
+
+<!-- Прогноз -->
+<div class="dash-side-card" style="margin-bottom:28px;">
+    <h4 class="dash-side-title">Прогноз балла</h4>
+    {% if data.prediction_available %}
+        {# появится после внесения шкал перевода #}
+    {% else %}
+        <div class="dash-empty-small">
+            {% icon 'bar-chart' size=28 %}
+            <p>Недостаточно данных для прогноза</p>
+            <span>Прогноз появится после нескольких пробников и внесения шкалы перевода баллов.</span>
+        </div>
+    {% endif %}
+</div>
+
+<!-- По курсам -->
+{% for block in data.courses %}
+<div class="anl-course">
+    <div class="anl-course-head">
+        <div>
+            <span class="dash-course-subject">{{ block.subject_name }}</span>
+            <h4>{{ block.course.title }}</h4>
+        </div>
+        <div class="anl-course-stats">
+            <span>Программа: <b>{{ block.progress_percent }}%</b></span>
+            {% if block.accuracy_percent is not None %}
+            <span>Точность: <b>{{ block.accuracy_percent }}%</b></span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="pf-progress-track" style="max-width:none; margin-bottom:20px;">
+        <div class="pf-progress-fill {% if block.progress_percent == 100 %}done{% endif %}"
+             style="width: {{ block.progress_percent }}%;"></div>
+    </div>
+
+    {% if block.topics %}
+    <div class="anl-topics">
+        {% for topic in block.topics %}
+        <a href="{% url 'lesson' topic.lesson.pk %}" class="anl-topic anl-topic-{{ topic.status }}">
+            <span class="anl-topic-name">{{ topic.lesson.title }}</span>
+            <span class="anl-topic-bar">
+                <span style="width: {% if topic.is_reliable and topic.mastery %}{{ topic.mastery }}{% else %}0{% endif %}%;"></span>
+            </span>
+            <span class="anl-topic-value">
+                {% if topic.is_reliable and topic.mastery is not None %}{{ topic.mastery }}%{% else %}—{% endif %}
+            </span>
+            <span class="anl-topic-label">{{ topic.label }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="dash-muted">По этому курсу ещё нет попыток — освоение тем появится после первых тестов.</p>
+    {% endif %}
+</div>
 {% endfor %}
+
+<!-- Разбор ошибок -->
+{% if data.errors.total %}
+<div class="dash-side-card">
+    <h4 class="dash-side-title">Работа над ошибками</h4>
+    <div class="err-stats" style="margin:0 0 16px;">
+        <div class="err-stat"><b>{{ data.errors.not_analyzed }}</b><span>не разобрано</span></div>
+        <div class="err-stat"><b>{{ data.errors.in_progress }}</b><span>в работе</span></div>
+        <div class="err-stat"><b>{{ data.errors.corrected_once }}</b><span>исправлено раз</span></div>
+        <div class="err-stat err-stat-good"><b>{{ data.errors.reinforced }}</b><span>закреплено</span></div>
+        {% if data.errors.regressed %}
+        <div class="err-stat err-stat-warn"><b>{{ data.errors.regressed }}</b><span>вернулось</span></div>
+        {% endif %}
+    </div>
+    <a href="{% url 'error_notebook' %}" class="btn btn-outline">Разобрать ошибки</a>
+</div>
+{% endif %}
+
+{% endif %}
 {% endblock %}
