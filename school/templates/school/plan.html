@@ -46,7 +46,7 @@
 <div class="plan-day {% if day.is_today %}plan-day-today{% endif %}">
     <div class="plan-day-head">
         <h4>
-            {% if day.is_today %}Сегодня{% else %}{{ day.date|date:"d MMMM, l" }}{% endif %}
+            {% if day.is_today %}Сегодня{% else %}{{ day.date|date:"j F, l" }}{% endif %}
         </h4>
         <span>{% icon 'stopwatch' size=13 %} {{ day.minutes }} мин</span>
     </div>
