@@ -138,5 +138,7 @@ urlpatterns = [
     path('plan/item/<int:pk>/complete/', views.plan_item_complete, name='plan_item_complete'),
     path('plan/item/<int:pk>/skip/', views.plan_item_skip, name='plan_item_skip'),
 
+    path('heartbeat/', views.study_heartbeat, name='study_heartbeat'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

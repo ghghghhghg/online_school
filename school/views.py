@@ -2283,3 +2283,46 @@ def plan_item_skip(request, pk):
         item.status = PlanStatus.SKIPPED
         item.save(update_fields=['status'])
     return redirect('study_plan')
+
+@login_required
+def study_heartbeat(request):
+    """
+    Пульс активности от клиента. Вызывается раз в минуту,
+    только когда вкладка видима (ТЗ 15.11).
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone as tz
+
+    from .models import StudySession
+    from .services.study_time import seconds_to_add
+
+    if request.method != 'POST' or request.user.is_staff:
+        return JsonResponse({'ok': False}, status=400)
+
+    client_id = (request.POST.get('session_id') or '')[:64]
+    if not client_id:
+        return JsonResponse({'ok': False}, status=400)
+
+    now = tz.now()
+    activity_type = (request.POST.get('activity') or '')[:30]
+    course_id = request.POST.get('course_id') or None
+
+    session, created = StudySession.objects.get_or_create(
+        student=request.user,
+        client_session_id=client_id,
+        defaults={
+            'activity_type': activity_type,
+            'course_id': course_id if str(course_id).isdigit() else None,
+        },
+    )
+
+    if not created:
+        delta = seconds_to_add(session.last_activity_at, now)
+        StudySession.objects.filter(pk=session.pk).update(
+            active_seconds=session.active_seconds + delta,
+            last_activity_at=now,
+            activity_type=activity_type or session.activity_type,
+        )
+        session.active_seconds += delta
+
+    return JsonResponse({'ok': True, 'seconds': session.active_seconds})

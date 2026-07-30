@@ -1,56 +1,21 @@
 {% extends 'school/base.html' %}
 {% load static %}
 {% load icons %}
-{% block header %}
 
-<header>
-    <div class="container platform-header">
-        <a class="logo" href="{% url 'student_profile' %}" style="text-decoration:none;">
-            <img src="{% static 'school/favicon_not_background.png' %}" alt="" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 4px;"> ABS <span class="thin">SCHOOL</span>
+{% block header %}
+<header class="cab-topbar">
+    <div class="cab-topbar-inner">
+        <a class="cab-logo" href="{% url 'student_profile' %}">
+            <img src="{% static 'school/favicon_not_background.png' %}" alt="">
+            ABS <span class="thin">SCHOOL</span>
         </a>
-        <ul class="nav-links platform-nav">
-            <li>
-                <a href="{% url 'student_profile' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_profile' %}active-link{% endif %}">
-                    {% icon 'grid' size=17 %}<span>Главная</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'student_courses' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_courses' %}active-link{% endif %}">
-                    {% icon 'book-open' size=17 %}<span>Мои курсы</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'error_notebook' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'error_notebook' or request.resolver_match.url_name == 'error_detail' %}active-link{% endif %}">
-                    {% icon 'pencil' size=17 %}<span>Практика</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'study_plan' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'study_plan' %}active-link{% endif %}">
-                    {% icon 'map' size=17 %}<span>План</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'student_analytics' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_analytics' %}active-link{% endif %}">
-                    {% icon 'bar-chart' size=17 %}<span>Результаты</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'edit_student_profile' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'edit_student_profile' %}active-link{% endif %}">
-                    {% icon 'user' size=17 %}<span>Профиль</span>
-                </a>
-            </li>
-        </ul>
-        <div class="nav-actions">
+
+        <div class="cab-topbar-actions">
             <div class="dropdown">
-                <button class="btn position-relative" type="button"
-                        data-bs-toggle="dropdown"
-                        style="background: none; border: none; font-size: 1.1rem; padding: 0.25rem 0.4rem;">
+                <button class="cab-icon-btn" type="button" data-bs-toggle="dropdown" aria-label="Уведомления">
                     {% icon 'bell' size=21 %}
                     {% if unread_notifications_count %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                              style="background-color: var(--terra); font-size: 0.6rem;">
-                            {{ unread_notifications_count }}
-                        </span>
+                    <span class="cab-badge">{{ unread_notifications_count }}</span>
                     {% endif %}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" id="notifications-list" style="min-width: 280px;">
@@ -68,25 +33,103 @@
                     <li><span class="dropdown-item-text small text-muted">Новых уведомлений нет</span></li>
                     {% endfor %}
                     {% if recent_notifications %}
-                    <li id="clear-all-divider"><hr class="dropdown-divider"></li>
-                    <li id="clear-all-li">
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                         <button type="button" class="dropdown-item small text-center" id="clear-all-btn"
-                                data-url="{% url 'clear_notifications' %}">
-                            Прочитано — очистить все
-                        </button>
+                                data-url="{% url 'clear_notifications' %}">Прочитано — очистить все</button>
                     </li>
                     {% endif %}
                 </ul>
             </div>
-            <span class="me-2 d-none d-md-inline" style="color: rgba(255,255,255,.85);">{{ user.first_name }}</span>
-            <a class="btn btn-outline" href="{% url 'logout' %}">Выйти</a>
+
+            <span class="cab-divider"></span>
+
+            <div class="dropdown">
+                <button class="cab-user" type="button" data-bs-toggle="dropdown">
+                    <span class="cab-avatar">{{ user.first_name|first|default:"У" }}</span>
+                    <span class="cab-user-name">{{ user.first_name }}</span>
+                    <span class="cab-chevron"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'edit_student_profile' %}">Профиль</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </header>
 {% endblock %}
 
 {% block fullwidth %}
-<div class="container mt-4">
-    {% block content %}{% endblock %}
+<div class="cab-layout">
+    <aside class="cab-sidebar">
+        <nav class="cab-nav">
+            <a href="{% url 'student_profile' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'student_profile' %}active{% endif %}">
+                {% icon 'grid' size=19 %}<span>Главная</span>
+            </a>
+            <a href="{% url 'student_courses' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'student_courses' %}active{% endif %}">
+                {% icon 'book-open' size=19 %}<span>Мои курсы</span>
+            </a>
+            <a href="{% url 'study_plan' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'study_plan' %}active{% endif %}">
+                {% icon 'map' size=19 %}<span>План и задания</span>
+            </a>
+            <a href="{% url 'error_notebook' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'error_notebook' or request.resolver_match.url_name == 'error_detail' %}active{% endif %}">
+                {% icon 'pencil' size=19 %}<span>Практика</span>
+            </a>
+            <a href="{% url 'student_analytics' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'student_analytics' %}active{% endif %}">
+                {% icon 'bar-chart' size=19 %}<span>Результаты</span>
+            </a>
+            <a href="{% url 'edit_student_profile' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'edit_student_profile' %}active{% endif %}">
+                {% icon 'user' size=19 %}<span>Профиль</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="cab-main">
+        {% block content %}{% endblock %}
+    </main>
 </div>
+
+{% if user.is_authenticated and not user.is_staff %}
+<form id="heartbeat-form" style="display:none;">{% csrf_token %}</form>
+<script>
+(function(){
+  var url = '{% url "study_heartbeat" %}';
+  var csrf = document.querySelector('#heartbeat-form [name=csrfmiddlewaretoken]');
+  if (!csrf) return;
+
+  var sessionId = sessionStorage.getItem('abs_study_session');
+  if (!sessionId) {
+    sessionId = 'tab-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+    sessionStorage.setItem('abs_study_session', sessionId);
+  }
+
+  var activity = document.body.dataset.activity || 'general';
+  var courseId = document.body.dataset.courseId || '';
+  var interacted = true;
+
+  function beat(){
+    if (document.hidden || !interacted) return;
+    var body = new FormData();
+    body.append('session_id', sessionId);
+    body.append('activity', activity);
+    if (courseId) body.append('course_id', courseId);
+    body.append('csrfmiddlewaretoken', csrf.value);
+    fetch(url, { method: 'POST', body: body, keepalive: true });
+    interacted = false;
+  }
+
+  ['click','keydown','scroll','mousemove','touchstart'].forEach(function(evt){
+    window.addEventListener(evt, function(){ interacted = true; }, { passive: true });
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) interacted = true;
+  });
+
+  beat();
+  setInterval(beat, 60000);
+})();
+</script>
+{% endif %}
 {% endblock %}
