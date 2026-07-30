@@ -652,16 +652,38 @@ a > .card:hover{ background-color:var(--cream); }
    17. ПЛАТФОРМА (личный кабинет ученика)
    ============================================================ */
 .platform-header{
-  height:72px; display:flex; align-items:center; justify-content:space-between; gap:18px;
+  height:72px; display:flex; align-items:center; gap:32px;
 }
-.platform-logo-mark{
-  width:38px; height:38px; border-radius:50%; background:#fff;
-  display:grid; place-items:center; color:var(--terra); font-size:18px; flex:none;
-}
-.platform-nav-link{ text-decoration:none; font-size:14.5px; font-weight:500; color:rgba(255,255,255,.85); }
-.platform-nav-link:hover{ color:#fff; }
-.platform-nav-link.active-link{ font-weight:700; color:#fff; text-decoration:underline; text-underline-offset:4px; }
+/* Меню прижато к логотипу, действия уходят вправо */
+.platform-nav{ margin-right:auto; gap:6px !important; }
 
+.platform-nav-link{
+  display:inline-flex; align-items:center; gap:7px;
+  text-decoration:none; font-size:14px; font-weight:500;
+  color:rgba(255,255,255,.85);
+  padding:8px 12px; border-radius:10px;
+  transition:background .18s, color .18s;
+  white-space:nowrap;
+}
+.platform-nav-link svg{ opacity:.85; flex:none; }
+.platform-nav-link:hover{ background:rgba(255,255,255,.12); color:#fff; }
+.platform-nav-link:hover svg{ opacity:1; }
+.platform-nav-link.active-link{
+  background:rgba(255,255,255,.18); color:#fff; font-weight:700;
+  text-decoration:none;
+}
+.platform-nav-link.active-link svg{ opacity:1; }
+
+/* Иконки в шапке белые: тег отдаёт stroke="currentColor" не всегда,
+   поэтому перекрываем принудительно */
+.platform-nav-link svg path,
+.platform-nav-link svg circle,
+.platform-nav-link svg rect{ stroke:currentColor; }
+
+@media (max-width: 1200px){
+  .platform-nav-link span{ display:none; }
+  .platform-nav-link{ padding:9px 11px; }
+}
 .pf-alert{
   display:flex; align-items:center; gap:14px; background:var(--lemon);
   border-radius:16px; padding:16px 20px; margin-bottom:20px; font-size:14.5px; color:#6E5A0A;
@@ -1065,6 +1087,15 @@ a > .card:hover{ background-color:var(--cream); }
 .plan-btn-done:hover{ background:#E7F3D9; }
 .plan-item-done{ flex:none; }
 
+@media (max-width: 767px){
+  .platform-header{ flex-wrap:wrap; height:auto; padding:10px 0; gap:12px; }
+  .platform-nav{
+    order:3; width:100%; margin-right:0;
+    justify-content:space-between; gap:2px !important;
+  }
+  .platform-nav-link{ padding:8px 9px; }
+}
+
 
 /* ============================================================
    18. ТАЙМКОДЫ ВИДЕО
@@ -1086,7 +1117,7 @@ a > .card:hover{ background-color:var(--cream); }
 
 /* Меню в шапке скрывается пораньше, чтобы кнопки не переносились */
 @media (max-width: 1100px){
-  .nav-links{ display:none; }
+  .nav-links:not(.platform-nav){ display:none; }
 }
 
 /* Планшет: hero, about в колонку */
