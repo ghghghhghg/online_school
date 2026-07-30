@@ -12,6 +12,7 @@
             <li><a href="{% url 'student_profile' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_profile' %}active-link{% endif %}">Главная</a></li>
             <li><a href="{% url 'student_courses' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_courses' %}active-link{% endif %}">Мои курсы</a></li>
             <li><a href="{% url 'error_notebook' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'error_notebook' %}active-link{% endif %}">Практика</a></li>
+            <li><a href="{% url 'study_plan' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'study_plan' %}active-link{% endif %}">План</a></li>
             <li><a href="{% url 'student_analytics' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'student_analytics' %}active-link{% endif %}">Результаты</a></li>
             <li><a href="{% url 'edit_student_profile' %}" class="platform-nav-link {% if request.resolver_match.url_name == 'edit_student_profile' %}active-link{% endif %}">Профиль</a></li>
         </ul>
