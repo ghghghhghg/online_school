@@ -741,6 +741,12 @@ a > .card:hover{ background-color:var(--cream); }
   width:100%; max-width:1100px;
   margin-right:272px;   /* компенсация ширины sidebar */
 }
+.cab-main > *{ width:100%; max-width:1100px; }
+
+/* Центрируем контент относительно окна, а не оставшейся области */
+@media (min-width: 1600px){
+  .cab-main > *{ margin-right:272px; }
+}
 
 @media (max-width: 1100px){
   .cab-sidebar{ width:76px; padding:20px 12px; }
