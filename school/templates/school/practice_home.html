@@ -1,0 +1,70 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Практика{% endblock %}
+
+{% block content %}
+<h2 class="dash-greeting">Практика</h2>
+<p class="dash-subtitle">Выберите, что потренировать</p>
+
+{% if unfinished %}
+<div class="pf-alert">
+    {% icon 'stopwatch' size=20 %}
+    <span>У вас есть незавершённая сессия — {{ unfinished.answered_count }} из {{ unfinished.total_count }}</span>
+    <a href="{% url 'practice_session' unfinished.pk %}" class="btn btn-terra" style="margin-left:auto;">Продолжить</a>
+</div>
+{% endif %}
+
+{% if not bank_size %}
+<div class="dash-empty">
+    {% icon 'clipboard' size=40 %}
+    <h3>Банк заданий пока пуст</h3>
+    <p>Преподаватель ещё не добавил задания для практики. Пока можно пройти тесты в уроках.</p>
+    <a href="{% url 'student_courses' %}" class="btn btn-terra">К курсам</a>
+</div>
+{% else %}
+
+<div class="prc-modes">
+    {% for mode in modes %}
+    <form method="post" action="{% url 'practice_start' %}" class="prc-mode-card">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="{{ mode.code }}">
+        <div class="prc-mode-icon">{% icon mode.icon size=22 %}</div>
+        <b>{{ mode.title }}</b>
+        <span>{{ mode.description }}</span>
+
+        {% if mode.code == 'topic' %}
+        <select name="lesson" class="form-select form-select-sm" required>
+            <option value="">Выберите тему</option>
+            {% for lesson in lessons %}
+            <option value="{{ lesson.pk }}">{{ lesson.title }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+
+        {% if mode.code == 'errors' and unresolved_errors %}
+        <span class="prc-badge">{{ unresolved_errors }} незакрытых</span>
+        {% endif %}
+
+        <button type="submit" class="btn btn-terra">Начать</button>
+    </form>
+    {% endfor %}
+</div>
+
+{% if recent_sessions %}
+<h4 class="res-section-title" style="margin-top:32px;">Последние сессии</h4>
+<div class="prc-history">
+    {% for s in recent_sessions %}
+    <a href="{% url 'practice_result' s.pk %}" class="prc-history-item">
+        <span class="prc-history-mode">{{ s.get_mode_display }}</span>
+        <span class="prc-history-date">{{ s.started_at|date:"d.m.Y H:i" }}</span>
+        <span class="prc-history-score">
+            {% if s.max_points %}{{ s.earned_points|floatformat:"-1" }} / {{ s.max_points|floatformat:"-1" }}{% endif %}
+        </span>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

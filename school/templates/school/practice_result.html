@@ -1,0 +1,79 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Итог практики{% endblock %}
+
+{% block content %}
+<div class="res-hero {% if percent >= 70 %}res-hero-passed{% endif %}">
+    <div class="res-score-block">
+        <span class="res-score-value">{{ percent }}<small>%</small></span>
+        <span class="res-points">
+            {{ session.earned_points|floatformat:"-1" }} из {{ session.max_points|floatformat:"-1" }} баллов
+        </span>
+    </div>
+    <div class="res-summary">
+        <h2>{{ session.get_mode_display }}</h2>
+        <div class="res-counters">
+            <span class="res-counter res-counter-ok">
+                {% icon 'check' size=15 color='#4A8B5C' %} Верно: {{ correct_count }}
+            </span>
+            {% if wrong %}
+            <span class="res-counter res-counter-bad">
+                {% icon 'x' size=15 %} Ошибок: {{ wrong|length }}
+            </span>
+            {% endif %}
+            {% if skipped %}
+            <span class="res-counter">Пропущено: {{ skipped|length }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="res-next">
+    <div>
+        <span class="dash-card-label">Следующий шаг</span>
+        <p class="res-next-reason">
+            {% if wrong %}Разберите ошибки, пока материал свежий{% else %}Отличный результат — можно двигаться дальше{% endif %}
+        </p>
+    </div>
+    {% if wrong %}
+    <a href="{% url 'error_notebook' %}" class="btn btn-terra">Разобрать ошибки</a>
+    {% else %}
+    <a href="{% url 'practice_home' %}" class="btn btn-terra">Ещё практика</a>
+    {% endif %}
+</div>
+
+{% if wrong %}
+<h4 class="res-section-title">Ошибки</h4>
+{% for item in wrong %}
+<div class="res-error-card">
+    <p class="res-question">{{ item.question.text }}</p>
+    <div class="res-answer res-answer-wrong">
+        <div><span>Ваш ответ</span><b>{{ item.student_answer|default:'—' }}</b></div>
+    </div>
+    {% if item.question.explanation %}
+    <div class="err-explanation"><div><p>{{ item.question.explanation }}</p></div></div>
+    {% endif %}
+
+    <form method="post" action="{% url 'practice_mark_error_type' item.pk %}" class="prc-error-type">
+        {% csrf_token %}
+        <label>Почему ошиблись?</label>
+        <select name="error_type" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Не указано</option>
+            {% for value, label in item.ERROR_TYPE_CHOICES %}{% endfor %}
+            <option value="theory" {% if item.error_type == 'theory' %}selected{% endif %}>Не знаю теорию</option>
+            <option value="misread" {% if item.error_type == 'misread' %}selected{% endif %}>Неверно понял условие</option>
+            <option value="calculation" {% if item.error_type == 'calculation' %}selected{% endif %}>Ошибка в вычислениях</option>
+            <option value="careless" {% if item.error_type == 'careless' %}selected{% endif %}>Невнимательность</option>
+            <option value="random" {% if item.error_type == 'random' %}selected{% endif %}>Угадывал</option>
+        </select>
+    </form>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="res-secondary">
+    <a href="{% url 'practice_home' %}" class="btn btn-outline">К практике</a>
+    <a href="{% url 'student_profile' %}" class="btn btn-outline-secondary">На главную</a>
+</div>
+{% endblock %}

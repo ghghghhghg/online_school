@@ -140,5 +140,12 @@ urlpatterns = [
 
     path('heartbeat/', views.study_heartbeat, name='study_heartbeat'),
 
+    path('practice/', views.practice_home, name='practice_home'),
+    path('practice/start/', views.practice_start, name='practice_start'),
+    path('practice/session/<int:pk>/', views.practice_session_view, name='practice_session'),
+    path('practice/session/<int:pk>/submit/', views.practice_submit, name='practice_submit'),
+    path('practice/session/<int:pk>/result/', views.practice_result, name='practice_result'),
+    path('practice/answer/<int:pk>/error-type/', views.practice_mark_error_type, name='practice_mark_error_type'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

@@ -2247,3 +2247,207 @@ def study_heartbeat(request):
         session.active_seconds += delta
 
     return JsonResponse({'ok': True, 'seconds': session.active_seconds})
+
+@login_required
+def practice_home(request):
+    """Выбор режима практики."""
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    from .models import ErrorRecord, ErrorStatus, PracticeSession, Question
+    from .services.analytics_repository import get_enrolled_courses
+    from .services.practice import MODE_DESCRIPTIONS
+
+    courses = list(get_enrolled_courses(request.user))
+    lessons = []
+    for course in courses:
+        lessons.extend(course.lessons.all())
+
+    unresolved_errors = (
+        ErrorRecord.objects
+        .filter(student=request.user)
+        .exclude(status=ErrorStatus.REINFORCED)
+        .count()
+    )
+    bank_size = Question.objects.filter(is_in_bank=True).count()
+
+    recent = (
+        PracticeSession.objects
+        .filter(student=request.user, finished_at__isnull=False)
+        .select_related('lesson')[:5]
+    )
+    unfinished = (
+        PracticeSession.objects
+        .filter(student=request.user, finished_at__isnull=True)
+        .first()
+    )
+
+    return render(request, 'school/practice_home.html', {
+        'modes': MODE_DESCRIPTIONS,
+        'courses': courses,
+        'lessons': lessons,
+        'unresolved_errors': unresolved_errors,
+        'bank_size': bank_size,
+        'recent_sessions': recent,
+        'unfinished': unfinished,
+    })
+
+
+@login_required
+def practice_start(request):
+    """Создание сессии по выбранному режиму."""
+    from .models import Course, Lesson
+    from .services.practice import DEFAULT_TASK_COUNT, create_session
+
+    if request.method != 'POST':
+        return redirect('practice_home')
+
+    mode = request.POST.get('mode', 'mixed')
+    lesson_id = request.POST.get('lesson') or None
+    course_id = request.POST.get('course') or None
+    try:
+        count = int(request.POST.get('count', DEFAULT_TASK_COUNT))
+    except (TypeError, ValueError):
+        count = DEFAULT_TASK_COUNT
+
+    lesson = Lesson.objects.filter(pk=lesson_id).first() if lesson_id else None
+    course = Course.objects.filter(pk=course_id).first() if course_id else None
+    if lesson and not course:
+        course = lesson.course
+
+    session = create_session(
+        request.user, mode, course=course, lesson=lesson, count=count
+    )
+    if not session:
+        messages.info(
+            request,
+            'По этому режиму пока нет заданий. Попробуйте другой режим или '
+            'обратитесь к преподавателю.',
+        )
+        return redirect('practice_home')
+
+    return redirect('practice_session', pk=session.pk)
+
+
+@login_required
+def practice_session_view(request, pk):
+    """Экран текущего задания."""
+    from .models import PracticeSession
+
+    session = get_object_or_404(PracticeSession, pk=pk, student=request.user)
+    if session.is_finished:
+        return redirect('practice_result', pk=session.pk)
+
+    current = session.next_answer()
+    if not current:
+        from .services.practice import finish_session
+        finish_session(session)
+        return redirect('practice_result', pk=session.pk)
+
+    return render(request, 'school/practice_task.html', {
+        'session': session,
+        'answer': current,
+        'question': current.question,
+        'answers': current.question.answers.all(),
+        'position': current.order,
+        'total': session.total_count,
+    })
+
+
+@login_required
+def practice_submit(request, pk):
+    """Проверка ответа с показом разбора."""
+    from .models import PracticeAnswer, PracticeSession
+    from .services.practice import skip_answer, submit_answer
+
+    session = get_object_or_404(PracticeSession, pk=pk, student=request.user)
+    if request.method != 'POST' or session.is_finished:
+        return redirect('practice_session', pk=pk)
+
+    answer_id = request.POST.get('answer_id')
+    practice_answer = get_object_or_404(
+        PracticeAnswer, pk=answer_id, session=session
+    )
+
+    if request.POST.get('action') == 'skip':
+        skip_answer(practice_answer)
+        return redirect('practice_session', pk=pk)
+
+    if request.POST.get('mark_review'):
+        practice_answer.marked_for_review = True
+
+    question = practice_answer.question
+    if question.answer_type == 'text':
+        payload = request.POST.get('text_answer', '')
+    elif question.answer_type == 'multiple':
+        payload = request.POST.getlist('choice')
+    else:
+        payload = request.POST.get('choice', '')
+
+    try:
+        time_spent = int(request.POST.get('time_spent', 0))
+    except (TypeError, ValueError):
+        time_spent = 0
+
+    is_correct, earned, maximum = submit_answer(practice_answer, payload, time_spent)
+
+    return render(request, 'school/practice_feedback.html', {
+        'session': session,
+        'answer': practice_answer,
+        'question': question,
+        'answers': question.answers.all(),
+        'is_correct': is_correct,
+        'earned': earned,
+        'maximum': maximum,
+        'has_next': session.next_answer() is not None,
+    })
+
+
+@login_required
+def practice_result(request, pk):
+    """Итог сессии."""
+    from .models import PracticeSession
+    from .services.practice import finish_session
+
+    session = get_object_or_404(
+        PracticeSession.objects.prefetch_related('answers__question'),
+        pk=pk, student=request.user,
+    )
+    if not session.is_finished:
+        finish_session(session)
+        session.refresh_from_db()
+
+    answers = list(session.answers.select_related('question').all())
+    wrong = [a for a in answers if not a.is_correct and not a.skipped]
+    skipped = [a for a in answers if a.skipped]
+
+    percent = 0
+    if session.max_points and session.max_points > 0:
+        percent = int(float(session.earned_points) / float(session.max_points) * 100)
+
+    return render(request, 'school/practice_result.html', {
+        'session': session,
+        'answers': answers,
+        'wrong': wrong,
+        'skipped': skipped,
+        'correct_count': len(answers) - len(wrong) - len(skipped),
+        'percent': percent,
+    })
+
+
+@login_required
+def practice_mark_error_type(request, pk):
+    """Ученик уточняет тип своей ошибки (ТЗ 9)."""
+    from .models import ErrorRecord, PracticeAnswer
+
+    practice_answer = get_object_or_404(
+        PracticeAnswer, pk=pk, session__student=request.user
+    )
+    if request.method == 'POST':
+        error_type = request.POST.get('error_type', '')
+        practice_answer.error_type = error_type
+        practice_answer.save(update_fields=['error_type'])
+        ErrorRecord.objects.filter(
+            student=request.user, question=practice_answer.question
+        ).update(error_type=error_type)
+    return redirect('practice_result', pk=practice_answer.session_id)

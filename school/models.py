@@ -295,10 +295,36 @@ class Test(models.Model):
     def __str__(self):
         return f'Тест: {self.lesson.title}'
 
+class AnswerType(models.TextChoices):
+    SINGLE = 'single', 'Один вариант'
+    MULTIPLE = 'multiple', 'Несколько вариантов'
+    TEXT = 'text', 'Короткий ответ'
 
 class Question(models.Model):
-    test = models.ForeignKey(Test, on_delete=models.CASCADE,
-                             related_name='questions', verbose_name='Тест')
+    # --- Банк заданий (задание может существовать вне теста) ---
+    test = models.ForeignKey(
+        Test, on_delete=models.CASCADE, related_name='questions',
+        null=True, blank=True, verbose_name='Тест',
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='bank_questions', verbose_name='Тема',
+    )
+    exam_task_number = models.PositiveSmallIntegerField(
+        null=True, blank=True, verbose_name='Номер задания ЕГЭ',
+    )
+    answer_type = models.CharField(
+        max_length=10, choices=AnswerType.choices,
+        default=AnswerType.SINGLE, verbose_name='Тип ответа',
+    )
+    correct_text = models.CharField(
+        max_length=300, blank=True,
+        verbose_name='Правильный ответ (для короткого ответа)',
+        help_text='Несколько допустимых вариантов — через точку с запятой',
+    )
+    is_in_bank = models.BooleanField(
+        default=False, db_index=True, verbose_name='В банке заданий',
+    )
     text = models.TextField(verbose_name='Вопрос')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     explanation = models.TextField(blank=True, verbose_name='Объяснение (показывается при ошибке)')
@@ -308,6 +334,51 @@ class Question(models.Model):
         verbose_name='Максимальный первичный балл',
     )
 
+    @property
+    def effective_lesson(self):
+        """Тема задания: своя или через тест."""
+        if self.lesson_id:
+            return self.lesson
+        return self.test.lesson if self.test_id else None
+
+    def check_answer(self, payload) -> tuple[bool, float]:
+        """
+        Проверка ответа. Возвращает (верно_полностью, набранные_баллы).
+        Для множественного выбора баллы частичные (ТЗ 9).
+        """
+        from decimal import Decimal
+
+        points = Decimal(str(self.points or 1))
+
+        if self.answer_type == AnswerType.TEXT:
+            given = _normalize_answer(payload if isinstance(payload, str) else '')
+            variants = [
+                _normalize_answer(v) for v in (self.correct_text or '').split(';')
+            ]
+            correct = bool(given) and given in variants
+            return correct, float(points if correct else 0)
+
+        chosen_ids = set()
+        if isinstance(payload, (list, tuple, set)):
+            chosen_ids = {int(x) for x in payload if str(x).isdigit()}
+        elif str(payload).isdigit():
+            chosen_ids = {int(payload)}
+
+        answers = list(self.answers.all())
+        correct_ids = {a.id for a in answers if a.is_correct}
+        if not correct_ids:
+            return False, 0.0
+
+        if self.answer_type == AnswerType.SINGLE:
+            correct = chosen_ids == correct_ids
+            return correct, float(points if correct else 0)
+
+        hits = len(chosen_ids & correct_ids)
+        misses = len(chosen_ids - correct_ids)
+        ratio = max(0.0, (hits - misses) / len(correct_ids))
+        earned = float(points) * ratio
+        return ratio >= 1.0, round(earned, 2)
+
     class Meta:
         verbose_name = 'Вопрос'
         verbose_name_plural = 'Вопросы'
@@ -316,6 +387,15 @@ class Question(models.Model):
     def __str__(self):
         return f'{self.order}. {self.text[:50]}'
 
+def _normalize_answer(value: str) -> str:
+    """Нормализация короткого ответа: регистр, пробелы, ё."""
+    return (
+        (value or '')
+        .strip().lower()
+        .replace('ё', 'е')
+        .replace(' ', '')
+        .replace(',', '')
+    )
 
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE,
@@ -1466,3 +1546,96 @@ class LessonViewProgress(models.Model):
     def is_started(self) -> bool:
         return self.watched_percent > 0 and not self.is_watched
 
+
+class PracticeMode(models.TextChoices):
+    TOPIC = 'topic', 'По теме'
+    EXAM_NUMBER = 'exam_number', 'По номеру задания'
+    WEAK = 'weak', 'По слабым местам'
+    ERRORS = 'errors', 'По ошибкам'
+    MIXED = 'mixed', 'Смешанная'
+    RECOMMENDED = 'recommended', 'Рекомендованная'
+    REVIEW = 'review', 'Повторение'
+
+
+class PracticeSession(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
+    """Одна сессия практики (ТЗ 9)."""
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='practice_sessions', verbose_name='Ученик',
+    )
+    course = models.ForeignKey(
+        Course, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='practice_sessions', verbose_name='Курс',
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='practice_sessions', verbose_name='Тема',
+    )
+    mode = models.CharField(
+        max_length=20, choices=PracticeMode.choices,
+        default=PracticeMode.MIXED, verbose_name='Режим',
+    )
+    exam_task_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Сессия практики'
+        verbose_name_plural = 'Сессии практики'
+        ordering = ['-started_at']
+        indexes = [models.Index(fields=['student', 'started_at'])]
+
+    def __str__(self):
+        return f'{self.student.username} — {self.get_mode_display()}'
+
+    @property
+    def is_finished(self) -> bool:
+        return self.finished_at is not None
+
+    @property
+    def session_key(self) -> str:
+        """Ключ учебной сессии для механики закрепления ошибок."""
+        return f'practice-{self.pk}'
+
+    def next_answer(self):
+        """Первое неотвеченное задание сессии."""
+        return self.answers.filter(answered_at__isnull=True).order_by('order').first()
+
+    @property
+    def answered_count(self) -> int:
+        return self.answers.filter(answered_at__isnull=False).count()
+
+    @property
+    def total_count(self) -> int:
+        return self.answers.count()
+
+
+class PracticeAnswer(PrimaryScoreMixin, models.Model):
+    """Ответ на одно задание в сессии практики."""
+    session = models.ForeignKey(
+        PracticeSession, on_delete=models.CASCADE,
+        related_name='answers', verbose_name='Сессия',
+    )
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE,
+        related_name='practice_answers', verbose_name='Задание',
+    )
+    order = models.PositiveSmallIntegerField(default=0)
+    student_answer = models.TextField(blank=True, verbose_name='Ответ ученика')
+    is_correct = models.BooleanField(default=False)
+    skipped = models.BooleanField(default=False, verbose_name='Пропущено')
+    marked_for_review = models.BooleanField(
+        default=False, verbose_name='Отмечено для повторения',
+    )
+    error_type = models.CharField(
+        max_length=20, choices=ErrorType.choices, blank=True,
+        verbose_name='Тип ошибки',
+    )
+    answered_at = models.DateTimeField(null=True, blank=True)
+    time_spent_seconds = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Ответ в практике'
+        verbose_name_plural = 'Ответы в практике'
+        ordering = ['order']
+        indexes = [models.Index(fields=['session', 'order'])]

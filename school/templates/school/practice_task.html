@@ -1,0 +1,66 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Практика{% endblock %}
+
+{% block content %}
+<div class="prc-progress-head">
+    <span>Задание {{ position }} из {{ total }}</span>
+    <div class="pf-progress-track" style="max-width:none;">
+        <div class="pf-progress-fill" style="width: {{ position }}0%;"></div>
+    </div>
+</div>
+
+<div class="prc-task-card">
+    {% if question.effective_lesson %}
+    <span class="dash-course-name">{{ question.effective_lesson.title }}</span>
+    {% endif %}
+    {% if question.exam_task_number %}
+    <span class="prc-task-number">Задание {{ question.exam_task_number }}</span>
+    {% endif %}
+
+    <p class="prc-question">{{ question.text }}</p>
+
+    <form method="post" action="{% url 'practice_submit' session.pk %}" id="practice-form">
+        {% csrf_token %}
+        <input type="hidden" name="answer_id" value="{{ answer.pk }}">
+        <input type="hidden" name="time_spent" id="time-spent" value="0">
+
+        {% if question.answer_type == 'text' %}
+        <input type="text" name="text_answer" class="form-control prc-text-input"
+               placeholder="Введите ответ" autocomplete="off" autofocus>
+        {% else %}
+        <div class="prc-options">
+            {% for option in answers %}
+            <label class="prc-option">
+                <input type="{% if question.answer_type == 'multiple' %}checkbox{% else %}radio{% endif %}"
+                       name="choice" value="{{ option.pk }}">
+                <span>{{ option.text }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <label class="prc-review-check">
+            <input type="checkbox" name="mark_review" value="1">
+            Отметить для повторения
+        </label>
+
+        <div class="prc-actions">
+            <button type="submit" class="btn btn-terra">Проверить</button>
+            <button type="submit" name="action" value="skip" class="btn btn-outline-secondary"
+                    formnovalidate>Пропустить</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function(){
+  var start = Date.now();
+  var field = document.getElementById('time-spent');
+  document.getElementById('practice-form').addEventListener('submit', function(){
+    field.value = Math.round((Date.now() - start) / 1000);
+  });
+})();
+</script>
+{% endblock %}

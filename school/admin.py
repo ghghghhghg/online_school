@@ -2,12 +2,17 @@ from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
     CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay, \
-    TeacherProfile, CourseBenefit, CourseAudience, CourseStep, Question, Test
+    TeacherProfile, CourseBenefit, CourseAudience, CourseStep, Question, Test, PracticeSession, Answer
 
 from .models import (
     ErrorCorrectionAttempt, ErrorRecord, PlanItem, ScoreConversionTable,
     StudentProfile, StudentSubjectGoal, StudyPlan, StudySession, Subject,
 )
+
+class AnswerInline(admin.TabularInline):
+    model = Answer
+    extra = 2
+
 
 class QuestionInline(admin.TabularInline):
     """Вопросы теста с весом в первичных баллах."""
@@ -75,6 +80,7 @@ class LessonInline(admin.TabularInline):
 class LessonAdmin(admin.ModelAdmin):
     list_display = ['title', 'course', 'module', 'duration_minutes', 'order']
     inlines = [TimecodeInline]
+    search_fields = ['title']
 
 
 @admin.register(Enrollment)
@@ -298,3 +304,38 @@ class StudyPlanAdmin(admin.ModelAdmin):
 class TestAdmin(admin.ModelAdmin):
     list_display = ['title', 'lesson', 'pass_score']
     inlines = [QuestionInline]
+    search_fields = ['title']
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ['text_short', 'lesson', 'exam_task_number', 'answer_type',
+                    'points', 'is_in_bank']
+    list_filter = ['is_in_bank', 'answer_type', 'exam_task_number']
+    list_editable = ['is_in_bank', 'points']
+    search_fields = ['text']
+    autocomplete_fields = ['lesson', 'test']
+    inlines = [AnswerInline]
+    fieldsets = [
+        (None, {'fields': ['text', 'answer_type', 'points', 'explanation']}),
+        ('Банк заданий', {
+            'fields': ['is_in_bank', 'lesson', 'exam_task_number', 'correct_text'],
+            'description': 'Задание в банке доступно в разделе «Практика». '
+                           'Для короткого ответа укажите правильный вариант.',
+        }),
+        ('Тест урока', {'fields': ['test', 'order'], 'classes': ['collapse']}),
+    ]
+
+    @admin.display(description='Задание')
+    def text_short(self, obj):
+        return obj.text[:70]
+
+
+@admin.register(PracticeSession)
+class PracticeSessionAdmin(admin.ModelAdmin):
+    list_display = ['student', 'mode', 'started_at', 'finished_at',
+                    'earned_points', 'max_points']
+    list_filter = ['mode', 'started_at']
+    readonly_fields = ['started_at', 'finished_at', 'earned_points', 'max_points']
+
+    def has_add_permission(self, request):
+        return False

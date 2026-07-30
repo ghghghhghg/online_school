@@ -178,3 +178,63 @@ def record_homework_submission(submission):
         'earned_points', 'max_points', 'analytics_data_quality', 'checked_at',
     ])
     return earned, max_points
+
+def register_practice_error(student, question, session):
+    """Неверный ответ в практике — фиксируем или повторяем ошибку."""
+    from django.contrib.contenttypes.models import ContentType
+
+    from school.models import ErrorRecord, ErrorType
+
+    lesson = question.effective_lesson
+    subject = None
+    if lesson and lesson.course_id:
+        subject = getattr(lesson.course, 'subject_ref', None)
+
+    record = ErrorRecord.objects.filter(student=student, question=question).first()
+    if record:
+        record.register_repeat()
+        return record
+
+    return ErrorRecord.objects.create(
+        student=student,
+        subject=subject,
+        lesson=lesson,
+        question=question,
+        source_content_type=ContentType.objects.get_for_model(session.__class__),
+        source_object_id=session.pk,
+        error_type=ErrorType.UNCLASSIFIED,
+    )
+
+
+def resolve_practice_error(student, question, session_key):
+    """
+    Верный ответ в практике засчитывается как попытка исправления
+    по этой же теме — механика закрепления из ТЗ 11.
+    """
+    from school.models import ErrorCorrectionAttempt, ErrorRecord, ErrorStatus
+
+    lesson = question.effective_lesson
+    if not lesson:
+        return
+
+    records = (
+        ErrorRecord.objects
+        .filter(student=student, lesson=lesson)
+        .exclude(status=ErrorStatus.REINFORCED)
+    )
+
+    for record in records:
+        is_same_task = record.question_id == question.id
+        ErrorCorrectionAttempt.objects.create(
+            error_record=record,
+            is_correct=True,
+            is_similar_task=not is_same_task or True,
+            session_key=session_key,
+        )
+        if record.status == ErrorStatus.NOT_ANALYZED:
+            record.status = ErrorStatus.IN_PROGRESS
+            record.save(update_fields=['status'])
+        elif record.status == ErrorStatus.IN_PROGRESS:
+            record.status = ErrorStatus.CORRECTED_ONCE
+            record.save(update_fields=['status'])
+        record.try_reinforce()

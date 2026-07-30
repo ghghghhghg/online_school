@@ -1,0 +1,62 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Проверка{% endblock %}
+
+{% block content %}
+<div class="prc-feedback {% if is_correct %}prc-feedback-ok{% else %}prc-feedback-bad{% endif %}">
+    {% if is_correct %}
+        {% icon 'check-circle' size=28 color='#4A8B5C' %}
+        <div>
+            <b>Верно</b>
+            <span>{{ earned|floatformat:"-1" }} из {{ maximum|floatformat:"-1" }} баллов</span>
+        </div>
+    {% else %}
+        {% icon 'x' size=28 %}
+        <div>
+            <b>{% if earned %}Частично верно{% else %}Неверно{% endif %}</b>
+            <span>{{ earned|floatformat:"-1" }} из {{ maximum|floatformat:"-1" }} баллов</span>
+        </div>
+    {% endif %}
+</div>
+
+<div class="prc-task-card">
+    <p class="prc-question">{{ question.text }}</p>
+
+    {% if question.answer_type == 'text' %}
+    <div class="res-answer {% if is_correct %}res-answer-right{% else %}res-answer-wrong{% endif %}">
+        <div><span>Ваш ответ</span><b>{{ answer.student_answer|default:'—' }}</b></div>
+    </div>
+    {% if not is_correct %}
+    <div class="res-answer res-answer-right">
+        <div><span>Правильный ответ</span><b>{{ question.correct_text }}</b></div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="prc-options">
+        {% for option in answers %}
+        <div class="prc-option prc-option-static
+                    {% if option.is_correct %}prc-option-right{% endif %}">
+            {% if option.is_correct %}{% icon 'check' size=15 color='#4A8B5C' %}{% endif %}
+            <span>{{ option.text }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if question.explanation %}
+    <div class="err-explanation" style="margin-top:16px;">
+        {% icon 'lightbulb' size=18 %}
+        <div><span>Объяснение</span><p>{{ question.explanation }}</p></div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="prc-actions">
+    {% if has_next %}
+    <a href="{% url 'practice_session' session.pk %}" class="btn btn-terra">Следующее задание</a>
+    {% else %}
+    <a href="{% url 'practice_result' session.pk %}" class="btn btn-terra">Посмотреть итог</a>
+    {% endif %}
+</div>
+{% endblock %}
