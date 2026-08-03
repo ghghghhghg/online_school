@@ -2250,7 +2250,6 @@ def study_heartbeat(request):
 
 @login_required
 def practice_home(request):
-    """Выбор режима практики."""
     if request.user.is_staff:
         return redirect('teacher_dashboard')
 
@@ -2259,22 +2258,39 @@ def practice_home(request):
     from .services.practice import MODE_DESCRIPTIONS
 
     courses = list(get_enrolled_courses(request.user))
-    lessons = []
-    for course in courses:
-        lessons.extend(course.lessons.all())
 
-    unresolved_errors = (
-        ErrorRecord.objects
-        .filter(student=request.user)
-        .exclude(status=ErrorStatus.REINFORCED)
-        .count()
-    )
-    bank_size = Question.objects.filter(is_in_bank=True).count()
+    selected_course_id = request.GET.get('course')
+    selected_course = None
+    if selected_course_id:
+        selected_course = next(
+            (c for c in courses if str(c.pk) == selected_course_id), None
+        )
+    if not selected_course and courses:
+        selected_course = courses[0]
+
+    lessons = selected_course.lessons.all() if selected_course else []
+
+    unresolved_errors = 0
+    if selected_course:
+        unresolved_errors = (
+            ErrorRecord.objects
+            .filter(student=request.user, lesson__course=selected_course)
+            .exclude(status=ErrorStatus.REINFORCED)
+            .count()
+        )
+        bank_size = Question.objects.filter(
+            is_in_bank=True
+        ).filter(
+            models.Q(lesson__course=selected_course) |
+            models.Q(test__lesson__course=selected_course)
+        ).count()
+    else:
+        bank_size = 0
 
     recent = (
         PracticeSession.objects
         .filter(student=request.user, finished_at__isnull=False)
-        .select_related('lesson')[:5]
+        .select_related('lesson', 'course')[:5]
     )
     unfinished = (
         PracticeSession.objects
@@ -2285,6 +2301,7 @@ def practice_home(request):
     return render(request, 'school/practice_home.html', {
         'modes': MODE_DESCRIPTIONS,
         'courses': courses,
+        'selected_course': selected_course,
         'lessons': lessons,
         'unresolved_errors': unresolved_errors,
         'bank_size': bank_size,

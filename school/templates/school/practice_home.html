@@ -23,12 +23,23 @@
     <a href="{% url 'student_courses' %}" class="btn btn-terra">К курсам</a>
 </div>
 {% else %}
-
+{% if courses|length > 1 %}
+<div class="course-filters" style="justify-content:flex-start; margin-bottom:24px;">
+    {% for c in courses %}
+    <a href="?course={{ c.pk }}" class="filter-pill filter-pill-sm {% if selected_course.pk == c.pk %}active{% endif %}">
+        {{ c.subject_ref.name|default:c.title }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
 <div class="prc-modes">
     {% for mode in modes %}
     <form method="post" action="{% url 'practice_start' %}" class="prc-mode-card">
         {% csrf_token %}
         <input type="hidden" name="mode" value="{{ mode.code }}">
+        {% if selected_course %}
+        <input type="hidden" name="course" value="{{ selected_course.pk }}">
+        {% endif %}
         <div class="prc-mode-icon">{% icon mode.icon size=22 %}</div>
         <b>{{ mode.title }}</b>
         <span>{{ mode.description }}</span>

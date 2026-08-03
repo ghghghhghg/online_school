@@ -291,3 +291,37 @@ class PracticeViewTests(TestCase):
         self.assertRedirects(
             response, reverse('practice_result', kwargs={'pk': session.pk})
         )
+
+class CourseFilterTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='s1', password='pass12345')
+        cls.rus = Course.objects.create(title='Русский', slug='rus')
+        cls.math = Course.objects.create(title='Математика', slug='math')
+        l1 = Lesson.objects.create(course=cls.rus, title='Тема рус', order=1)
+        l2 = Lesson.objects.create(course=cls.math, title='Тема мат', order=1)
+        Question.objects.create(text='Рус вопрос', order=1, lesson=l1, is_in_bank=True)
+        Question.objects.create(text='Мат вопрос', order=1, lesson=l2, is_in_bank=True)
+        Enrollment.objects.create(
+            student=cls.user, course=cls.rus, status=Enrollment.STATUS_APPROVED
+        )
+        Enrollment.objects.create(
+            student=cls.user, course=cls.math, status=Enrollment.STATUS_APPROVED
+        )
+
+    def test_mixed_mode_respects_course_filter(self):
+        """Смешанный режим не должен смешивать предметы."""
+        tasks = select_tasks(self.user, 'mixed', course=self.rus, count=20)
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].text, 'Рус вопрос')
+
+    def setUp(self):
+        self.client.login(username='s1', password='pass12345')
+
+    def test_start_passes_course_from_form(self):
+        self.client.post(reverse('practice_start'), {
+            'mode': 'mixed', 'course': self.rus.pk,
+        })
+        session = PracticeSession.objects.filter(student=self.user).first()
+        self.assertEqual(session.course_id, self.rus.pk)
+        self.assertEqual(session.answers.first().question.text, 'Рус вопрос')
