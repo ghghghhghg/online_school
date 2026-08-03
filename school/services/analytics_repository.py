@@ -13,7 +13,7 @@ from django.utils import timezone
 from school.models import (
     Course, ErrorRecord, ErrorStatus, Enrollment, ExamAttempt, Homework,
     HomeworkSubmission, Lesson, LessonProgress, PlanItem, PlanStatus,
-    StudySession, TestResult, ExamMock,
+    StudySession, TestResult, ExamMock, TestAnswerLog, PracticeAnswer, Question,
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
@@ -504,3 +504,66 @@ def get_error_record_for_student(student, pk):
         .prefetch_related('question__answers', 'correction_attempts')
         .first()
     )
+
+def get_task_max_points_by_number(course):
+    """
+    Максимум баллов за каждый номер задания ЕГЭ — по банку заданий курса.
+    Берётся наибольший points среди вопросов с этим номером
+    (разные формулировки одного номера обычно равнозначны).
+    """
+    from django.db.models import Max
+
+    rows = (
+        Question.objects
+        .filter(
+            Q(lesson__course=course) | Q(test__lesson__course=course),
+            exam_task_number__isnull=False,
+        )
+        .values('exam_task_number')
+        .annotate(max_points=Max('points'))
+    )
+    return {row['exam_task_number']: float(row['max_points']) for row in rows}
+
+
+def get_attempts_by_exam_number(student, course, now=None):
+    """
+    Агрегированные earned/max по каждому номеру задания —
+    из практики и мини-проверок вместе.
+    """
+    since = _window_start(now)
+    result = defaultdict(lambda: {'earned': 0.0, 'max': 0.0})
+
+    practice_rows = (
+        PracticeAnswer.objects
+        .filter(
+            session__student=student,
+            question__exam_task_number__isnull=False,
+            answered_at__isnull=False,
+            answered_at__gte=since,
+        )
+        .filter(
+            Q(question__lesson__course=course) | Q(question__test__lesson__course=course)
+        )
+        .values('question__exam_task_number', 'earned_points', 'max_points')
+    )
+    for row in practice_rows:
+        n = row['question__exam_task_number']
+        result[n]['earned'] += float(row['earned_points'] or 0)
+        result[n]['max'] += float(row['max_points'] or 0)
+
+    log_rows = (
+        TestAnswerLog.objects
+        .filter(
+            result__student=student,
+            question__exam_task_number__isnull=False,
+            result__test__lesson__course=course,
+            result__created_at__gte=since,
+        )
+        .values('question__exam_task_number', 'earned_points', 'max_points')
+    )
+    for row in log_rows:
+        n = row['question__exam_task_number']
+        result[n]['earned'] += float(row['earned_points'] or 0)
+        result[n]['max'] += float(row['max_points'] or 0)
+
+    return dict(result)

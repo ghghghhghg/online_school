@@ -9,8 +9,9 @@ from django.utils import timezone
 from . import analytics_repository as repo
 from .analytics import (
     classify_topic, confidence_label, mastery_confidence, mastery_label,
-    program_progress, topic_mastery,
+    program_progress, topic_mastery, score_gap,
 )
+from .prediction import predict_test_score
 from .recommendations import build_day_state
 
 
@@ -41,6 +42,10 @@ class DashboardData:
     best_score: int | None = None
     has_courses: bool = False
     prediction_available: bool = False
+    prediction: object = None
+    goal_score: int | None = None
+    score_gap_value: int | None = None
+    score_gap_label: str = ''
 
 
 def _weak_topics_for_course(student, course, now, limit=3):
@@ -106,11 +111,40 @@ def build_dashboard(student, now=None) -> DashboardData:
     candidates = repo.build_recommendation_candidates(student, now)
     completed_today, total_today = repo.get_today_task_counts(student, now)
 
+    prediction = None
+    goal = None
+    gap_value, gap_label = (None, '')
+
+    if courses:
+        main_course = courses[0]
+        table = None
+
+        if main_course.subject_ref:
+            from school.models import ScoreConversionTable, StudentSubjectGoal
+            table_obj = ScoreConversionTable.get_active(
+                main_course.subject_ref, main_course.exam_type, now.year
+            )
+            table = table_obj.as_mapping() if table_obj else None
+            goal = StudentSubjectGoal.objects.filter(
+                student__user=student, subject=main_course.subject_ref, is_active=True
+            ).first()
+
+        task_max = repo.get_task_max_points_by_number(main_course)
+        attempts_by_number = repo.get_attempts_by_exam_number(student, main_course, now)
+        prediction = predict_test_score(attempts_by_number, task_max, table)
+
+        if prediction.available and goal:
+            gap_value, gap_label = score_gap(goal.target_test_score, prediction.predicted_test_score)
+
     return DashboardData(
         day_state=build_day_state(candidates, completed_today, total_today),
         courses=course_cards,
         weak_topics=weak_topics[:3],
         best_score=repo.get_best_mock_result(student),
         has_courses=True,
-        prediction_available=False,  # включится после внесения шкал и накопления данных
+        prediction_available=bool(prediction and prediction.available),
+        prediction=prediction,
+        goal_score=goal.target_test_score if goal else None,
+        score_gap_value=gap_value,
+        score_gap_label=gap_label,
     )

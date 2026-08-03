@@ -920,6 +920,14 @@ a > .card:hover{ background-color:var(--cream); }
 @media (max-width: 900px){
   .dash-main-grid, .dash-bottom-grid{ grid-template-columns:1fr; }
 }
+
+.pred-score{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; }
+.pred-value{ font-size:36px; font-weight:800; color:var(--terra); }
+.pred-goal{ font-size:13px; color:var(--ink-soft); }
+.pred-gap{ font-size:13.5px; margin:0 0 10px; color:var(--ink-soft); }
+.pred-gap-ok{ color:#4A8B5C; font-weight:600; }
+.pred-coverage{ font-size:12px; color:var(--ink-soft); }
+
 /* ---------- Работа над ошибками ---------- */
 .err-stats{ display:flex; gap:12px; flex-wrap:wrap; margin:20px 0 24px; }
 .err-stat{

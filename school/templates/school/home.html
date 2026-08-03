@@ -123,12 +123,25 @@
     <div class="dash-side-card">
         <h4 class="dash-side-title">Прогноз балла</h4>
         {% if dashboard.prediction_available %}
-            {# заполнится после внесения шкал и накопления данных #}
+            <div class="pred-score">
+                <span class="pred-value">{{ dashboard.prediction.predicted_test_score }}</span>
+                {% if dashboard.goal_score %}
+                <span class="pred-goal">из {{ dashboard.goal_score }} целевых</span>
+                {% endif %}
+            </div>
+            {% if dashboard.score_gap_label %}
+            <p class="pred-gap {% if dashboard.score_gap_value <= 0 %}pred-gap-ok{% endif %}">
+                {{ dashboard.score_gap_label }}
+                {% if dashboard.score_gap_value > 0 %}— не хватает {{ dashboard.score_gap_value }} баллов{% endif %}
+            </p>
+            {% endif %}
+            <span class="pred-coverage">Покрытие программы: {{ dashboard.prediction.coverage_percent }}%
+                ({{ dashboard.prediction.covered_numbers }} из {{ dashboard.prediction.total_numbers }} номеров)</span>
         {% else %}
             <div class="dash-empty-small">
                 {% icon 'bar-chart' size=28 %}
                 <p>Недостаточно данных для прогноза</p>
-                <span>Пройдите несколько тестов и пробников — прогноз появится автоматически.</span>
+                <span>{{ dashboard.prediction.reason|default:"Пройдите несколько заданий с указанным номером ЕГЭ." }}</span>
             </div>
         {% endif %}
     </div>
