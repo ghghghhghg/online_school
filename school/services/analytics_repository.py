@@ -567,3 +567,55 @@ def get_attempts_by_exam_number(student, course, now=None):
         result[n]['max'] += float(row['max_points'] or 0)
 
     return dict(result)
+
+def get_mocks_overview(student):
+    """
+    Пробники по всем курсам ученика с историей попыток.
+    Один запрос на курс вместо N+1 на каждый пробник.
+    """
+    from school.models import ExamMock
+
+    courses = list(get_enrolled_courses(student))
+    course_ids = [c.id for c in courses]
+
+    mocks = (
+        ExamMock.objects
+        .filter(course_id__in=course_ids)
+        .select_related('course')
+        .order_by('course__title', 'order')
+    )
+
+    all_attempts = (
+        ExamAttempt.objects
+        .filter(student=student, exam__in=mocks)
+        .order_by('exam_id', 'started_at')
+    )
+    by_exam = defaultdict(list)
+    for a in all_attempts:
+        by_exam[a.exam_id].append(a)
+
+    result = []
+    for mock in mocks:
+        attempts = by_exam.get(mock.id, [])
+        finished = [a for a in attempts if a.submitted_at]
+        unfinished = [a for a in attempts if not a.submitted_at]
+
+        scores = []
+        for a in finished:
+            if a.max_points and a.max_points > 0:
+                scores.append(round(float(a.earned_points) / float(a.max_points) * 100))
+
+        trend = None
+        if len(scores) >= 2:
+            trend = scores[-1] - scores[-2]
+
+        result.append({
+            'mock': mock,
+            'attempts': finished,
+            'attempts_count': len(finished),
+            'unfinished': unfinished[0] if unfinished else None,
+            'best_score': max(scores) if scores else None,
+            'last_score': scores[-1] if scores else None,
+            'trend': trend,
+        })
+    return result

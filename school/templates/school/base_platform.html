@@ -74,6 +74,9 @@
             <a href="{% url 'study_plan' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'study_plan' %}active{% endif %}">
                 {% icon 'map' size=19 %}<span>План и задания</span>
             </a>
+            <a href="{% url 'mocks_list' %}" class="cab-nav-link {% if request.resolver_match.url_name == 'mocks_list' %}active{% endif %}">
+                {% icon 'target' size=19 %}<span>Пробники</span>
+            </a>
             <a href="{% url 'practice_home' %}" class="cab-nav-link {% if 'practice' in request.resolver_match.url_name %}active{% endif %}">
                 {% icon 'pencil' size=19 %}<span>Практика</span>
             </a>

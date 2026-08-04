@@ -149,5 +149,7 @@ urlpatterns = [
 
     path('onboarding/goal/', views.onboarding_goal, name='onboarding_goal'),
 
+    path('mocks/', views.mocks_list, name='mocks_list'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

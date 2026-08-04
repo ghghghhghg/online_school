@@ -7,7 +7,9 @@ from django.utils import timezone
 
 from school.models import (
     Course, Enrollment, Lesson, LessonProgress, Question, Subject, Test, TestResult, StudentSubjectGoal, StudentProfile,
+    ExamAttempt, ExamMock,
 )
+from school.services.analytics_repository import get_mocks_overview
 from school.services.dashboard import build_dashboard
 
 
@@ -190,3 +192,46 @@ class OnboardingTests(TestCase):
             })
         self.assertEqual(StudentSubjectGoal.objects.filter(subject=self.subject).count(), 1)
         self.assertEqual(StudentSubjectGoal.objects.get(subject=self.subject).target_test_score, 85)
+
+class MocksOverviewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='s1', password='pass12345')
+        cls.course = Course.objects.create(title='ЕГЭ', slug='ege')
+        cls.mock = ExamMock.objects.create(
+            course=cls.course, title='Вариант 1', duration_minutes=210
+        )
+        Enrollment.objects.create(
+            student=cls.user, course=cls.course, status=Enrollment.STATUS_APPROVED
+        )
+
+    def _attempt(self, earned, maximum, submitted=True):
+        return ExamAttempt.objects.create(
+            student=self.user, exam=self.mock,
+            submitted_at=timezone.now() if submitted else None,
+            earned_points=Decimal(str(earned)), max_points=Decimal(str(maximum)),
+            analytics_data_quality='exact',
+        )
+
+    def test_no_attempts(self):
+        overview = get_mocks_overview(self.user)
+        self.assertEqual(overview[0]['attempts_count'], 0)
+        self.assertIsNone(overview[0]['best_score'])
+
+    def test_trend_between_attempts(self):
+        self._attempt(20, 50)
+        self._attempt(30, 50)
+        item = get_mocks_overview(self.user)[0]
+        self.assertEqual(item['trend'], 20)
+
+    def test_unfinished_attempt_detected(self):
+        self._attempt(0, 0, submitted=False)
+        item = get_mocks_overview(self.user)[0]
+        self.assertIsNotNone(item['unfinished'])
+
+    def setUp(self):
+        self.client.login(username='s1', password='pass12345')
+
+    def test_page_renders(self):
+        response = self.client.get(reverse('mocks_list'))
+        self.assertContains(response, 'Вариант 1')

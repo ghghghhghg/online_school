@@ -1,0 +1,55 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+{% block title %}Пробники{% endblock %}
+{% block content %}
+<h2 class="dash-greeting">Пробники</h2>
+<p class="dash-subtitle">Полные экзаменационные варианты с таймером</p>
+
+{% for item in overview %}
+<div class="pf-course-row" style="align-items:flex-start;">
+    <div style="flex:1; min-width:220px;">
+        <span class="dash-course-name">{{ item.mock.course.title }}</span>
+        <h5 style="margin:4px 0 10px; font-size:17px;">{{ item.mock.title }}</h5>
+        <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--ink-soft);">
+            <span>{% icon 'stopwatch' size=14 %} {{ item.mock.duration_minutes }} мин</span>
+            {% if item.attempts_count %}
+            <span>Попыток: {{ item.attempts_count }}</span>
+            {% endif %}
+        </div>
+
+        {% if item.attempts %}
+        <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+            {% for a in item.attempts %}
+            <span class="filter-pill filter-pill-sm" style="cursor:default;">
+                {{ a.started_at|date:"d.m" }}: {% if a.max_points %}{{ a.earned_points|floatformat:"-1" }}/{{ a.max_points|floatformat:"-1" }}{% endif %}
+            </span>
+            {% endfor %}
+        </div>
+        {% if item.trend is not None %}
+        <p style="font-size:13px; margin-top:8px;">
+            {% if item.trend > 0 %}<span style="color:#4A8B5C;">▲ +{{ item.trend }}%</span> к прошлой попытке
+            {% elif item.trend < 0 %}<span style="color:var(--terra);">▼ {{ item.trend }}%</span> к прошлой попытке
+            {% else %}Без изменений{% endif %}
+        </p>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <div>
+        {% if item.unfinished %}
+            <a href="{% url 'exam_attempt' item.unfinished.pk %}" class="btn btn-terra">Продолжить</a>
+        {% else %}
+            <a href="{% url 'exam_start' item.mock.pk %}" class="btn {% if item.attempts_count %}btn-outline{% else %}btn-terra{% endif %}">
+                {% if item.attempts_count %}Пройти ещё раз{% else %}Начать{% endif %}
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="dash-empty">
+    {% icon 'clipboard' size=40 %}
+    <h3>Пробников пока нет</h3>
+    <p>Преподаватель ещё не добавил пробные варианты для ваших курсов.</p>
+</div>
+{% endfor %}
+{% endblock %}

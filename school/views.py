@@ -2522,3 +2522,13 @@ def onboarding_goal(request):
         'profile': profile,
         'current_year': date.today().year,
     })
+
+@login_required
+def mocks_list(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    from .services.analytics_repository import get_mocks_overview
+    return render(request, 'school/mocks_list.html', {
+        'overview': get_mocks_overview(request.user),
+    })
