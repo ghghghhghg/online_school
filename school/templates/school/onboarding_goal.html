@@ -1,0 +1,48 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+{% block title %}Настройка цели{% endblock %}
+{% block content %}
+<h2 class="dash-greeting">Ваша цель</h2>
+<p class="dash-subtitle">Укажите целевой балл — прогноз будет показывать разрыв до него</p>
+
+<form method="post" class="dash-side-card" style="max-width:640px;">
+    {% csrf_token %}
+
+    {% for course in courses %}
+    {% if course.subject_ref %}
+    <div style="margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--line);">
+        <b style="display:block; margin-bottom:12px;">{{ course.subject_ref.name }}</b>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div>
+                <label class="form-label">Целевой балл</label>
+                <input type="number" name="target_{{ course.pk }}" class="form-control" min="1" max="100"
+                       value="{{ existing_goals|get_item:course.subject_ref.pk|default_if_none:''|default:'' }}"
+                       placeholder="85">
+            </div>
+            <div>
+                <label class="form-label">Год экзамена</label>
+                <input type="number" name="year_{{ course.pk }}" class="form-control" value="{{ current_year|add:1 }}">
+            </div>
+            <div>
+                <label class="form-label">Дата экзамена</label>
+                <input type="date" name="date_{{ course.pk }}" class="form-control">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <div style="display:flex; gap:16px; margin-bottom:24px;">
+        <div>
+            <label class="form-label">Дней в неделю на учёбу</label>
+            <input type="number" name="days" class="form-control" min="1" max="7" value="{{ profile.available_days_per_week }}">
+        </div>
+        <div>
+            <label class="form-label">Минут в день</label>
+            <input type="number" name="minutes" class="form-control" min="5" value="{{ profile.daily_minutes }}">
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-terra">Сохранить</button>
+</form>
+{% endblock %}

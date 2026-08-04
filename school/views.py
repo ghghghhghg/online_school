@@ -2472,3 +2472,53 @@ def practice_mark_error_type(request, pk):
             student=request.user, question=practice_answer.question
         ).update(error_type=error_type)
     return redirect('practice_result', pk=practice_answer.session_id)
+
+@login_required
+def onboarding_goal(request):
+    if request.user.is_staff:
+        return redirect('teacher_dashboard')
+
+    from datetime import date
+    from .models import StudentProfile, StudentSubjectGoal
+    from .services.analytics_repository import get_enrolled_courses
+
+    courses = list(get_enrolled_courses(request.user))
+    profile, _ = StudentProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        for course in courses:
+            if not course.subject_ref:
+                continue
+            score = request.POST.get(f'target_{course.pk}')
+            year = request.POST.get(f'year_{course.pk}')
+            exam_date = request.POST.get(f'date_{course.pk}') or None
+            if not score:
+                continue
+            StudentSubjectGoal.objects.update_or_create(
+                student=profile, subject=course.subject_ref,
+                exam_year=int(year) if year else date.today().year + 1,
+                defaults={
+                    'target_test_score': int(score),
+                    'exam_date': exam_date,
+                    'is_active': True,
+                },
+            )
+
+        profile.available_days_per_week = int(request.POST.get('days', 5))
+        profile.daily_minutes = int(request.POST.get('minutes', 60))
+        profile.onboarding_completed = True
+        profile.save()
+
+        messages.success(request, 'Цель настроена! Прогноз будет учитывать её.')
+        return redirect('student_profile')
+
+    existing_goals = {
+        g.subject_id: g for g in profile.goals.filter(is_active=True)
+    }
+
+    return render(request, 'school/onboarding_goal.html', {
+        'courses': courses,
+        'existing_goals': existing_goals,
+        'profile': profile,
+        'current_year': date.today().year,
+    })

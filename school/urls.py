@@ -147,5 +147,7 @@ urlpatterns = [
     path('practice/session/<int:pk>/result/', views.practice_result, name='practice_result'),
     path('practice/answer/<int:pk>/error-type/', views.practice_mark_error_type, name='practice_mark_error_type'),
 
+    path('onboarding/goal/', views.onboarding_goal, name='onboarding_goal'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

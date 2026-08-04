@@ -18,7 +18,13 @@
         </div>
         {% endif %}
 </div>
-
+{% if not dashboard.goal_score %}
+<div class="pf-alert">
+    {% icon 'target' size=20 %}
+    <span>Цель ещё не настроена — прогноз не покажет разрыв до неё</span>
+    <a href="{% url 'onboarding_goal' %}" class="btn btn-outline" style="margin-left:auto;">Настроить</a>
+</div>
+{% endif %}
 {% if pending_enrollments %}
 <div class="pf-alert">
     {% icon 'stopwatch' size=20 %}

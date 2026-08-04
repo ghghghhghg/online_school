@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from school.models import (
-    Course, Enrollment, Lesson, LessonProgress, Question, Subject, Test, TestResult,
+    Course, Enrollment, Lesson, LessonProgress, Question, Subject, Test, TestResult, StudentSubjectGoal, StudentProfile,
 )
 from school.services.dashboard import build_dashboard
 
@@ -151,3 +151,42 @@ class DashboardViewTests(TestCase):
         self.client.login(username='s1', password='pass12345')
         response = self.client.get(reverse('student_profile'))
         self.assertContains(response, 'Выбрать курс')
+
+class OnboardingTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='s1', password='pass12345')
+        cls.subject = Subject.objects.create(code='rus', name='Русский язык')
+        cls.course = Course.objects.create(title='ЕГЭ', slug='ege', subject_ref=cls.subject)
+        Enrollment.objects.create(
+            student=cls.user, course=cls.course, status=Enrollment.STATUS_APPROVED
+        )
+
+    def setUp(self):
+        self.client.login(username='s1', password='pass12345')
+
+    def test_creates_goal(self):
+        self.client.post(reverse('onboarding_goal'), {
+            f'target_{self.course.pk}': '85',
+            f'year_{self.course.pk}': '2027',
+            'days': '5', 'minutes': '60',
+        })
+        goal = StudentSubjectGoal.objects.get(subject=self.subject)
+        self.assertEqual(goal.target_test_score, 85)
+
+    def test_marks_onboarding_completed(self):
+        self.client.post(reverse('onboarding_goal'), {
+            f'target_{self.course.pk}': '85', 'days': '5', 'minutes': '60',
+        })
+        profile = StudentProfile.objects.get(user=self.user)
+        self.assertTrue(profile.onboarding_completed)
+
+    def test_resubmit_updates_not_duplicates(self):
+        for score in ('70', '85'):
+            self.client.post(reverse('onboarding_goal'), {
+                f'target_{self.course.pk}': score,
+                f'year_{self.course.pk}': '2027',
+                'days': '5', 'minutes': '60',
+            })
+        self.assertEqual(StudentSubjectGoal.objects.filter(subject=self.subject).count(), 1)
+        self.assertEqual(StudentSubjectGoal.objects.get(subject=self.subject).target_test_score, 85)
