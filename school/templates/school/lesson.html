@@ -1,9 +1,13 @@
 {% extends 'school/base_platform.html' %}
 {% load icons %}
 
-{% block title %}{{ lesson.title }}{% endblock %}
+{% block title %}{{ lesson.title }} — {{ lesson.course.title }}{% endblock %}
+{% block description %}{{ lesson.description|default:lesson.title|truncatewords:20 }}{% endblock %}
 
 {% block content %}
+
+<!-- CSRF для fetch-запросов (нужен всегда, независимо от форм ниже) -->
+<span id="lsn-csrf" hidden>{% csrf_token %}</span>
 
 <!-- Хлебные крошки -->
 <nav class="lsn-breadcrumbs">
@@ -20,12 +24,15 @@
 <div class="lsn-head">
     <div>
         <h2 class="lsn-title">{{ lesson.title }}</h2>
+        {% if lesson.description %}
+        <p class="text-muted">{{ lesson.description }}</p>
+        {% endif %}
         <div class="lsn-meta">
             {% if lesson.duration_minutes %}
             <span>{% icon 'stopwatch' size=14 %} {{ lesson.duration_minutes }} мин</span>
             {% endif %}
             {% if view_progress.is_watched %}
-            <span class="lsn-watched">{% icon 'check-circle' size=14 color='#4A8B5C' %} Просмотрено</span>
+            <span class="lsn-watched">{% icon 'check-circle' size=14 %} Просмотрено</span>
             {% elif view_progress.watched_percent %}
             <span>Просмотрено {{ view_progress.watched_percent }}%</span>
             {% endif %}
@@ -45,12 +52,40 @@
 {% endif %}
 
 <!-- Видео -->
-<div id="lesson-video">
-    {# существующий блок видео и таймкодов — оставить как есть, #}
-    {# у тега <video> должен быть id="lesson-video-player" #}
+{% if lesson.video_file %}
+<div class="ratio ratio-16x9 my-4">
+    <video id="lesson-video" controls style="width: 100%; border-radius: 16px;">
+        <source src="{{ lesson.video_file.url }}" type="video/mp4">
+    </video>
 </div>
+{% elif lesson.video_url %}
+<div class="ratio ratio-16x9 my-4">
+    <iframe id="lesson-video-vk" src="{{ lesson.video_url }}"
+            allowfullscreen
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            frameborder="0"
+            allowtransparency>
+    </iframe>
+</div>
+{% endif %}
+
+<!-- Таймкоды -->
+{% if timecodes %}
+<div class="mb-4">
+    <h6 class="mb-2" style="color: var(--ink-soft); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em;">
+        Содержание урока
+    </h6>
+    {% for tc in timecodes %}
+    <button type="button" class="timecode-btn" data-seconds="{{ tc.time_seconds }}">
+        <span class="timecode-time">{{ tc.formatted_time }}</span>
+        <span class="timecode-label">{{ tc.label }}</span>
+    </button>
+    {% endfor %}
+</div>
+{% endif %}
 
 <!-- Главный следующий шаг -->
+{% if step %}
 <div class="lsn-next">
     <div>
         <span class="dash-card-label">Следующий шаг</span>
@@ -58,9 +93,10 @@
     </div>
     <a href="{{ step.url }}" class="btn btn-terra">{{ step.label }}</a>
 </div>
+{% endif %}
 
-<!-- Ручная отметка -->
-{% if not view_progress.is_watched %}
+<!-- Ручная отметка просмотра -->
+{% if not view_progress.is_watched and not user.is_staff %}
 <form method="post" action="{% url 'lesson_mark_watched' lesson.pk %}" class="lsn-mark-form">
     {% csrf_token %}
     <button type="submit" class="lsn-mark-btn">
@@ -69,18 +105,188 @@
 </form>
 {% endif %}
 
-{# существующие блоки: конспект, домашка, тест, комментарии #}
+<!-- Конспект -->
+{% if lesson.conspect %}
+<div class="pf-lesson-actions">
+    <a href="{{ lesson.conspect.url }}" target="_blank"
+       class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 mb-3">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C8442A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg> Скачать конспект урока
+    </a>
+</div>
+{% endif %}
 
-{% endblock %}
+<!-- Домашнее задание -->
+{% if lesson.homework %}
+<a href="{% url 'homework' lesson.pk %}" class="btn btn-outline-primary mb-3">
+    {% icon 'file-text' size=15 %} Домашнее задание
+</a>
+{% endif %}
 
-{% block extra_js %}
+<!-- Мини-проверка / завершение урока -->
+<div class="mt-4">
+    {% if user.is_staff %}
+        <p class="text-muted small">Вы просматриваете урок как преподаватель — прогресс не отслеживается</p>
+    {% elif lesson.test %}
+        {% if test_result %}
+            {% if test_result.passed %}
+                <div class="pf-passed-banner">
+                    {% icon 'check-circle' size=20 %}
+                    <span style="flex: 1;">Урок пройден — тест сдан на {{ test_result.score }}%</span>
+                    <a href="{% url 'test' lesson.pk %}" class="btn btn-sm" style="border: 2px solid #2E5B39; color: #2E5B39; background: transparent;">Пройти ещё раз</a>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    {% icon 'x' size=16 %} Тест не сдан — результат {{ test_result.score }}%,
+                    нужно {{ lesson.test.pass_score }}%
+                </div>
+                <a href="{% url 'test' lesson.pk %}" class="btn btn-primary">
+                    {% icon 'refresh' size=15 color='#fff' %} Попробовать ещё раз
+                </a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'test' lesson.pk %}" class="btn btn-primary">
+                {% icon 'file-edit' size=15 color='#fff' %} Пройти тест
+            </a>
+        {% endif %}
+    {% else %}
+        {% if is_completed %}
+            <span class="text-success fw-bold">{% icon 'check-circle' size=20 %} Урок пройден</span>
+        {% else %}
+            <form method="post" action="{% url 'complete_lesson' lesson.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">
+                    {% icon 'check-circle' size=20 color='#fff' %} Отметить как пройденный
+                </button>
+            </form>
+        {% endif %}
+    {% endif %}
+</div>
+
+<hr class="my-4">
+
+<h5 class="mb-3">Вопросы к уроку</h5>
+
+<form method="post" action="{% url 'add_comment' lesson.pk %}" class="mb-4">
+    {% csrf_token %}
+    <div class="mb-2">
+        <textarea name="text" class="form-control" rows="2"
+                  placeholder="Задайте вопрос преподавателю..." required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Отправить</button>
+</form>
+
+{% for comment in comments %}
+<div class="pf-comment-card mb-2 p-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <strong>
+                {{ comment.author.first_name }} {{ comment.author.last_name }}
+                {% if comment.author.is_staff %}
+                    <span class="badge" style="background-color: var(--accent);">Преподаватель</span>
+                {% endif %}
+            </strong>
+            <p class="mb-1 mt-1">{{ comment.text }}</p>
+            <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+        {% if request.user == comment.author or request.user.is_staff %}
+        <form method="post" action="{% url 'delete_comment' comment.pk %}"
+              onsubmit="return confirm('Удалить комментарий?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">{% icon 'trash' size=14 %}</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <button class="btn btn-sm btn-link ps-0 mt-1" type="button"
+            data-bs-toggle="collapse" data-bs-target="#reply-form-{{ comment.pk }}">
+        Ответить
+    </button>
+
+    <form method="post" action="{% url 'add_comment' lesson.pk %}"
+          class="collapse ms-4 mt-1" id="reply-form-{{ comment.pk }}">
+        {% csrf_token %}
+        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+        <div class="input-group input-group-sm">
+            <input type="text" name="text" class="form-control"
+                   placeholder="Ваш ответ..." required>
+            <button type="submit" class="btn btn-outline-primary">Отправить</button>
+        </div>
+    </form>
+
+    <!-- Ответы -->
+    {% for reply in comment.replies.all %}
+    <div class="ms-4 mt-2 p-2" style="border-left: 2px solid var(--line);">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>
+                    {{ reply.author.first_name }} {{ reply.author.last_name }}
+                    {% if reply.author.is_staff %}
+                        <span class="badge" style="background-color: var(--accent);">Преподаватель</span>
+                    {% endif %}
+                </strong>
+                <p class="mb-1 mt-1">{{ reply.text }}</p>
+                <small class="text-muted">{{ reply.created_at|date:"d.m.Y H:i" }}</small>
+            </div>
+            {% if request.user == reply.author or request.user.is_staff %}
+            <form method="post" action="{% url 'delete_comment' reply.pk %}"
+                  onsubmit="return confirm('Удалить комментарий?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">{% icon 'trash' size=14 %}</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <button class="btn btn-sm btn-link ps-0 mt-1" type="button"
+                data-bs-toggle="collapse" data-bs-target="#reply-form-{{ reply.pk }}">
+            Ответить
+        </button>
+
+        <form method="post" action="{% url 'add_comment' lesson.pk %}"
+              class="collapse ms-3 mt-1" id="reply-form-{{ reply.pk }}">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+            <div class="input-group input-group-sm">
+                <input type="text" name="text" class="form-control"
+                       placeholder="Ваш ответ..." required>
+                <button type="submit" class="btn btn-outline-primary">Отправить</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% empty %}
+<p class="text-muted">Пока нет вопросов. Будьте первым!</p>
+{% endfor %}
+
 <script>
+// --- Переход по таймкодам ---
+document.querySelectorAll('.timecode-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var seconds = parseInt(btn.dataset.seconds, 10);
+
+    var video = document.getElementById('lesson-video');
+    if (video) {
+      video.currentTime = seconds;
+      video.play();
+      return;
+    }
+
+    var vkFrame = document.getElementById('lesson-video-vk');
+    if (vkFrame) {
+      var src = vkFrame.src.split('&t=')[0].split('?t=')[0];
+      var separator = src.includes('?') ? '&' : '?';
+      vkFrame.src = src + separator + 't=' + seconds;
+    }
+  });
+});
+
+// --- Сохранение позиции просмотра (только HTML5-видео) ---
 (function(){
-  var video = document.getElementById('lesson-video-player');
+  var video = document.getElementById('lesson-video');
   if (!video) return;
 
   var url = '{% url "lesson_video_progress" lesson.pk %}';
-  var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+  var csrf = document.querySelector('#lsn-csrf [name=csrfmiddlewaretoken]');
   var lastSent = 0;
   var startPosition = {{ view_progress.position_seconds|default:0 }};
 
@@ -96,6 +302,7 @@
     var body = new FormData();
     body.append('position', Math.floor(video.currentTime));
     body.append('percent', percent);
+    body.append('duration', Math.floor(video.duration));
     body.append('csrfmiddlewaretoken', csrf.value);
     fetch(url, { method: 'POST', body: body });
   }
@@ -108,4 +315,5 @@
   video.addEventListener('ended', send);
 })();
 </script>
+
 {% endblock %}
