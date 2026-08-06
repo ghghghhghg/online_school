@@ -920,6 +920,11 @@ a > .card:hover{ background-color:var(--cream); }
 @media (max-width: 900px){
   .dash-main-grid, .dash-bottom-grid{ grid-template-columns:1fr; }
 }
+.anl-metric-empty {
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-weight: 500;
+}
 
 .pred-score{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; }
 .pred-value{ font-size:36px; font-weight:800; color:var(--terra); }

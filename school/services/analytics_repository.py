@@ -29,7 +29,7 @@ from school.models import (
     Course, ErrorRecord, ErrorStatus, Enrollment, ExamAttempt, Homework,
     HomeworkSubmission, Lesson, LessonProgress, PlanItem, PlanStatus,
     StudySession, TestResult, ExamMock, TestAnswerLog, PracticeAnswer,
-    PracticeSession, Question,
+    PracticeSession, CheckpointAttempt, Question,
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
@@ -195,8 +195,24 @@ def get_course_attempts(student, course, now=None) -> list[AttemptData]:
             completed_at=p['finished_at'],
         ))
 
-    return attempts
+        # Контрольные точки. max_points > 0 сам по себе означает «проверено
+        # целиком»: record_checkpoint_attempt пишет баллы только после того,
+        # как у всех заданий проставлен passed.
+    checkpoint_attempts = CheckpointAttempt.objects.filter(
+        student=student, checkpoint__course=course,
+        analytics_data_quality__in=USABLE_QUALITY,
+        max_points__gt=0, submitted_at__gte=since,
+    ).values('earned_points', 'max_points', 'submitted_at')
 
+    for c in checkpoint_attempts:
+        attempts.append(AttemptData(
+            earned_points=float(c['earned_points']),
+            max_points=float(c['max_points']),
+            activity_type='checkpoint',
+            completed_at=c['submitted_at'],
+        ))
+
+    return attempts
 
 def get_program_progress_counts(student, course) -> tuple[int, int]:
     """

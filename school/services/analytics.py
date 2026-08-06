@@ -62,9 +62,13 @@ def accuracy(attempts: Iterable[AttemptData]) -> float | None:
 
 
 # --- 15.3 / 15.4 Прогресс программы и темы ---
-def program_progress(completed_required: int, total_required: int) -> float:
+def program_progress(completed_required: int, total_required: int) -> float | None:
+    """
+    None — программа ещё не сконфигурирована (обязательных элементов нет).
+    Ноль возвращается только когда элементы есть, но ни один не выполнен (ТЗ 4.3).
+    """
     if total_required <= 0:
-        return 0.0
+        return None
     return clamp(completed_required / total_required * 100)
 
 
@@ -157,18 +161,22 @@ def error_rate(attempts: Iterable[AttemptData]) -> float | None:
 
 
 # --- 15.9 Исправление ошибок ---
-def error_correction_rate(reinforced: int, total_unique: int) -> float:
+def error_correction_rate(reinforced: int, total_unique: int) -> float | None:
+    """None — ошибок нет вообще, измерять нечего (ТЗ 4.3)."""
     if total_unique <= 0:
-        return 0.0
+        return None
     return clamp(reinforced / total_unique * 100)
 
 
 # --- 15.10 Выполнение плана ---
-def plan_adherence(completed_on_time: int, total_due: int, cancelled: int = 0) -> float:
-    """Отменённые задачи не ухудшают показатель (ТЗ 15.10)."""
+def plan_adherence(completed_on_time: int, total_due: int, cancelled: int = 0) -> float | None:
+    """
+    Отменённые задачи не ухудшают показатель (ТЗ 15.10).
+    None — измеримых задач нет: план пуст или все задачи отменены (ТЗ 4.3).
+    """
     effective_total = total_due - cancelled
     if effective_total <= 0:
-        return 0.0
+        return None
     return clamp(completed_on_time / effective_total * 100)
 
 

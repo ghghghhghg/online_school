@@ -15,6 +15,13 @@ from .analytics import (
 from .study_time import current_streak
 
 
+def _percent_or_none(value: float | None) -> int | None:
+    """
+    None пробрасывается дальше как признак отсутствия данных —
+    шаблон покажет «Недостаточно данных», а не ложный 0% (ТЗ 4.3).
+    """
+    return None if value is None else int(value)
+
 @dataclass
 class TopicRow:
     lesson: object
@@ -33,7 +40,7 @@ class TopicRow:
 class CourseAnalytics:
     course: object
     subject_name: str
-    progress_percent: int
+    progress_percent: int | None
     completed: int
     total: int
     accuracy_percent: int | None
@@ -51,7 +58,7 @@ class AnalyticsData:
     # Сводные показатели
     overall_accuracy: int | None = None
     errors: dict = field(default_factory=dict)
-    correction_percent: int = 0
+    correction_percent: int | None = None
     trend: float | None = None
     stability_label: str = 'Мало данных'
     stability_value: float | None = None
@@ -133,7 +140,7 @@ def build_analytics(student, now=None) -> AnalyticsData:
             subject_name=(
                 course.subject_ref.name if course.subject_ref else course.subject
             ),
-            progress_percent=int(program_progress(done, total)),
+            progress_percent=_percent_or_none(program_progress(done, total)),
             completed=done,
             total=total,
             accuracy_percent=int(course_accuracy) if course_accuracy is not None else None,
@@ -163,14 +170,14 @@ def build_analytics(student, now=None) -> AnalyticsData:
         has_data=bool(all_attempts) or bool(error_stats.get('total')),
         overall_accuracy=int(overall) if overall is not None else None,
         errors=error_stats,
-        correction_percent=int(error_correction_rate(
+        correction_percent=_percent_or_none(error_correction_rate(
             error_stats.get('reinforced', 0), error_stats.get('total', 0)
         )),
         trend=score_trend(last_14, prev_14),
         stability_label=sd_label,
         stability_value=sd_value,
         adherence=(
-            int(plan_adherence(
+            _percent_or_none(plan_adherence(
                 plan_counts['completed_on_time'],
                 plan_counts['total_due'],
                 plan_counts['cancelled'],

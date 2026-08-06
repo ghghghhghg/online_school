@@ -56,8 +56,8 @@ class ProgressTests(SimpleTestCase):
         self.assertEqual(program_progress(3, 4), 75)
 
     def test_zero_total_does_not_crash(self):
-        self.assertEqual(program_progress(0, 0), 0.0)
-
+        self.assertIsNone(program_progress(0, 0))
+        self.assertEqual(program_progress(0, 10), 0.0)
 
 class RecencyTests(SimpleTestCase):
     def test_fresh_attempt_full_weight(self):
@@ -111,7 +111,8 @@ class ErrorTests(SimpleTestCase):
         self.assertEqual(error_rate([make_attempt(3, 4)]), 25)
 
     def test_correction_rate_zero_total(self):
-        self.assertEqual(error_correction_rate(0, 0), 0.0)
+        self.assertIsNone(error_correction_rate(0, 0))
+        self.assertEqual(error_correction_rate(0, 3), 0.0)
 
     def test_correction_rate(self):
         self.assertEqual(error_correction_rate(3, 12), 25)
@@ -123,7 +124,8 @@ class PlanTests(SimpleTestCase):
         self.assertEqual(plan_adherence(completed_on_time=5, total_due=10, cancelled=5), 100)
 
     def test_zero_due(self):
-        self.assertEqual(plan_adherence(0, 0), 0.0)
+        self.assertIsNone(plan_adherence(0, 0))
+        self.assertEqual(plan_adherence(0, 5), 0.0)
 
 
 class ConversionTableTests(SimpleTestCase):

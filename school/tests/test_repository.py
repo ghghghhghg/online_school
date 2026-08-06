@@ -52,7 +52,7 @@ class RepositoryTests(TestCase):
         self.assertEqual(len(result), 5)
 
     def test_course_attempts_flat_includes_exams(self):
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             attempts = repo.get_course_attempts(self.user, self.course)
         self.assertEqual(len(attempts), 5)
 

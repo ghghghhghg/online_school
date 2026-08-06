@@ -8,7 +8,10 @@ ACTIVITY_WEIGHTS = {
     'mini_check': 0.8,
     'practice': 1.0,
     'homework': 1.1,
+    'checkpoint': 1.2,
     'mock_exam': 1.3,
+    # Повторы по ошибкам ученик проходит внутри практики (режим «по ошибкам»)
+    # и они учитываются как PracticeSession. Отдельного источника нет.
     'error_retry': 0.9,
 }
 DEFAULT_ACTIVITY_WEIGHT = 1.0
