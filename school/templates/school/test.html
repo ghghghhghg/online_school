@@ -9,7 +9,8 @@
 <p class="text-muted">Проходной балл: {{ test.pass_score }}%</p>
 <hr>
 
-<form method="post">
+<form method="post" id="test-form">
+    <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
     {% csrf_token %}
     {% for question in questions %}
     <div class="card mb-3">
@@ -32,4 +33,17 @@
 
     <button type="submit" class="btn btn-primary">Отправить ответы</button>
 </form>
+<script>
+(function(){
+  var form = document.getElementById('test-form');
+  if (!form) return;
+  form.addEventListener('submit', function(){
+    var btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Отправляем…';
+    }
+  });
+})();
+</script>
 {% endblock %}

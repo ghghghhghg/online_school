@@ -419,6 +419,10 @@ class TestResult(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
     score = models.PositiveIntegerField(verbose_name='Результат (%)')
     passed = models.BooleanField(verbose_name='Сдан')
     created_at = models.DateTimeField(auto_now_add=True)
+    idempotency_key = models.CharField(
+        max_length=64, null=True, blank=True, unique=True, db_index=True,
+        verbose_name='Ключ идемпотентности',
+    )
 
     class Meta:
         verbose_name = 'Результат теста'

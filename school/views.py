@@ -13,7 +13,7 @@ from .models import Course, Lesson, Enrollment, LessonProgress, Test, Question, 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 import uuid
@@ -576,32 +576,45 @@ def test_view(request, pk):
         passed = score >= test.pass_score
 
         if not request.user.is_staff:
-            result = TestResult.objects.create(
-                student=request.user,
-                test=test,
-                score=score,
-                passed=passed,
-            )
-            for question, chosen, is_correct in answers_log:
-                log = TestAnswerLog.objects.create(
-                    result=result,
-                    question=question,
-                    chosen_answer=chosen,
-                    is_correct=is_correct,
-                )
-                record_answer_points(log, question, is_correct)
+            key = request.POST.get('idempotency_key') or ''
+            if key and TestResult.objects.filter(idempotency_key=key).exists():
+                # Повторная отправка той же формы — попытка уже сохранена (ТЗ 4.8)
+                return redirect('test_result', pk=lesson.pk)
 
-            record_test_attempt(result, answers_log)
-            register_errors(request.user, result, answers_log)
-            resolve_errors_on_success(
-                request.user, answers_log,
-                session_key=request.session.session_key or '',
-            )
+            try:
+                with transaction.atomic():
+                    result = TestResult.objects.create(
+                        student=request.user,
+                        test=test,
+                        score=score,
+                        passed=passed,
+                        idempotency_key=key or None,
+                    )
+                    for question, chosen, is_correct in answers_log:
+                        log = TestAnswerLog.objects.create(
+                            result=result,
+                            question=question,
+                            chosen_answer=chosen,
+                            is_correct=is_correct,
+                        )
+                        record_answer_points(log, question, is_correct)
 
-            if passed:
-                LessonProgress.objects.get_or_create(
-                    student=request.user, lesson=lesson
-                )
+                    record_test_attempt(result, answers_log)
+                    register_errors(request.user, result, answers_log)
+                    resolve_errors_on_success(
+                        request.user, answers_log,
+                        session_key=request.session.session_key or '',
+                    )
+
+                    if passed:
+                        LessonProgress.objects.get_or_create(
+                            student=request.user, lesson=lesson
+                        )
+            except IntegrityError:
+                # Два запроса пришли одновременно — второй проиграл гонку
+                # на unique-ключе. Данные уже записаны первым, это не ошибка.
+                pass
+
             return redirect('test_result', pk=lesson.pk)
         else:
             messages.success(request, f'Предпросмотр: результат {score}% (не сохранён)')
@@ -611,7 +624,9 @@ def test_view(request, pk):
         'lesson': lesson,
         'test': test,
         'questions': questions,
+        'idempotency_key': uuid.uuid4().hex,
     })
+
 
 @login_required
 def test_result_view(request, pk):
