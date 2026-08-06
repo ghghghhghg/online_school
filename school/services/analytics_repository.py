@@ -3,6 +3,21 @@
 
 Только выборки и нормализация в DTO. Формул здесь нет — они в analytics.py.
 Все запросы оптимизированы под отсутствие N+1 (ТЗ-уточнение 12).
+
+Источники попыток (ТЗ 4.2):
+  TestResult, HomeworkSubmission, ExamAttempt, PracticeSession.
+
+Практика берётся на уровне сессии, а не PracticeAnswer: иначе одна работа
+попала бы в агрегацию дважды. Сессии с темой идут в разрез по урокам,
+без темы — в общий список курса; условия lesson__isnull зеркальны.
+
+ErrorCorrectionAttempt намеренно НЕ является источником баллов: у него нет
+first/max points, а сами повторные задания по ошибкам ученик решает внутри
+практики в режиме «по ошибкам» и они уже учтены через PracticeSession.
+Эта модель — журнал закрепления ошибки (три этапа), не попытка.
+
+CheckpointAttempt пока не подключён: у модели нет поля завершённости,
+пригодного для фильтрации в ORM (all_passed/has_pending — property).
 """
 from collections import defaultdict
 from datetime import date, timedelta
@@ -13,7 +28,8 @@ from django.utils import timezone
 from school.models import (
     Course, ErrorRecord, ErrorStatus, Enrollment, ExamAttempt, Homework,
     HomeworkSubmission, Lesson, LessonProgress, PlanItem, PlanStatus,
-    StudySession, TestResult, ExamMock, TestAnswerLog, PracticeAnswer, Question,
+    StudySession, TestResult, ExamMock, TestAnswerLog, PracticeAnswer,
+    PracticeSession, Question,
 )
 from .analytics import AttemptData
 from .constants import MASTERY_WINDOW_DAYS
@@ -65,7 +81,24 @@ def get_lesson_attempts(student, lesson, now=None) -> list[AttemptData]:
             completed_at=s.checked_at,
         ))
 
+        # Практика учитывается на уровне сессии, а не отдельных ответов:
+        # иначе одна и та же работа попала бы в агрегацию дважды (ТЗ 4.2).
+    practice_sessions = PracticeSession.objects.filter(
+        student=student, lesson=lesson,
+        analytics_data_quality__in=USABLE_QUALITY,
+        max_points__gt=0, finished_at__gte=since,
+    ).only('earned_points', 'max_points', 'finished_at')
+
+    for p in practice_sessions:
+        attempts.append(AttemptData(
+            earned_points=float(p.earned_points),
+            max_points=float(p.max_points),
+            activity_type='practice',
+            completed_at=p.finished_at,
+        ))
+
     return attempts
+
 
 
 def get_course_attempts_by_lesson(student, course, now=None) -> dict[int, list[AttemptData]]:
@@ -104,6 +137,22 @@ def get_course_attempts_by_lesson(student, course, now=None) -> dict[int, list[A
             completed_at=s['checked_at'],
         ))
 
+        # Только сессии, привязанные к конкретной теме: смешанная практика
+        # и практика по номеру ЕГЭ не относятся ни к одному уроку.
+    practice_sessions = PracticeSession.objects.filter(
+        student=student, lesson__course=course, lesson__isnull=False,
+        analytics_data_quality__in=USABLE_QUALITY,
+        max_points__gt=0, finished_at__gte=since,
+    ).values('lesson_id', 'earned_points', 'max_points', 'finished_at')
+
+    for p in practice_sessions:
+        by_lesson[p['lesson_id']].append(AttemptData(
+            earned_points=float(p['earned_points']),
+            max_points=float(p['max_points']),
+            activity_type='practice',
+            completed_at=p['finished_at'],
+        ))
+
     return dict(by_lesson)
 
 
@@ -127,6 +176,23 @@ def get_course_attempts(student, course, now=None) -> list[AttemptData]:
             max_points=float(e['max_points']),
             activity_type='mock_exam',
             completed_at=e['submitted_at'],
+        ))
+
+        # Практика вне конкретной темы (смешанная, по номеру ЕГЭ, по ошибкам).
+        # Сессии с темой уже пришли выше из get_course_attempts_by_lesson —
+        # здесь берём только оставшиеся, иначе получится двойной учёт.
+    free_practice = PracticeSession.objects.filter(
+        student=student, course=course, lesson__isnull=True,
+        analytics_data_quality__in=USABLE_QUALITY,
+        max_points__gt=0, finished_at__gte=since,
+    ).values('earned_points', 'max_points', 'finished_at')
+
+    for p in free_practice:
+        attempts.append(AttemptData(
+            earned_points=float(p['earned_points']),
+            max_points=float(p['max_points']),
+            activity_type='practice',
+            completed_at=p['finished_at'],
         ))
 
     return attempts
@@ -397,22 +463,22 @@ def build_recommendation_candidates(student, now=None) -> list:
             estimated_minutes=exam.duration_minutes,
         ))
         # Задачи плана на сегодня
-        today_items = (
-            PlanItem.objects
-            .filter(plan__student=student, required=True, due_at__date=now.date())
-            .filter(status__in=[PlanStatus.PLANNED, PlanStatus.IN_PROGRESS])
-            .select_related('plan')[:3]
-        )
-        for item in today_items:
-            candidates.append(Recommendation(
-                action_type=ActionType.PRACTICE,
-                priority=PRIORITY_PLANNED_TODAY,
-                title=item.title,
-                reason='Задача из плана на сегодня',
-                url=reverse('study_plan'),
-                estimated_minutes=item.estimated_minutes,
-                due_at=item.due_at,
-            ))
+    today_items = (
+        PlanItem.objects
+        .filter(plan__student=student, required=True, due_at__date=now.date())
+        .filter(status__in=[PlanStatus.PLANNED, PlanStatus.IN_PROGRESS])
+        .select_related('plan')[:3]
+    )
+    for item in today_items:
+        candidates.append(Recommendation(
+            action_type=ActionType.PRACTICE,
+            priority=PRIORITY_PLANNED_TODAY,
+            title=item.title,
+            reason='Задача из плана на сегодня',
+            url=reverse('study_plan'),
+            estimated_minutes=item.estimated_minutes,
+            due_at=item.due_at,
+        ))
 
     return candidates
 

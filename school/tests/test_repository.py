@@ -47,12 +47,12 @@ class RepositoryTests(TestCase):
 
     def test_course_attempts_no_n_plus_one(self):
         """5 уроков — фиксированное число запросов, а не 5+."""
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             result = repo.get_course_attempts_by_lesson(self.user, self.course)
         self.assertEqual(len(result), 5)
 
     def test_course_attempts_flat_includes_exams(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(5):
             attempts = repo.get_course_attempts(self.user, self.course)
         self.assertEqual(len(attempts), 5)
 
