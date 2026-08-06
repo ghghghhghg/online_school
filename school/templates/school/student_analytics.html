@@ -83,20 +83,6 @@
     {% endif %}
 </div>
 
-<!-- Прогноз -->
-<div class="dash-side-card" style="margin-bottom:28px;">
-    <h4 class="dash-side-title">Прогноз балла</h4>
-    {% if data.prediction_available %}
-        {# появится после внесения шкал перевода #}
-    {% else %}
-        <div class="dash-empty-small">
-            {% icon 'bar-chart' size=28 %}
-            <p>Недостаточно данных для прогноза</p>
-            <span>Прогноз появится после нескольких пробников и внесения шкалы перевода баллов.</span>
-        </div>
-    {% endif %}
-</div>
-
 <!-- По курсам -->
 {% for block in data.courses %}
 <div class="anl-course">
@@ -113,6 +99,34 @@
             {% endif %}
             {% if block.accuracy_percent is not None %}
             <span>Точность: <b>{{ block.accuracy_percent }}%</b></span>
+            {% endif %}
+        </div>
+        <!-- Прогноз по курсу -->
+        <div class="anl-prediction">
+            <h5>Прогноз балла</h5>
+            {% if block.prediction.available %}
+            <div class="anl-pred-main">
+                <span class="pred-value">{{ block.prediction.predicted_test_score }}</span>
+                <span class="pred-unit">тестовых баллов</span>
+            </div>
+            <span class="pred-primary">
+                Первичных: {{ block.prediction.expected_primary|floatformat:0 }}
+                из {{ block.prediction.max_primary|floatformat:0 }}
+            </span>
+            <span class="pred-coverage">
+                Покрытие: {{ block.prediction.coverage_percent }}%
+                ({{ block.prediction.covered_numbers }} из {{ block.prediction.total_numbers }} номеров)
+            </span>
+            <span class="pred-confidence">
+                Достоверность: {{ block.prediction.confidence_percent }}% —
+                {{ block.prediction.confidence_label }}
+            </span>
+            {% else %}
+            <div class="dash-empty-small">
+                {% icon 'bar-chart' size=28 %}
+                <p>Прогноз недоступен</p>
+                <span>{{ block.prediction.reason|default:"Пройдите несколько заданий с указанным номером ЕГЭ." }}</span>
+            </div>
             {% endif %}
         </div>
     </div>

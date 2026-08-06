@@ -7,8 +7,13 @@
 это состояние показывается честно, а не подменяется приближением.
 """
 from dataclasses import dataclass
+from datetime import datetime
+from django.utils import timezone
 
-from .analytics import TaskStats, expected_primary_score, convert_to_test_score
+from .analytics import (
+    TaskStats, confidence_label, convert_to_test_score,
+    expected_primary_score, prediction_confidence,
+)
 
 
 @dataclass
@@ -19,6 +24,8 @@ class PredictionResult:
     max_primary: float | None = None
     covered_numbers: int = 0
     total_numbers: int = 0
+    confidence_percent: int = 0
+    confidence_label: str = 'Мало данных'
     reason: str = ''
 
     @property
@@ -35,7 +42,7 @@ def build_task_stats(attempts_by_number: dict[int, dict], task_max_points: dict[
     """
     stats = []
     for number, points in task_max_points.items():
-        agg = attempts_by_number.get(number, {'earned': 0, 'max': 0})
+        agg = attempts_by_number.get(number) or {'earned': 0, 'max': 0}
         stats.append(TaskStats(
             max_primary_points=points,
             total_earned_points=agg['earned'],
@@ -44,7 +51,9 @@ def build_task_stats(attempts_by_number: dict[int, dict], task_max_points: dict[
     return stats
 
 
-def predict_test_score(attempts_by_number, task_max_points, conversion_table) -> PredictionResult:
+def predict_test_score(
+    attempts_by_number, task_max_points, conversion_table, now: datetime | None = None,
+) -> PredictionResult:
     if not task_max_points:
         return PredictionResult(
             available=False,
@@ -72,6 +81,10 @@ def predict_test_score(attempts_by_number, task_max_points, conversion_table) ->
     max_primary = sum(task_max_points.values())
     test_score = convert_to_test_score(expected, conversion_table)
 
+    confidence = prediction_confidence(
+        attempts_by_number, task_max_points, now or timezone.now(),
+    )
+
     return PredictionResult(
         available=test_score is not None,
         predicted_test_score=test_score,
@@ -79,5 +92,7 @@ def predict_test_score(attempts_by_number, task_max_points, conversion_table) ->
         max_primary=max_primary,
         covered_numbers=covered,
         total_numbers=total,
+        confidence_percent=int(confidence),
+        confidence_label=confidence_label(confidence),
         reason='' if test_score is not None else 'Первичный балл вне диапазона шкалы',
     )

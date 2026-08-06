@@ -143,6 +143,8 @@
             {% endif %}
             <span class="pred-coverage">Покрытие программы: {{ dashboard.prediction.coverage_percent }}%
                 ({{ dashboard.prediction.covered_numbers }} из {{ dashboard.prediction.total_numbers }} номеров)</span>
+            <span class="pred-confidence">Достоверность: {{ dashboard.prediction.confidence_percent }}% —
+                {{ dashboard.prediction.confidence_label }}</span>
         {% else %}
             <div class="dash-empty-small">
                 {% icon 'bar-chart' size=28 %}

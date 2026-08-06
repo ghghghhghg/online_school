@@ -15,6 +15,7 @@ from .constants import (
     ACTIVITY_WEIGHTS, CONFIDENCE_TARGET_ATTEMPTS, DEFAULT_ACTIVITY_WEIGHT,
     EVIDENCE_WEIGHT_CAP, MASTERY_HALF_LIFE_DAYS, MASTERY_MAX_ATTEMPTS,
     MASTERY_WINDOW_DAYS, PREDICTION_PRIOR_PROBABILITY, PREDICTION_PRIOR_STRENGTH, TREND_MIN_RESULTS,
+    PREDICTION_RECENCY_HALF_LIFE, PREDICTION_SPREAD_TARGET, PREDICTION_EVIDENCE_TARGET,
 )
 
 logger = logging.getLogger(__name__)
@@ -135,6 +136,61 @@ def confidence_label(confidence: float) -> str:
     if confidence < 80:
         return 'Достаточно данных'
     return 'Высокая достоверность'
+
+
+def prediction_confidence(
+    attempts_by_number: dict,
+    task_max_points: dict,
+    now: datetime,
+) -> float:
+    """
+    Достоверность прогноза балла, 0–100 (ТЗ 4.4).
+
+    Четыре фактора, перемножаются: слабость любого из них ограничивает
+    результат, потому что они не взаимозаменяемы — сто баллов по трём
+    номерам из тридцати не делают прогноз надёжным.
+
+    Доля результатов пробников (пятый фактор по ТЗ) пока не участвует:
+    у ExamTask нет номера задания ЕГЭ, подключается на этапе P1
+    вместе с ExamTaskType (ТЗ 6.4).
+    """
+    if not task_max_points:
+        return 0.0
+
+    covered = [
+        n for n in task_max_points
+        if attempts_by_number.get(n, {}).get('max', 0) > 0
+    ]
+    if not covered:
+        return 0.0
+
+    # 1. Покрытие номеров ЕГЭ
+    coverage = len(covered) / len(task_max_points)
+
+    # 2. Объём первичных баллов в истории
+    total_points = sum(
+        attempts_by_number.get(n, {}).get('max', 0) for n in covered
+    )
+    evidence = min(1.0, total_points / PREDICTION_EVIDENCE_TARGET)
+
+    # 3. Результаты в разные дни
+    all_dates = set()
+    for n in covered:
+        all_dates |= attempts_by_number[n].get('dates') or set()
+    spread = min(1.0, len(all_dates) / PREDICTION_SPREAD_TARGET) if all_dates else 0.5
+
+    # 4. Давность данных — по самому свежему результату
+    moments = [
+        attempts_by_number[n].get('last_at') for n in covered
+        if attempts_by_number[n].get('last_at')
+    ]
+    if moments:
+        age_days = max(0.0, (now - max(moments)).total_seconds() / 86400)
+        recency = 0.5 ** (age_days / PREDICTION_RECENCY_HALF_LIFE)
+    else:
+        recency = 0.5
+
+    return clamp(coverage * evidence * spread * recency * 100)
 
 
 # --- 15.7 Уровни освоения ---

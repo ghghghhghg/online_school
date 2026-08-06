@@ -131,7 +131,7 @@ def build_dashboard(student, now=None) -> DashboardData:
 
         task_max = repo.get_task_max_points_by_number(main_course)
         attempts_by_number = repo.get_attempts_by_exam_number(student, main_course, now)
-        prediction = predict_test_score(attempts_by_number, task_max, table)
+        prediction = predict_test_score(attempts_by_number, task_max, table, now)
 
         if prediction.available and goal:
             gap_value, gap_label = score_gap(goal.target_test_score, prediction.predicted_test_score)

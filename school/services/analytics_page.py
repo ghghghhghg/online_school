@@ -14,6 +14,7 @@ from .analytics import (
 )
 from .study_time import current_streak
 
+from .prediction import predict_test_score
 
 def _percent_or_none(value: float | None) -> int | None:
     """
@@ -45,6 +46,7 @@ class CourseAnalytics:
     total: int
     accuracy_percent: int | None
     error_percent: int | None
+    prediction: object = None
     topics: list = field(default_factory=list)
     weak_topics: list = field(default_factory=list)
     strong_topics: list = field(default_factory=list)
@@ -135,6 +137,21 @@ def build_analytics(student, now=None) -> AnalyticsData:
         topics = _topic_rows(student, course, now)
         course_accuracy = accuracy(attempts)
 
+        table = None
+        if course.subject_ref:
+            from school.models import ScoreConversionTable
+            table_obj = ScoreConversionTable.get_active(
+                course.subject_ref, course.exam_type, now.year
+            )
+            table = table_obj.as_mapping() if table_obj else None
+
+        prediction = predict_test_score(
+            repo.get_attempts_by_exam_number(student, course, now),
+            repo.get_task_max_points_by_number(course),
+            table,
+            now,
+        )
+
         course_blocks.append(CourseAnalytics(
             course=course,
             subject_name=(
@@ -150,6 +167,7 @@ def build_analytics(student, now=None) -> AnalyticsData:
             topics=topics,
             weak_topics=[t for t in topics if t.status in ('weak', 'critical')],
             strong_topics=[t for t in topics if t.status == 'strong'],
+            prediction=prediction,
         ))
 
     # Сводные
@@ -188,5 +206,5 @@ def build_analytics(student, now=None) -> AnalyticsData:
         week_minutes=study_time['week_seconds'] // 60,
         month_minutes=study_time['month_seconds'] // 60,
         streak_days=current_streak(repo.get_active_days(student), now.date()),
-        prediction_available=False,
+        prediction_available=any(c.prediction and c.prediction.available for c in course_blocks),
     )

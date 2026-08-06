@@ -45,6 +45,18 @@ def _window_start(now=None):
     return (now or timezone.now()) - timedelta(days=MASTERY_WINDOW_DAYS)
 
 
+def _track_recency(bucket: dict, moment) -> None:
+    """
+    Даты нужны достоверности прогноза (ТЗ 4.4): результаты в разные дни
+    надёжнее, чем та же сумма баллов, набранная за один заход.
+    """
+    if not moment:
+        return
+    bucket['dates'].add(moment.date())
+    if bucket['last_at'] is None or moment > bucket['last_at']:
+        bucket['last_at'] = moment
+
+
 def get_lesson_attempts(student, lesson, now=None) -> list[AttemptData]:
     """
     Все попытки ученика, относящиеся к одному уроку.
@@ -613,7 +625,9 @@ def get_attempts_by_exam_number(student, course, now=None):
     из практики и мини-проверок вместе.
     """
     since = _window_start(now)
-    result = defaultdict(lambda: {'earned': 0.0, 'max': 0.0})
+    result = defaultdict(lambda: {
+        'earned': 0.0, 'max': 0.0, 'dates': set(), 'last_at': None,
+    })
 
     practice_rows = (
         PracticeAnswer.objects
@@ -626,12 +640,13 @@ def get_attempts_by_exam_number(student, course, now=None):
         .filter(
             Q(question__lesson__course=course) | Q(question__test__lesson__course=course)
         )
-        .values('question__exam_task_number', 'earned_points', 'max_points')
+        .values('question__exam_task_number', 'earned_points', 'max_points', 'answered_at')
     )
     for row in practice_rows:
         n = row['question__exam_task_number']
         result[n]['earned'] += float(row['earned_points'] or 0)
         result[n]['max'] += float(row['max_points'] or 0)
+        _track_recency(result[n], row['answered_at'])
 
     log_rows = (
         TestAnswerLog.objects
@@ -641,12 +656,14 @@ def get_attempts_by_exam_number(student, course, now=None):
             result__test__lesson__course=course,
             result__created_at__gte=since,
         )
-        .values('question__exam_task_number', 'earned_points', 'max_points')
+        .values('question__exam_task_number', 'earned_points', 'max_points',
+                'result__created_at')
     )
     for row in log_rows:
         n = row['question__exam_task_number']
         result[n]['earned'] += float(row['earned_points'] or 0)
         result[n]['max'] += float(row['max_points'] or 0)
+        _track_recency(result[n], row['result__created_at'])
 
     return dict(result)
 
