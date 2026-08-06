@@ -16,6 +16,9 @@ ACTIVITY_WEIGHTS = {
 }
 DEFAULT_ACTIVITY_WEIGHT = 1.0
 
+# Минимум результатов в каждом сравниваемом периоде для расчёта тренда (ТЗ 4.3)
+TREND_MIN_RESULTS = 2
+
 # Затухание веса по времени
 MASTERY_HALF_LIFE_DAYS = 45
 MASTERY_WINDOW_DAYS = 90

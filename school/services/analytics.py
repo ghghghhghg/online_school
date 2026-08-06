@@ -14,7 +14,7 @@ import math
 from .constants import (
     ACTIVITY_WEIGHTS, CONFIDENCE_TARGET_ATTEMPTS, DEFAULT_ACTIVITY_WEIGHT,
     EVIDENCE_WEIGHT_CAP, MASTERY_HALF_LIFE_DAYS, MASTERY_MAX_ATTEMPTS,
-    MASTERY_WINDOW_DAYS, PREDICTION_PRIOR_PROBABILITY, PREDICTION_PRIOR_STRENGTH,
+    MASTERY_WINDOW_DAYS, PREDICTION_PRIOR_PROBABILITY, PREDICTION_PRIOR_STRENGTH, TREND_MIN_RESULTS,
 )
 
 logger = logging.getLogger(__name__)
@@ -242,10 +242,13 @@ def score_gap(target: int, predicted: int | None) -> tuple[int | None, str]:
 
 # --- 15.15 Динамика ---
 def score_trend(last_14: Sequence[float], previous_14: Sequence[float]) -> float | None:
-    if not last_14 or not previous_14:
+    """
+    None — данных мало. Минимум два результата в каждом периоде (ТЗ 4.3):
+    сравнение одной попытки с одной показывает разброс, а не динамику.
+    """
+    if len(last_14) < TREND_MIN_RESULTS or len(previous_14) < TREND_MIN_RESULTS:
         return None
     return round(sum(last_14) / len(last_14) - sum(previous_14) / len(previous_14), 1)
-
 
 # --- 15.16 Стабильность ---
 def stability(scores: Sequence[float]) -> tuple[float | None, str]:
