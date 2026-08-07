@@ -151,5 +151,7 @@ urlpatterns = [
 
     path('mocks/', views.mocks_list, name='mocks_list'),
 
+    path('streams/', views.streams_view, name='streams'),
+
     path('confirm-email/<uidb64>/<token>/', views.confirm_email_view, name='confirm_email'),
 ]

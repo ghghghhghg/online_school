@@ -1,0 +1,71 @@
+{% extends 'school/base_platform.html' %}
+{% load icons %}
+
+{% block title %}Трансляции{% endblock %}
+
+{% block content %}
+<h2>{% icon 'play-circle' size=24 %} Трансляции</h2>
+
+{% if upcoming %}
+<h5 class="mt-4 mb-3">Ближайшие эфиры</h5>
+{% for stream in upcoming %}
+<div class="card mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <span class="dash-course-subject">{{ stream.course.title }}</span>
+            <h5 class="mb-1">{{ stream.title }}</h5>
+            {% if stream.description %}
+            <p class="text-muted mb-2" style="white-space: pre-line;">{{ stream.description }}</p>
+            {% endif %}
+            <div class="lsn-meta">
+                <span>{% icon 'stopwatch' size=14 %}
+                    {{ stream.scheduled_at|date:"d.m.Y, H:i" }} — {{ stream.duration_minutes }} мин</span>
+            </div>
+        </div>
+        {% if stream.status == 'live' %}
+        <span class="badge bg-danger">В эфире</span>
+        {% endif %}
+    </div>
+
+    {% if stream.status == 'live' and stream.kinescope_id %}
+    <div class="ratio ratio-16x9 mt-3">
+        <iframe src="https://kinescope.io/embed/{{ stream.kinescope_id }}"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                frameborder="0" allowfullscreen></iframe>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if past %}
+<h5 class="mt-4 mb-3">Прошедшие эфиры</h5>
+{% for stream in past %}
+<div class="card mb-3 p-3">
+    <span class="dash-course-subject">{{ stream.course.title }}</span>
+    <h5 class="mb-1">{{ stream.title }}</h5>
+    <div class="lsn-meta mb-2">
+        <span>{% icon 'stopwatch' size=14 %} {{ stream.scheduled_at|date:"d.m.Y" }}</span>
+    </div>
+
+    {% if stream.has_recording %}
+    <div class="ratio ratio-16x9">
+        <iframe src="https://kinescope.io/embed/{{ stream.recording_id }}"
+                allow="fullscreen; picture-in-picture; encrypted-media"
+                frameborder="0" allowfullscreen></iframe>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Запись пока не выложена</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if not upcoming and not past %}
+<div class="dash-empty-small mt-4">
+    {% icon 'play-circle' size=28 %}
+    <p>Трансляций пока нет</p>
+    <span>Здесь появятся вебинары и разборы по вашим курсам.</span>
+</div>
+{% endif %}
+{% endblock %}

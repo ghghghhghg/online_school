@@ -2601,3 +2601,28 @@ def mocks_list(request):
     return render(request, 'school/mocks_list.html', {
         'overview': get_mocks_overview(request.user),
     })
+
+@login_required
+def streams_view(request):
+    """Список трансляций по курсам ученика."""
+    from .models import CourseStream
+    from .services import analytics_repository as repo
+
+    courses = repo.get_enrolled_courses(request.user)
+    streams = (
+        CourseStream.objects
+        .filter(course__in=courses, is_published=True)
+        .exclude(status=CourseStream.STATUS_CANCELLED)
+        .select_related('course')
+    )
+
+    now = timezone.now()
+    upcoming = [s for s in streams if s.status != CourseStream.STATUS_FINISHED]
+    upcoming.sort(key=lambda s: s.scheduled_at)
+    past = [s for s in streams if s.status == CourseStream.STATUS_FINISHED]
+
+    return render(request, 'school/streams.html', {
+        'upcoming': upcoming,
+        'past': past,
+        'now': now,
+    })
