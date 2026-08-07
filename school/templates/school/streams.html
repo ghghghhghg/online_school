@@ -30,7 +30,7 @@
     {% if stream.status == 'live' and stream.kinescope_id %}
     <div class="ratio ratio-16x9 mt-3">
         <iframe src="https://kinescope.io/embed/{{ stream.kinescope_id }}"
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
                 frameborder="0" allowfullscreen></iframe>
     </div>
     {% endif %}
@@ -51,7 +51,7 @@
     {% if stream.has_recording %}
     <div class="ratio ratio-16x9">
         <iframe src="https://kinescope.io/embed/{{ stream.recording_id }}"
-                allow="fullscreen; picture-in-picture; encrypted-media"
+                allow="fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
                 frameborder="0" allowfullscreen></iframe>
     </div>
     {% else %}
