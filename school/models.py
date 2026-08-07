@@ -14,6 +14,7 @@ from django.utils.text import slugify
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from datetime import timedelta
 
 class AnalyticsDataQuality(models.TextChoices):
     """
@@ -235,6 +236,75 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f'{self.order}. {self.title}'
+
+
+class CourseStream(models.Model):
+    """Онлайн-трансляция (вебинар) по курсу. Видео — Kinescope."""
+
+    STATUS_SCHEDULED = 'scheduled'
+    STATUS_LIVE = 'live'
+    STATUS_FINISHED = 'finished'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_CHOICES = [
+        (STATUS_SCHEDULED, 'Запланирована'),
+        (STATUS_LIVE, 'Идёт эфир'),
+        (STATUS_FINISHED, 'Завершена'),
+        (STATUS_CANCELLED, 'Отменена'),
+    ]
+
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE,
+        related_name='streams', verbose_name='Курс',
+    )
+    title = models.CharField(max_length=200, verbose_name='Название эфира')
+    description = models.TextField(blank=True, verbose_name='О чём эфир')
+
+    scheduled_at = models.DateTimeField(verbose_name='Начало эфира')
+    duration_minutes = models.PositiveSmallIntegerField(
+        default=60, verbose_name='Длительность, мин',
+    )
+
+    kinescope_id = models.CharField(
+        max_length=100, blank=True,
+        verbose_name='ID трансляции Kinescope',
+        help_text='ID из кабинета Kinescope. Пусто — плеер не показывается.',
+    )
+    recording_id = models.CharField(
+        max_length=100, blank=True,
+        verbose_name='ID записи эфира',
+        help_text='Заполняется после завершения, если запись выкладывается.',
+    )
+
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_SCHEDULED,
+        verbose_name='Статус',
+    )
+    is_published = models.BooleanField(
+        default=False, verbose_name='Показывать ученикам',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Трансляция'
+        verbose_name_plural = 'Трансляции'
+        ordering = ['-scheduled_at']
+        indexes = [models.Index(fields=['course', 'scheduled_at'])]
+
+    def __str__(self):
+        return f'{self.title} — {self.scheduled_at:%d.%m.%Y %H:%M}'
+
+    @property
+    def ends_at(self):
+        return self.scheduled_at + timedelta(minutes=self.duration_minutes)
+
+    @property
+    def is_upcoming(self) -> bool:
+        return self.status == self.STATUS_SCHEDULED and self.scheduled_at > timezone.now()
+
+    @property
+    def has_recording(self) -> bool:
+        return self.status == self.STATUS_FINISHED and bool(self.recording_id)
 
 
 class Enrollment(models.Model):

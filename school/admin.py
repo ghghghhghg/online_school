@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Course, Lesson, Enrollment, LessonProgress, Review, FAQ, Comment, WhyUsBlock, StatBlock, Homework, \
     HomeworkSubmission, Module, Checkpoint, CheckpointTask, CheckpointAttempt, ExamMock, ExamTask, ExamAttempt, \
     CheckpointAnswer, Notification, FearBlock, ParentBlock, SiteSettings, ReviewPhoto, Timecode, CourseTeacherDisplay, \
-    TeacherProfile, CourseBenefit, CourseAudience, CourseStep, Question, Test, PracticeSession, Answer
+    TeacherProfile, CourseBenefit, CourseAudience, CourseStep, Question, Test, PracticeSession, Answer, CourseStream
 
 from .models import (
     ErrorCorrectionAttempt, ErrorRecord, PlanItem, ScoreConversionTable,
@@ -339,3 +339,27 @@ class PracticeSessionAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(CourseStream)
+class CourseStreamAdmin(admin.ModelAdmin):
+    list_display = ('title', 'course', 'scheduled_at', 'status', 'is_published')
+    list_filter = ('status', 'is_published', 'course')
+    search_fields = ('title', 'description')
+    date_hierarchy = 'scheduled_at'
+    list_editable = ('status', 'is_published')
+    fieldsets = (
+        (None, {
+            'fields': ('course', 'title', 'description'),
+        }),
+        ('Время', {
+            'fields': ('scheduled_at', 'duration_minutes'),
+        }),
+        ('Kinescope', {
+            'fields': ('kinescope_id', 'recording_id'),
+            'description': 'ID берутся из кабинета Kinescope.',
+        }),
+        ('Публикация', {
+            'fields': ('status', 'is_published'),
+        }),
+    )
