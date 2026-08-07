@@ -697,6 +697,10 @@ class CheckpointAttempt(PrimaryScoreMixin, AnalyticsQualityMixin, models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE,
                                 related_name='checkpoint_attempts', verbose_name='Ученик')
     submitted_at = models.DateTimeField(auto_now_add=True)
+    idempotency_key = models.CharField(
+        max_length=64, null=True, blank=True, unique=True, db_index=True,
+        verbose_name='Ключ идемпотентности',
+    )
 
     class Meta:
         verbose_name = 'Попытка контрольной точки'

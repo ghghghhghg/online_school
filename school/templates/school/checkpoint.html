@@ -5,10 +5,10 @@
 
 {% block content %}
 <a href="{% url 'course_lessons' checkpoint.course.slug %}" class="btn btn-outline-secondary btn-sm mb-3">
-    ← Назад к курсу
+    {% icon 'arrow-left' size=14 %} Назад к курсу
 </a>
 
-<h2>🚩 {{ checkpoint.title }}</h2>
+<h2>{% icon 'flag' size=24 %} {{ checkpoint.title }}</h2>
 
 {% if messages %}
     {% for message in messages %}
@@ -25,31 +25,40 @@
 </div>
 {% endif %}
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="checkpoint-form">
     {% csrf_token %}
+    <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
     {% for task in tasks %}
     <div class="card mb-3 p-3">
         <h5>{{ forloop.counter }}. {{ task.title }}</h5>
         <p style="white-space: pre-line; color: var(--ink);">{{ task.description }}</p>
 
         {% if task.task_type == 'auto' %}
-            <input type="text" name="answer_{{ task.id }}" class="form-control" placeholder="Ваш ответ" required>
+            <label class="form-label" for="answer_{{ task.id }}">Ваш ответ</label>
+            <input type="text" name="answer_{{ task.id }}" id="answer_{{ task.id }}"
+                   class="form-control" placeholder="Ваш ответ" required>
         {% else %}
             {% if task.submission_type == 'text' %}
             <div class="mb-2">
-                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
+                <label class="form-label" for="answer_text_{{ task.id }}">Ваш ответ</label>
+                <textarea name="answer_text_{{ task.id }}" id="answer_text_{{ task.id }}"
+                          class="form-control" rows="3"></textarea>
             </div>
             {% elif task.submission_type == 'file' %}
             <div class="mb-2">
-                <input type="file" name="file_{{ task.id }}" class="form-control">
+                <label class="form-label" for="file_{{ task.id }}">Прикрепить файл</label>
+                <input type="file" name="file_{{ task.id }}" id="file_{{ task.id }}" class="form-control">
             </div>
             {% elif task.submission_type == 'either' %}
             <p class="text-muted small mb-1">Заполните текст или прикрепите файл</p>
             <div class="mb-2">
-                <textarea name="answer_text_{{ task.id }}" class="form-control" rows="3"></textarea>
+                <label class="form-label" for="answer_text_{{ task.id }}">Текстовый ответ</label>
+                <textarea name="answer_text_{{ task.id }}" id="answer_text_{{ task.id }}"
+                          class="form-control" rows="3"></textarea>
             </div>
             <div class="mb-2">
-                <input type="file" name="file_{{ task.id }}" class="form-control">
+                <label class="form-label" for="file_{{ task.id }}">Или прикрепите файл</label>
+                <input type="file" name="file_{{ task.id }}" id="file_{{ task.id }}" class="form-control">
             </div>
             {% endif %}
         {% endif %}
@@ -62,4 +71,20 @@
     <button type="submit" class="btn btn-primary">Отправить все ответы</button>
     {% endif %}
 </form>
+
+{% if tasks %}
+<script>
+(function(){
+  var form = document.getElementById('checkpoint-form');
+  if (!form) return;
+  form.addEventListener('submit', function(){
+    var btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Отправляем…';
+    }
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

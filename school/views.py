@@ -1371,32 +1371,56 @@ def checkpoint_view(request, pk):
     ).prefetch_related('answers__task').first()
 
     if request.method == 'POST':
-        attempt = CheckpointAttempt.objects.create(checkpoint=checkpoint, student=request.user)
+        key = request.POST.get('idempotency_key') or ''
+        existing = (
+            CheckpointAttempt.objects.filter(idempotency_key=key).first()
+            if key else None
+        )
+        if existing:
+            # Повторная отправка той же формы — попытка уже создана (ТЗ 4.8)
+            return redirect('checkpoint_result', pk=existing.pk)
 
-        for task in tasks:
-            if task.task_type == CheckpointTask.TYPE_AUTO:
-                answer_text = request.POST.get(f'answer_{task.id}', '').strip()
-                correct_variants = [
-                    line.strip().lower()
-                    for line in task.correct_answers.splitlines() if line.strip()
-                ]
-                passed = answer_text.strip().lower() in correct_variants
-                CheckpointAnswer.objects.create(
-                    attempt=attempt,
-                    task=task,
-                    answer_text=answer_text,
-                    status=CheckpointAnswer.STATUS_CHECKED,
-                    passed=passed,
-                    checked_at=timezone.now(),
+        attempt = None
+        try:
+            with transaction.atomic():
+                attempt = CheckpointAttempt.objects.create(
+                    checkpoint=checkpoint, student=request.user,
+                    idempotency_key=key or None,
                 )
-            else:
-                CheckpointAnswer.objects.create(
-                    attempt=attempt,
-                    task=task,
-                    answer_text=request.POST.get(f'answer_text_{task.id}', ''),
-                    file=request.FILES.get(f'file_{task.id}'),
-                )
-            record_checkpoint_attempt(attempt)
+
+                for task in tasks:
+                    if task.task_type == CheckpointTask.TYPE_AUTO:
+                        answer_text = request.POST.get(f'answer_{task.id}', '').strip()
+                        correct_variants = [
+                            line.strip().lower()
+                            for line in task.correct_answers.splitlines() if line.strip()
+                        ]
+                        passed = answer_text.strip().lower() in correct_variants
+                        CheckpointAnswer.objects.create(
+                            attempt=attempt,
+                            task=task,
+                            answer_text=answer_text,
+                            status=CheckpointAnswer.STATUS_CHECKED,
+                            passed=passed,
+                            checked_at=timezone.now(),
+                        )
+                    else:
+                        CheckpointAnswer.objects.create(
+                            attempt=attempt,
+                            task=task,
+                            answer_text=request.POST.get(f'answer_text_{task.id}', ''),
+                            file=request.FILES.get(f'file_{task.id}'),
+                        )
+
+                record_checkpoint_attempt(attempt)
+        except IntegrityError:
+            # Одновременные запросы: второй проиграл гонку на unique-ключе,
+            # попытка уже создана первым.
+            attempt = CheckpointAttempt.objects.filter(idempotency_key=key).first()
+
+        if attempt is None:
+            messages.error(request, 'Не удалось сохранить ответы, попробуйте ещё раз')
+            return redirect('checkpoint', pk=checkpoint.pk)
 
         messages.success(request, 'Ответы отправлены!')
         return redirect('checkpoint_result', pk=attempt.pk)
@@ -1405,6 +1429,7 @@ def checkpoint_view(request, pk):
         'checkpoint': checkpoint,
         'tasks': tasks,
         'last_attempt': last_attempt,
+        'idempotency_key': uuid.uuid4().hex,
     })
 
 
@@ -1661,7 +1686,12 @@ def exam_start_view(request, pk):
             return redirect('exam_result', pk=existing.pk)
         return redirect('exam_attempt', pk=existing.pk)
 
-    attempt = ExamAttempt.objects.create(exam=exam, student=request.user)
+    # get_or_create вместо create: при двойном клике второй запрос
+    # подхватит уже созданную незавершённую попытку, а не заведёт вторую.
+    attempt, _ = ExamAttempt.objects.get_or_create(
+        exam=exam, student=request.user, submitted_at__isnull=True,
+        defaults={},
+    )
     return redirect('exam_attempt', pk=attempt.pk)
 
 
@@ -1682,12 +1712,22 @@ def exam_attempt_view(request, pk):
     remaining_seconds = int((attempt.deadline - timezone.now()).total_seconds())
 
     if request.method == 'POST':
-        _save_exam_answers(attempt, tasks, request)
-        attempt.submitted_at = timezone.now()
-        attempt.save()
-        record_exam_attempt(attempt)
-        messages.success(request, 'Пробник завершён!')
-        return redirect('exam_result', pk=attempt.pk)
+        if request.method == 'POST':
+            _save_exam_answers(attempt, tasks, request)
+
+            # Захватываем попытку одним UPDATE: при одновременных запросах
+            # условие submitted_at__isnull=True выполнится ровно для одного,
+            # остальные получат 0 и не сдвинут дату сдачи (ТЗ 4.8).
+            claimed = ExamAttempt.objects.filter(
+                pk=attempt.pk, submitted_at__isnull=True,
+            ).update(submitted_at=timezone.now())
+
+            if claimed:
+                attempt.refresh_from_db()
+                record_exam_attempt(attempt)
+                messages.success(request, 'Пробник завершён!')
+
+            return redirect('exam_result', pk=attempt.pk)
 
     return render(request, 'school/exam_attempt.html', {
         'attempt': attempt,
