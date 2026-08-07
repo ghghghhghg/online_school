@@ -624,6 +624,13 @@ class HomeworkSubmission(PrimaryScoreMixin, AnalyticsQualityMixin,  models.Model
     teacher_comment = models.TextField(blank=True, verbose_name='Комментарий преподавателя')
 
     submitted_at = models.DateTimeField(auto_now_add=True)
+    attempt_number = models.PositiveSmallIntegerField(
+        default=1, verbose_name='Номер попытки',
+    )
+    idempotency_key = models.CharField(
+        max_length=64, null=True, blank=True, unique=True, db_index=True,
+        verbose_name='Ключ идемпотентности',
+    )
     checked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

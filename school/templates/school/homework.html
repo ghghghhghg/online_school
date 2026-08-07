@@ -1,10 +1,11 @@
 {% extends 'school/base_platform.html' %}
+{% load icons %}
 
 {% block title %}{{ homework.title }} — {{ lesson.title }}{% endblock %}
 
 {% block content %}
 <a href="{% url 'lesson' lesson.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
-    ← Назад к уроку
+    {% icon 'arrow-left' size=14 %} Назад к уроку
 </a>
 
 <h2>{{ homework.title }}</h2>
@@ -12,12 +13,19 @@
 
 {% if last_submission %}
 <div class="card mb-4 p-3">
-    <h6 class="mb-2">Ваш последний ответ</h6>
+    <h6 class="mb-2">
+        Ваш последний ответ
+        {% if last_submission.attempt_number > 1 %}
+        <span class="text-muted small">— попытка {{ last_submission.attempt_number }}</span>
+        {% endif %}
+    </h6>
     {% if last_submission.text %}
         <p class="mb-2">{{ last_submission.text }}</p>
     {% endif %}
     {% if last_submission.file %}
-        <a href="{{ last_submission.file.url }}" target="_blank" class="d-block mb-2">📎 Прикреплённый файл</a>
+        <a href="{{ last_submission.file.url }}" target="_blank" class="d-block mb-2">
+            {% icon 'paperclip' size=14 %} Прикреплённый файл
+        </a>
     {% endif %}
 
     {% if last_submission.status == 'checked' %}
@@ -25,7 +33,13 @@
             {% if homework.grading_type == 'score' %}
                 <strong>Оценка: {{ last_submission.score }}/100</strong>
             {% elif homework.grading_type == 'pass_fail' %}
-                <strong>{% if last_submission.passed %}✅ Зачтено{% else %}❌ Не зачтено{% endif %}</strong>
+                <strong>
+                    {% if last_submission.passed %}
+                        {% icon 'check-circle' size=16 %} Зачтено
+                    {% else %}
+                        {% icon 'x' size=16 %} Не зачтено
+                    {% endif %}
+                </strong>
             {% endif %}
             {% if last_submission.teacher_comment %}
                 <p class="mb-0 mt-2">{{ last_submission.teacher_comment }}</p>
@@ -46,32 +60,47 @@
 
 <div class="card p-3">
     <h6 class="mb-3">{% if last_submission %}Отправить новый ответ{% else %}Отправить ответ{% endif %}</h6>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="homework-form">
         {% csrf_token %}
+        <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
         {% if homework.submission_type == 'text' %}
         <div class="mb-3">
-            <label class="form-label">Ваш ответ</label>
-            <textarea name="text" class="form-control" rows="5"></textarea>
+            <label class="form-label" for="hw-text">Ваш ответ</label>
+            <textarea name="text" id="hw-text" class="form-control" rows="5"></textarea>
         </div>
         {% elif homework.submission_type == 'file' %}
         <div class="mb-3">
-            <label class="form-label">Прикрепить файл</label>
-            <input type="file" name="file" class="form-control">
+            <label class="form-label" for="hw-file">Прикрепить файл</label>
+            <input type="file" name="file" id="hw-file" class="form-control">
         </div>
         {% elif homework.submission_type == 'either' %}
         <p class="text-muted small mb-2">Заполните текст или прикрепите файл — не обязательно оба сразу</p>
         <div class="mb-3">
-            <label class="form-label">Текстовый ответ</label>
-            <textarea name="text" class="form-control" rows="4"></textarea>
+            <label class="form-label" for="hw-text">Текстовый ответ</label>
+            <textarea name="text" id="hw-text" class="form-control" rows="4"></textarea>
         </div>
         <div class="mb-3">
-            <label class="form-label">Или прикрепите файл</label>
-            <input type="file" name="file" class="form-control">
+            <label class="form-label" for="hw-file">Или прикрепите файл</label>
+            <input type="file" name="file" id="hw-file" class="form-control">
         </div>
         {% endif %}
         <button type="submit" class="btn btn-primary">Отправить на проверку</button>
     </form>
 </div>
+
+<script>
+(function(){
+  var form = document.getElementById('homework-form');
+  if (!form) return;
+  form.addEventListener('submit', function(){
+    var btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Отправляем…';
+    }
+  });
+})();
+</script>
 {% elif last_submission and last_submission.status == 'checked' and not homework.allow_resubmit %}
 <p class="text-muted">Пересдача этого задания недоступна</p>
 {% endif %}

@@ -1069,14 +1069,26 @@ def homework_view(request, pk):
         elif homework.submission_type == Homework.SUBMISSION_EITHER and not text and not file:
             errors.append('Введите текст ответа или прикрепите файл')
 
+        key = request.POST.get('idempotency_key') or ''
+        if key and HomeworkSubmission.objects.filter(idempotency_key=key).exists():
+            # Повторная отправка той же формы — работа уже сдана (ТЗ 4.8)
+            return redirect('homework', pk=lesson.pk)
+
         if not errors:
-            HomeworkSubmission.objects.create(
-                homework=homework,
-                student=request.user,
-                text=text,
-                file=file,
-            )
-            messages.success(request, 'Домашнее задание отправлено на проверку!')
+            try:
+                HomeworkSubmission.objects.create(
+                    homework=homework,
+                    student=request.user,
+                    text=text,
+                    file=file,
+                    attempt_number=submissions.count() + 1,
+                    idempotency_key=key or None,
+                )
+                messages.success(request, 'Домашнее задание отправлено на проверку!')
+            except IntegrityError:
+                # Одновременные запросы: второй проиграл гонку на unique-ключе,
+                # работа уже сохранена первым.
+                pass
             return redirect('homework', pk=lesson.pk)
 
         return render(request, 'school/homework.html', {
@@ -1085,6 +1097,7 @@ def homework_view(request, pk):
             'last_submission': last_submission,
             'can_submit': can_submit,
             'errors': errors,
+            'idempotency_key': uuid.uuid4().hex,
         })
 
     return render(request, 'school/homework.html', {
@@ -1092,6 +1105,7 @@ def homework_view(request, pk):
         'homework': homework,
         'last_submission': last_submission,
         'can_submit': can_submit,
+        'idempotency_key': uuid.uuid4().hex,
     })
 
 

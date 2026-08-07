@@ -154,10 +154,21 @@ def submit_answer(practice_answer, payload, time_spent=0):
     """
     Проверяет ответ, записывает баллы, двигает статусы ошибок.
     Возвращает (верно, набранные_баллы, максимум).
+
+    Идемпотентно (ТЗ 4.8): повторный POST по уже отвеченному заданию
+    возвращает сохранённый результат и не трогает статусы ошибок —
+    иначе двойное нажатие удвоило бы этапы закрепления ошибки.
     """
     from decimal import Decimal
 
     from .scoring import register_practice_error, resolve_practice_error
+
+    if practice_answer.answered_at is not None:
+        return (
+            practice_answer.is_correct,
+            float(practice_answer.earned_points or 0),
+            float(practice_answer.max_points or 0),
+        )
 
     question = practice_answer.question
     is_correct, earned = question.check_answer(payload)
@@ -184,6 +195,10 @@ def submit_answer(practice_answer, payload, time_spent=0):
 
 
 def skip_answer(practice_answer):
+    """Пропуск задания. Уже отвеченное задание не перезаписывается (ТЗ 4.8)."""
+    if practice_answer.answered_at is not None:
+        return
+
     practice_answer.skipped = True
     practice_answer.answered_at = timezone.now()
     practice_answer.earned_points = 0
@@ -192,8 +207,19 @@ def skip_answer(practice_answer):
 
 
 def finish_session(session):
-    """Подводит итог сессии, записывает первичные баллы."""
+    """
+    Подводит итог сессии, записывает первичные баллы.
+
+    Идемпотентно (ТЗ 4.8): у завершённой сессии дата не переписывается,
+    иначе повторное нажатие омолодило бы попытку в recencyWeight.
+    """
     from decimal import Decimal
+
+    if session.finished_at is not None:
+        return (
+            float(session.earned_points or 0),
+            float(session.max_points or 0),
+        )
 
     answered = session.answers.filter(answered_at__isnull=False)
     earned = sum(float(a.earned_points or 0) for a in answered)
